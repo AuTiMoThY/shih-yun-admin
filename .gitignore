@@ -1,0 +1,61 @@
+# Nuxt dev/build outputs
+admin/.output
+admin/.data
+admin/.nuxt
+admin/.nitro
+admin/.cache
+admin/dist
+
+# Node dependencies
+admin/node_modules
+node_modules
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Misc
+.DS_Store
+.fleet
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# Local env files
+.env
+.env.*
+!.env.example
+
+# CodeIgniter 4 API
+api/vendor
+api/writable/cache/*
+!api/writable/cache/index.html
+api/writable/logs/*
+!api/writable/logs/index.html
+api/writable/session/*
+!api/writable/session/index.html
+api/writable/uploads/*
+!api/writable/uploads/index.html
+api/writable/debugbar/*
+!api/writable/debugbar/index.html
+api/.env
+api/phpunit*.xml
+!api/phpunit.xml.dist
+
+# OS generated files
+Thumbs.db
+.DS_Store
+.AppleDouble
+.LSOverride
+
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
