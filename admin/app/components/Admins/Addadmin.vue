@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import type { AddAdminForm, AddAdminFormErrors } from "~/types/admin";
+import { PERMISSIONS } from "~/constants/permissions";
 
 const emit = defineEmits<{
     (e: "added"): void;
@@ -15,7 +16,7 @@ const password2Show = ref(false);
 const loading = ref(false);
 const submitError = ref("");
 
-const permission_names = ref([{ label: "管理員", value: "admin" }]);
+const permission_names = ref(PERMISSIONS);
 
 const form = reactive<AddAdminForm>({
     permission_name: "admin",

@@ -5,6 +5,72 @@ use App\Models\SysadminModel;
 
 class Admins extends BaseController
 {
+    /**
+     * 管理員登入：驗證帳號密碼並寫入 Session
+     */
+    public function login()
+    {
+        $payload = $this->request->getJSON(true) ?: $this->request->getPost();
+
+        if (empty($payload['username']) || empty($payload['password'])) {
+            return $this->response->setStatusCode(400)->setJSON([
+                'success' => false,
+                'message' => '請提供帳號與密碼',
+            ]);
+        }
+
+        $model = new SysadminModel();
+        $admin = $model->where('username', $payload['username'])->first();
+
+        if (! $admin) {
+            return $this->response->setStatusCode(401)->setJSON([
+                'success' => false,
+                'message' => '帳號或密碼錯誤',
+            ]);
+        }
+
+        if ((int) $admin['status'] !== 1) {
+            return $this->response->setStatusCode(403)->setJSON([
+                'success' => false,
+                'message' => '帳號已停用',
+            ]);
+        }
+
+        if (! password_verify($payload['password'], $admin['password_hash'])) {
+            return $this->response->setStatusCode(401)->setJSON([
+                'success' => false,
+                'message' => '帳號或密碼錯誤',
+            ]);
+        }
+
+        // 建立 Session
+        $session = session();
+        $session->regenerate(true);
+
+        $user = [
+            'id'              => $admin['id'],
+            'permission_name' => $admin['permission_name'],
+            'status'          => (int) $admin['status'],
+            'username'        => $admin['username'],
+            'name'            => $admin['name'],
+            'phone'           => $admin['phone'],
+            'address'         => $admin['address'],
+            'created_at'      => $admin['created_at'],
+            'updated_at'      => $admin['updated_at'],
+        ];
+
+        $session->set('admin_user', $user);
+
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => '登入成功',
+            'data'    => [
+                'user'  => $user,
+                'token' => session_id(),
+            ],
+        ]);
+    }
+
     public function addAdmin()
     {
         $data = $this->request->getJSON(true) ?: $this->request->getPost();
@@ -77,6 +143,42 @@ class Admins extends BaseController
         return $this->response->setJSON([
             'success' => true,
             'data'    => $admins,
+        ]);
+    }
+
+    /**
+     * 取得目前登入的管理員資料
+     */
+    public function me()
+    {
+        $session = session();
+        $user = $session->get('admin_user');
+
+        if (! $user) {
+            return $this->response->setStatusCode(401)->setJSON([
+                'success' => false,
+                'message' => '尚未登入',
+            ]);
+        }
+
+        return $this->response->setJSON([
+            'success' => true,
+            'data'    => $user,
+        ]);
+    }
+
+    /**
+     * 登出並清除 Session
+     */
+    public function logout()
+    {
+        $session = session();
+        $session->remove('admin_user');
+        $session->destroy();
+
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => '已登出',
         ]);
     }
 }

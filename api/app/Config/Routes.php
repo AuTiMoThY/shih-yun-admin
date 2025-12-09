@@ -16,5 +16,8 @@ $routes->get('/api/test-cors', 'TestCors::index');
 $routes->options('/(:any)', 'Home::options');
 $routes->post('/api/admins/add', 'Admins::addAdmin');
 $routes->get('/api/admins/get', 'Admins::getAdmins');
+$routes->post('/api/admins/login', 'Admins::login');
+$routes->get('/api/admins/me', 'Admins::me');
+$routes->post('/api/admins/logout', 'Admins::logout');
 
 

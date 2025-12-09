@@ -1,0 +1,6 @@
+{
+    "scripts": {
+        "dev": "cd admin && npm run dev",
+        "api": "cd api && php spark serve"
+    }
+}

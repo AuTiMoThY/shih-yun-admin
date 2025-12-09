@@ -3,6 +3,7 @@ definePageMeta({
     middleware: "auth"
 });
 import type { TableColumn } from "@nuxt/ui";
+import { h, resolveComponent } from "vue";
 
 const toast = useToast();
 
@@ -11,11 +12,52 @@ const users = ref<any[]>([]);
 const loading = ref(false);
 const table = ref();
 
+import { PERMISSION_LABEL_MAP } from "~/constants/permissions";
+import { ADMIN_STATUS_LABEL_MAP } from "~/constants/admin_status";
+
+// 參考 Addadmin.vue 的權限設定，轉換顯示文字
+const permissionLabelMap = PERMISSION_LABEL_MAP;
+const adminStatusLabelMap = ADMIN_STATUS_LABEL_MAP;
+const statusIconMap: Record<string, string> = {
+    "1": "i-lucide-badge-check",
+    "0": "i-lucide-ban"
+};
 const columns: TableColumn<any>[] = [
     { accessorKey: "username", header: "帳號" },
     { accessorKey: "name", header: "姓名" },
-    { accessorKey: "permission_name", header: "權限名稱" },
-    { accessorKey: "status", header: "狀態" }
+    {
+        accessorKey: "permission_name",
+        header: "權限名稱",
+        cell: ({ row }) =>
+            permissionLabelMap[row.original.permission_name] ??
+            row.original.permission_name
+    },
+    {
+        accessorKey: "status",
+        header: "狀態",
+        cell: ({ row }) => {
+            const status = String(row.original.status);
+            const label = adminStatusLabelMap[status] ?? status;
+            const icon =
+                statusIconMap[status] ?? "i-lucide-help-circle";
+            const UIcon = resolveComponent("UIcon");
+
+            return h(
+                "div",
+                { class: "flex items-center gap-2" },
+                [
+                    h(UIcon, {
+                        name: icon,
+                        class:
+                            status === "1"
+                                ? "text-emerald-500"
+                                : "text-rose-500"
+                    }),
+                    h("span", label)
+                ]
+            );
+        }
+    }
 ];
 
 const fetchUsers = async () => {
@@ -23,8 +65,7 @@ const fetchUsers = async () => {
     const res = await getUsers();
     if (res?.success) {
         users.value = res.data;
-    }
-    else {
+    } else {
         console.error(res.message);
         toast.add({
             title: res.message,
@@ -65,9 +106,8 @@ onMounted(fetchUsers);
                     tbody: '[&>tr]:last:[&>td]:border-b-0',
                     th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
                     td: 'border-b border-default',
-                    separator: 'h-0',
-                }"
-            />
+                    separator: 'h-0'
+                }" />
         </template>
     </UDashboardPanel>
 </template>
