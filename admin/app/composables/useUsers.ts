@@ -3,26 +3,30 @@ export const useUsers = () => {
     const { token } = useAuth();
 
     // API 基礎 URL
-    const apiBase = config.public.apiBase || "http://localhost:8080/api";
-
+    const { public: runtimePublic } = useRuntimeConfig();
+    const apiBase = runtimePublic.apiBase;
     /**
      * 取得所有使用者列表
      */
     const getUsers = async () => {
         try {
             const response = await $fetch<{
-                status: string;
+                success: boolean;
                 data: any[];
-            }>(`${apiBase}/auth/users`, {
+                message?: string;
+            }>(`${apiBase}/api/admins/get`, {
+                method: "GET",
                 headers: {
-                    Authorization: `Bearer ${token.value}`,
+                    // Authorization: `Bearer ${token.value}`,
+                    "Content-Type": "application/json"
                 },
+                credentials: "include"
             });
 
-            if (response.status === "success") {
+            if (response.success) {
                 return {
                     success: true,
-                    data: response.data,
+                    data: response.data ?? [],
                 };
             }
 

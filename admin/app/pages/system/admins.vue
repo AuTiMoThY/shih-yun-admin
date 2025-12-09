@@ -2,25 +2,43 @@
 definePageMeta({
     middleware: "auth"
 });
+import type { TableColumn } from "@nuxt/ui";
 
-const addAdmin = () => {
-    console.log("新增管理員");
+const toast = useToast();
+
+const { getUsers } = useUsers();
+const users = ref<any[]>([]);
+const loading = ref(false);
+const table = ref();
+
+const columns: TableColumn<any>[] = [
+    { accessorKey: "username", header: "帳號" },
+    { accessorKey: "name", header: "姓名" },
+    { accessorKey: "permission_name", header: "權限名稱" },
+    { accessorKey: "status", header: "狀態" }
+];
+
+const fetchUsers = async () => {
+    loading.value = true;
+    const res = await getUsers();
+    if (res?.success) {
+        users.value = res.data;
+    }
+    else {
+        console.error(res.message);
+        toast.add({
+            title: res.message,
+            color: "error"
+        });
+    }
+    loading.value = false;
 };
 
-const form = reactive({
-    username: "",
-    password: "",
-    password_confirmation: "",
-    name: "",
-    phone: ""
-});
-
-const loading = ref(false);
-const errorMessage = ref("");
+onMounted(fetchUsers);
 </script>
 
 <template>
-    <UDashboardPanel>
+    <UDashboardPanel id="admins">
         <template #header>
             <UDashboardNavbar title="管理員設定" :ui="{ right: 'gap-3' }">
                 <template #leading>
@@ -30,114 +48,26 @@ const errorMessage = ref("");
 
             <UDashboardToolbar>
                 <template #right>
-                    <UModal
-                        title="新增管理員"
-                        :close="{
-                            color: 'primary',
-                            variant: 'outline',
-                            class: 'rounded-full'
-                        }">
-                        <UButton
-                            color="primary"
-                            variant="outline"
-                            icon="lucide:plus"
-                            label="新增管理員" />
-                        <template #body>
-                            <UForm
-                                :state="form"
-                                @submit="addAdmin"
-                                class="space-y-4">
-                                <UFormField
-                                    label="帳號"
-                                    name="username"
-                                    required>
-                                    <UInput
-                                        v-model="form.username"
-                                        placeholder="請輸入帳號"
-                                        size="lg"
-                                        :disabled="loading"
-                                        class="w-full" />
-                                </UFormField>
-
-                                <UFormField
-                                    label="密碼"
-                                    name="password"
-                                    required>
-                                    <UInput
-                                        v-model="form.password"
-                                        type="password"
-                                        placeholder="請輸入密碼"
-                                        size="lg"
-                                        :disabled="loading"
-                                        class="w-full" />
-                                </UFormField>
-
-                                <UFormField
-                                    label="再次輸入密碼"
-                                    name="password_confirmation"
-                                    required>
-                                    <UInput
-                                        v-model="form.password_confirmation"
-                                        type="password"
-                                        placeholder="請再次輸入密碼"
-                                        size="lg"
-                                        :disabled="loading"
-                                        class="w-full" />
-                                </UFormField>
-
-                                <UFormField
-                                    label="姓名"
-                                    name="name"
-                                    required>
-                                    <UInput
-                                        v-model="form.name"
-                                        type="text"
-                                        placeholder="請輸入姓名"
-                                        size="lg"
-                                        :disabled="loading"
-                                        class="w-full" />
-                                </UFormField>
-
-                                <UFormField
-                                    label="電話"
-                                    name="phone"
-                                    required>
-                                    <UInput
-                                        v-model="form.phone"
-                                        type="text"
-                                        placeholder="請輸入電話"
-                                        size="lg"
-                                        :disabled="loading"
-                                        class="w-full" />
-                                </UFormField>
-
-                                <div
-                                    v-if="errorMessage"
-                                    class="text-sm text-red-500">
-                                    {{ errorMessage }}
-                                </div>
-
-                                <UButton
-                                    type="submit"
-                                    block
-                                    size="lg"
-                                    :loading="loading"
-                                    :disabled="loading">
-                                    登入
-                                </UButton>
-                            </UForm>
-                        </template>
-                    </UModal>
+                    <AdminsAddadmin @added="fetchUsers" />
                 </template>
             </UDashboardToolbar>
         </template>
         <template #body>
-            <UCard>
-                <div class="p-8 text-center text-muted-foreground">
-                    此功能尚未開發
-                </div>
-            </UCard>
+            <UTable
+                ref="table"
+                class="shrink-0"
+                :data="users"
+                :columns="columns"
+                :loading="loading"
+                :ui="{
+                    base: 'table-fixed border-separate border-spacing-0',
+                    thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
+                    tbody: '[&>tr]:last:[&>td]:border-b-0',
+                    th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
+                    td: 'border-b border-default',
+                    separator: 'h-0',
+                }"
+            />
         </template>
     </UDashboardPanel>
 </template>
-
