@@ -1,5 +1,9 @@
 <script setup>
 const colorMode = useColorMode();
+// 確保初始模式為 light
+if (colorMode.preference !== 'light') {
+    colorMode.preference = 'light';
+}
 console.log("colorMode", colorMode.value);
 useHead({
     meta: [

@@ -1,3 +1,24 @@
+<script setup lang="ts">
+definePageMeta({
+    middleware: "auth"
+});
+
+const addAdmin = () => {
+    console.log("新增管理員");
+};
+
+const form = reactive({
+    username: "",
+    password: "",
+    password_confirmation: "",
+    name: "",
+    phone: ""
+});
+
+const loading = ref(false);
+const errorMessage = ref("");
+</script>
+
 <template>
     <UDashboardPanel>
         <template #header>
@@ -20,12 +41,11 @@
                             color="primary"
                             variant="outline"
                             icon="lucide:plus"
-                            label="新增管理員"
-                            @click="addAdmin" />
+                            label="新增管理員" />
                         <template #body>
                             <UForm
                                 :state="form"
-                                @submit="handleLogin"
+                                @submit="addAdmin"
                                 class="space-y-4">
                                 <UFormField
                                     label="帳號"
@@ -79,13 +99,13 @@
                                 </UFormField>
 
                                 <UFormField
-                                    label="姓名"
-                                    name="name"
+                                    label="電話"
+                                    name="phone"
                                     required>
                                     <UInput
-                                        v-model="form.name"
+                                        v-model="form.phone"
                                         type="text"
-                                        placeholder="請輸入姓名"
+                                        placeholder="請輸入電話"
                                         size="lg"
                                         :disabled="loading"
                                         class="w-full" />
@@ -121,22 +141,3 @@
     </UDashboardPanel>
 </template>
 
-<script setup lang="ts">
-definePageMeta({
-    middleware: "auth"
-});
-
-const addAdmin = () => {
-    console.log("新增管理員");
-};
-
-const form = reactive({
-    username: "",
-    password: "",
-    password_confirmation: "",
-    name: ""
-});
-
-const loading = ref(false);
-const errorMessage = ref("");
-</script>

@@ -11,6 +11,6 @@ export default defineAppConfig({
         }
     },
     colorMode: {
-        preference: "system" // 可選：'system' | 'light' | 'dark'
+        preference: "light" // 可選：'system' | 'light' | 'dark'
     }
 });
