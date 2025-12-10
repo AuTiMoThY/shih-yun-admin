@@ -22,4 +22,10 @@ $routes->post('/api/admins/login', 'AuthController::login');
 $routes->get('/api/admins/me', 'AuthController::me');
 $routes->post('/api/admins/logout', 'AuthController::logout');
 
+// 系統架構層級相關路由
+$routes->post('/api/structure/add', 'StructureController::addLevel');
+$routes->post('/api/structure/update', 'StructureController::updateLevel');
+$routes->post('/api/structure/delete', 'StructureController::deleteLevel');
+$routes->get('/api/structure/get', 'StructureController::getLevels');
+
 
