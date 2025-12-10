@@ -1,6 +1,10 @@
 {
     "scripts": {
         "admin": "cd admin && npm run dev",
-        "api": "cd api && php spark serve"
+        "api": "cd api && php spark serve",
+        "preinstall": "node scripts/check-directory.js",
+        "prestart": "node scripts/check-directory.js",
+        "prebuild": "node scripts/check-directory.js",
+        "predev": "node scripts/check-directory.js"
     }
 }

@@ -4,7 +4,7 @@ const apiBase =
         .process?.env?.NUXT_PUBLIC_API_BASE || "http://localhost:8080";
 
 export default defineNuxtConfig({
-    modules: ["@nuxt/eslint", "@nuxt/ui", "@nuxt/image"],
+    modules: ["@nuxt/eslint", "@nuxt/ui", "@nuxt/image", "@vueuse/nuxt"],
 
     ssr: false, // 禁用 SSR，只使用客戶端渲染
 
