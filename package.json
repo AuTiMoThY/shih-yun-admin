@@ -3,8 +3,14 @@
         "admin": "cd admin && npm run dev",
         "api": "cd api && php spark serve",
         "preinstall": "node scripts/check-directory.js",
+        "prepublishOnly": "node scripts/check-directory.js",
+        "prepack": "node scripts/check-directory.js",
         "prestart": "node scripts/check-directory.js",
         "prebuild": "node scripts/check-directory.js",
-        "predev": "node scripts/check-directory.js"
+        "predev": "node scripts/check-directory.js",
+        "preversion": "node scripts/check-directory.js",
+        "pretest": "node scripts/check-directory.js",
+        "prepublish": "node scripts/check-directory.js",
+        "check": "node scripts/check-directory.js"
     }
 }
