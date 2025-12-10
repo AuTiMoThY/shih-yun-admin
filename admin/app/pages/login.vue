@@ -86,13 +86,6 @@ const handleLogin = async () => {
                     登入
                 </UButton>
             </UForm>
-
-            <template #footer>
-                <div
-                    class="text-center text-sm text-gray-500 dark:text-gray-400">
-                    <p>測試帳號：admin / admin</p>
-                </div>
-            </template>
         </UCard>
     </div>
 </template>

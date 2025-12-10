@@ -24,6 +24,7 @@ export const useAuth = () => {
      * 登入（使用假資料模擬）
      */
     const login = async (username: string, password: string) => {
+
         try {
             const response = await $fetch<{
                 success: boolean;
@@ -43,6 +44,8 @@ export const useAuth = () => {
                     password,
                 },
             });
+
+            console.log(response);
 
             if (response.success && response.data) {
                 token.value = response.data.token;
@@ -64,10 +67,20 @@ export const useAuth = () => {
                 message: response.message || "登入失敗",
             };
         } catch (error: any) {
-            console.error("登入錯誤:", error);
+            console.error("登入錯誤:", error.data);
+            // $fetch 在非 2xx 狀態碼時會拋出錯誤，錯誤資料可能在 error.data 或 error.response._data
+            // fail() 方法回傳格式: { status, error, messages: { error: "..." } }
+            // 其他錯誤回傳格式: { success: false, message: "..." }
+            const errorMessage = 
+                error?.data?.messages?.error ||  // fail() 方法的回傳格式
+                error?.data?.message ||          // 其他錯誤回傳格式
+                error?.response?._data?.messages?.error ||  // fail() 方法的備用路徑
+                error?.response?._data?.message ||          // 其他錯誤的備用路徑
+                error?.message || 
+                "登入失敗，請稍後再試";
             return {
                 success: false,
-                message: error?.data?.message || "登入失敗，請稍後再試",
+                message: errorMessage,
             };
         }
     };

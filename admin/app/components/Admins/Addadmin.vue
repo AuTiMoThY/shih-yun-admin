@@ -192,9 +192,8 @@ const addAdmin = async (event?: Event) => {
                     <UFormField
                         label="狀態"
                         name="status"
-                        :error="errors.status"
-                        required>
-                        <UCheckbox v-model="form.status" required />
+                        :error="errors.status">
+                        <UCheckbox v-model="form.status" />
                     </UFormField>
                 </div>
                 <UFormField
