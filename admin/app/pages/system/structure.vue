@@ -85,7 +85,8 @@ const setupRootSortable = () => {
         draggable: "tr[data-depth='0']",
         fallbackOnBody: true,
 		swapThreshold: 0.65,
-        onEnd: async (evt: any) => {
+        onUpdate: async (evt: any) => {
+            console.log("onUpdate", evt);
             const list = data.value || [];
             const rows = (
                 Array.from(
@@ -97,7 +98,7 @@ const setupRootSortable = () => {
             const idsAfterDom = rows
                 .map((r) => r.dataset.levelId)
                 .filter(Boolean);
-            debugLog("onEnd start", {
+            debugLog("onUpdate start", {
                 oldIndex: evt.oldIndex,
                 newIndex: evt.newIndex,
                 listLength: list.length,
@@ -128,7 +129,7 @@ const setupRootSortable = () => {
 
             data.value = [...newList];
             // updateSortOrder(data.value);
-            debugLog("onEnd done", {
+            debugLog("onUpdate done", {
                 movedId: evt.item?.dataset?.levelId,
                 idsAfter: data.value.map((x) => x?.id)
             });
@@ -189,7 +190,7 @@ onMounted(async () => {
                             </th>
                         </tr>
                     </thead>
-                    <tbody ref="rootBodyRef" class="nested-0">
+                    <tbody ref="rootBodyRef">
                         <template
                             v-for="(level, idx) in rootLevels"
                             :key="level?.id ?? `root-${idx}`">

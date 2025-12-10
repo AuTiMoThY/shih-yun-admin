@@ -99,7 +99,7 @@ const toggleExpand = () => {
         </td>
     </tr>
     <template v-if="hasChildren && isExpanded">
-        <tbody style="display: contents" :class="`nested-${currentDepth + 1}`">
+        <tbody style="display: contents">
             <TreeTableRow
                 v-for="child in level.children"
                 :key="child.id"
