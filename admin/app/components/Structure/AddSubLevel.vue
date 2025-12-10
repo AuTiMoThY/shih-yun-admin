@@ -1,6 +1,14 @@
 <script setup lang="ts">
 import type { AddLevelForm, AddLevelFormErrors } from "~/types/level";
 
+const props = withDefaults(defineProps<{
+    parentId: number | string;
+    parentName?: string;
+}>(), {
+    parentId: 0,
+    parentName: undefined
+});
+
 const emit = defineEmits<{
     (e: "added"): void;
 }>();
@@ -17,7 +25,8 @@ const form = reactive<AddLevelForm>({
     name: "",
     is_show_frontend: true,
     is_show_backend: true,
-    status: true
+    status: true,
+    parent_id: props.parentId
 });
 
 const errors = reactive<AddLevelFormErrors>({
@@ -32,6 +41,7 @@ const resetForm = () => {
     form.is_show_frontend = true;
     form.is_show_backend = true;
     form.status = true;
+    form.parent_id = props.parentId;
 
     Object.keys(errors).forEach((key) => {
         // @ts-ignore
@@ -64,7 +74,7 @@ const validateForm = (): boolean => {
     return !Object.values(errors).some((v) => v);
 };
 
-const addLevel = async (event?: Event) => {
+const addSubLevel = async (event?: Event) => {
     if (event) event.preventDefault();
     if (!validateForm()) return;
 
@@ -75,7 +85,10 @@ const addLevel = async (event?: Event) => {
             {
                 baseURL: apiBase,
                 method: "POST",
-                body: form,
+                body: {
+                    ...form,
+                    parent_id: props.parentId
+                },
                 headers: { "Content-Type": "application/json" },
                 credentials: "include"
             }
@@ -112,34 +125,41 @@ const addLevel = async (event?: Event) => {
             (typeof data?.message === "string" && data.message) ||
             (typeof data === "string" ? data : null) ||
             error?.message ||
-            "新增層級失敗，請稍後再試";
+            "新增子層級失敗，請稍後再試";
 
         submitError.value = msg;
         toast.add({ title: msg, color: "error" });
-        console.error("addLevel error", error);
+        console.error("addSubLevel error", error);
     } finally {
         loading.value = false;
     }
 };
+
+const openModal = () => {
+    if (!props.parentId || props.parentId === 0) {
+        console.error("無法打開子層級對話框：缺少父層級 ID");
+        return;
+    }
+    resetForm();
+    modalOpen.value = true;
+};
+
+defineExpose({
+    openModal
+});
 </script>
 <template>
     <UModal
         v-model:open="modalOpen"
-        title="新增層級1"
+        :title="`新增子層級${parentName ? ` (父層級: ${parentName})` : ''}`"
         description=""
         :close="{
             color: 'primary',
             variant: 'outline',
             class: 'rounded-full'
         }">
-        <UButton
-            color="primary"
-            variant="outline"
-            icon="lucide:plus"
-            label="新增層級1"
-            @click="modalOpen = true" />
         <template #body>
-            <UForm :state="form" @submit="addLevel" class="space-y-4">
+            <UForm :state="form" @submit="addSubLevel" class="space-y-4">
                 <UFormField
                     label="層級名稱"
                     name="name"
@@ -177,7 +197,7 @@ const addLevel = async (event?: Event) => {
                     size="lg"
                     :loading="loading"
                     :disabled="loading">
-                    新增層級
+                    新增子層級
                 </UButton>
                 <div v-if="submitError" class="text-sm text-red-500">
                     {{ submitError }}
@@ -186,3 +206,4 @@ const addLevel = async (event?: Event) => {
         </template>
     </UModal>
 </template>
+

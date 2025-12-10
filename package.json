@@ -1,6 +1,6 @@
 {
     "scripts": {
-        "admin": "cd admin && npm run dev",
+        "admin": "cd admin && pnpm run dev",
         "api": "cd api && php spark serve",
         "preinstall": "node scripts/check-directory.js",
         "prepublishOnly": "node scripts/check-directory.js",

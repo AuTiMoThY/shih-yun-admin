@@ -3,6 +3,7 @@ export type AddLevelForm = {
     is_show_frontend: boolean;
     is_show_backend: boolean;
     status: boolean;
+    parent_id?: number | string | null;
 };
 
 export type AddLevelFormErrors = {

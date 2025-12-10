@@ -106,5 +106,16 @@ class StructureModel extends Model
         
         return $builder->get()->getResultArray();
     }
+
+    /**
+     * 更新排序順序
+     * @param array $list 排序順序列表
+     * @return bool
+     */
+    public function updateSortOrder($list)
+    {
+        $this->updateBatch($list, 'id');
+        return true;
+    }
 }
 

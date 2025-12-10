@@ -4,6 +4,8 @@ definePageMeta({
 });
 import type { TableColumn } from "@nuxt/ui";
 import { h, resolveComponent } from "vue";
+import { PERMISSION_LABEL_MAP } from "~/constants/permissions";
+import { ADMIN_STATUS_LABEL_MAP } from "~/constants/admin_status";
 
 const toast = useToast();
 
@@ -11,9 +13,6 @@ const { getUsers } = useUsers();
 const users = ref<any[]>([]);
 const loading = ref(false);
 const table = ref();
-
-import { PERMISSION_LABEL_MAP } from "~/constants/permissions";
-import { ADMIN_STATUS_LABEL_MAP } from "~/constants/admin_status";
 
 const { public: runtimePublic } = useRuntimeConfig();
 const apiBase = runtimePublic.apiBase;
