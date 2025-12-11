@@ -7,18 +7,15 @@ import { useSortable } from "@vueuse/integrations/useSortable";
 import StructureAddSubLevel from "~/components/Structure/AddSubLevel.vue";
 import StructureTreeTableRow from "~/components/Structure/TreeTableRow.vue";
 
-const data = shallowRef<any[]>([]);
-const loading = ref(false);
-const toast = useToast();
+const { data, loading, fetchData, updateSortOrder, deleteLevel } = useStructure();
 const addSubLevelModalOpen = ref(false);
-const { public: runtimePublic } = useRuntimeConfig();
-const apiBase = runtimePublic.apiBase;
 const rootBodyRef = ref<HTMLElement | null>(null);
 const currentParentLevel = ref<any>(null);
 
 const editLevel = (level: any) => {
     console.log(typeof level.id);
 };
+
 
 const addSubLevel = (level: any) => {
     console.log(level);
@@ -29,53 +26,11 @@ const addSubLevel = (level: any) => {
 
 const rootLevels = computed(() => (data.value || []).filter(Boolean));
 
-const fetchData = async () => {
-    loading.value = true;
-    const res = await $fetch<{
-        success: boolean;
-        data: any[];
-        message?: string;
-    }>(`${apiBase}/structure/get?tree=1`, {
-        method: "GET"
-    });
-    if (res?.success) {
-        data.value = (res.data || []).filter(Boolean);
-        console.log("fetchData success", {
-            count: data.value.length,
-            ids: data.value.map((x) => x?.id)
-        });
-    } else {
-        console.error(res.message);
-        toast.add({ title: res.message, color: "error" });
-    }
-    loading.value = false;
+const handleDelete = async (level: any) => {
+    await deleteLevel(level, { onSuccess: fetchData });
 };
 
-const updateSortOrder = async (list: any[]) => {
-    const payload = (list || []).map((item, index) => ({
-        id: item?.id,
-        sort_order: index
-    }));
-    console.log("updateSortOrder payload", payload);
-    try {
-        const res = await $fetch<{
-            success: boolean;
-            message?: string;
-        }>(`${apiBase}/structure/update-sort-order`, {
-            method: "POST",
-            body: payload
-        });
-        if (res?.success) {
-            toast.add({ title: "排序已更新", color: "success" });
-        } else {
-            console.error(res.message);
-            toast.add({ title: res.message, color: "error" });
-        }
-    } catch (error: any) {
-        console.error(error.message);
-        toast.add({ title: error.message, color: "error" });
-    }
-};
+
 
 const setupRootSortable = () => {
     useSortable(rootBodyRef, data, {
@@ -168,15 +123,15 @@ onMounted(async () => {
                                 名稱
                             </th>
                             <th
-                                class="py-2 px-4 text-left border-y border-default first:border-l last:border-r font-semibold">
+                                class="w-[120px] py-2 px-4 text-left border-y border-default first:border-l last:border-r font-semibold">
                                 前台顯示
                             </th>
                             <th
-                                class="py-2 px-4 text-left border-y border-default first:border-l last:border-r font-semibold">
+                                class="w-[120px] py-2 px-4 text-left border-y border-default first:border-l last:border-r font-semibold">
                                 後台顯示
                             </th>
                             <th
-                                class="py-2 px-4 text-left border-y border-default first:border-l last:border-r font-semibold">
+                                class="w-[120px] py-2 px-4 text-left border-y border-default first:border-l last:border-r font-semibold">
                                 是否上線
                             </th>
                             <th
@@ -196,6 +151,7 @@ onMounted(async () => {
                                 :on-edit="editLevel"
                                 :on-add-sub="addSubLevel"
                                 :on-update-sort-order="updateSortOrder"
+                            :on-delete="handleDelete"
                                 @refresh="fetchData" />
                         </template>
                     </tbody>

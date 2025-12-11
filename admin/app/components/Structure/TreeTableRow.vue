@@ -11,6 +11,7 @@ const props = defineProps<{
     depth?: number;
     onEdit?: (level: any) => void;
     onAddSub?: (level: any) => void;
+    onDelete?: (level: any) => void;
     onUpdateSortOrder?: (list: any[]) => Promise<void>;
 }>();
 
@@ -40,11 +41,6 @@ const toggleExpand = () => {
         isExpanded.value = !isExpanded.value;
     }
 };
-
-const debugLog = (...args: any[]) => {
-    console.log(`[structure-sort-depth-${currentDepth}]`, ...args);
-};
-
 // 初始化子層級資料
 watch(
     () => props.level.children,
@@ -79,7 +75,7 @@ const setupChildrenSortable = () => {
         fallbackOnBody: true,
         swapThreshold: 0.65,
         onUpdate: async (evt: any) => {
-            debugLog("onUpdate children", {
+            console.log("onUpdate children", {
                 oldIndex: evt.oldIndex,
                 newIndex: evt.newIndex,
                 levelId: props.level.id
@@ -97,7 +93,7 @@ const setupChildrenSortable = () => {
                 .map((r) => r.dataset.levelId)
                 .filter(Boolean);
 
-            debugLog("onUpdate children start", {
+            console.log("onUpdate children start", {
                 listLength: list.length,
                 idsBefore: list.map((x) => x?.id),
                 idsAfterDom
@@ -137,7 +133,7 @@ const setupChildrenSortable = () => {
                 await props.onUpdateSortOrder(newList);
             }
 
-            debugLog("onUpdate children done", {
+            console.log("onUpdate children done", {
                 movedId: evt.item?.dataset?.levelId,
                 idsAfter: childrenData.value.map((x) => x?.id)
             });
@@ -226,6 +222,13 @@ onUnmounted(() => {
                     color="primary"
                     size="xs"
                     @click="onAddSub?.(level)" />
+                <UButton
+                    icon="i-lucide-trash"
+                    label="刪除"
+                    color="error"
+                    variant="ghost"
+                    size="xs"
+                    @click="onDelete?.(level)" />
             </div>
         </td>
     </tr>
@@ -239,7 +242,8 @@ onUnmounted(() => {
                 :on-edit="onEdit"
                 :on-add-sub="onAddSub"
                 :on-update-sort-order="onUpdateSortOrder"
-                @refresh="emit('refresh')" />
+                :on-delete="onDelete"
+                @refresh="emit('refresh')"/>
         </tbody>
     </template>
 </template>

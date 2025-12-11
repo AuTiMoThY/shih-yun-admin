@@ -6,40 +6,18 @@ import { company } from "~/data/menu/company";
 import { system } from "~/data/menu/system";
 
 const route = useRoute();
-const toast = useToast();
-const { public: runtimePublic } = useRuntimeConfig();
-const apiBase = runtimePublic.apiBase;
 const open = ref(false);
+const { data: structureData, fetchData: fetchStructure } = useStructure();
 
-const structureData = ref<any[]>([]);
-const fetchStructure = async () => {
-    try {
-        const res = await $fetch<{
-            success: boolean;
-            data: any[];
-            message?: string;
-        }>(`${apiBase}/structure/get?tree=1`, {
-            method: "GET"
-        });
-        if (res?.success) {
-            structureData.value = res.data;
-            console.log("fetchStructure success", structureData.value);
-        } else {
-            console.error(res.message);
-            toast.add({ title: res.message, color: "error" });
-        }
-    } catch (error: any) {
-        console.error(error.message);
-        toast.add({ title: error.message, color: "error" });
-    }
-};
+const mapStructureToMenu = (item: any): NavigationMenuItem => ({
+    label: item?.label,
+    icon: "lucide:network",
+    // 遞迴建立子層級選單
+    children: (item?.children || []).map(mapStructureToMenu)
+});
 
 const buildStructureMenu = (): NavigationMenuItem[] => {
-    return structureData.value.map((item) => ({
-        label: item.label,
-        icon: "lucide:network",
-        to: `/system/structure/${item.id}`
-    }));
+    return (structureData.value || []).map(mapStructureToMenu);
 };
 
 const links = computed(() => {
@@ -58,7 +36,10 @@ const links = computed(() => {
 // ]);
 
 onMounted(async () => {
-    await fetchStructure();
+    // 確保初次載入取得樹狀結構，並共享後續更新（如排序變動）
+    if (!structureData.value?.length) {
+        await fetchStructure();
+    }
     // const cookie = useCookie("cookie-consent");
     // if (cookie.value === "accepted") {
     //     return;
