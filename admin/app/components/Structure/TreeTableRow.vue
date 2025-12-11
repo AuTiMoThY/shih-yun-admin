@@ -165,8 +165,89 @@ onUnmounted(() => {
 </script>
 
 <template>
+    <!-- 手機版：卡片式佈局 -->
+    <div
+        class="block md:hidden bg-white dark:bg-gray-900 rounded-lg border border-default shadow-sm mb-3"
+        :data-depth="currentDepth"
+        :data-level-id="level.id"
+        :style="{ marginLeft: `${currentDepth * 16}px` }">
+        <div class="p-4 space-y-3">
+            <!-- 標題列 -->
+            <div class="flex items-center gap-2">
+                <UIcon
+                    name="i-lucide-grip-vertical"
+                    :data-depth="currentDepth"
+                    class="w-4 h-4 text-gray-500 drag-handle cursor-grab flex-shrink-0" />
+                <button
+                    v-if="hasChildren"
+                    @click="toggleExpand"
+                    class="flex items-center justify-center w-5 h-5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex-shrink-0">
+                    <UIcon
+                        :name="isExpanded ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
+                        class="w-4 h-4" />
+                </button>
+                <span v-else class="w-5 flex-shrink-0"></span>
+                <span class="font-medium text-base flex-1">{{ level.label }}</span>
+            </div>
+            
+            <!-- 資訊欄位 -->
+            <div class="grid grid-cols-2 gap-2 text-sm">
+                <div class="flex flex-col gap-1">
+                    <span class="text-gray-500 dark:text-gray-400 text-xs">前台顯示</span>
+                    <UBadge
+                        :label="isShowFrontendLabelMap[level.is_show_frontend] ?? level.is_show_frontend"
+                        :color="level.is_show_frontend === '1' ? 'success' : 'error'"
+                        size="sm" />
+                </div>
+                <div class="flex flex-col gap-1">
+                    <span class="text-gray-500 dark:text-gray-400 text-xs">後台顯示</span>
+                    <UBadge
+                        :label="isShowBackendLabelMap[level.is_show_backend] ?? level.is_show_backend"
+                        :color="level.is_show_backend === '1' ? 'success' : 'error'"
+                        size="sm" />
+                </div>
+                <div class="flex flex-col gap-1">
+                    <span class="text-gray-500 dark:text-gray-400 text-xs">是否上線</span>
+                    <UBadge
+                        :label="levelStatusLabelMap[level.status] ?? level.status"
+                        :color="level.status === '1' ? 'success' : 'error'"
+                        size="sm" />
+                </div>
+            </div>
+            
+            <!-- 操作按鈕 -->
+            <div class="flex flex-wrap gap-2 pt-2 border-t border-default">
+                <UButton
+                    icon="i-lucide-edit"
+                    label="編輯"
+                    color="primary"
+                    size="xs"
+                    variant="outline"
+                    class="flex-1 min-w-[80px]"
+                    @click="onEdit?.(level)" />
+                <UButton
+                    icon="i-lucide-plus"
+                    label="子層級"
+                    color="primary"
+                    size="xs"
+                    variant="outline"
+                    class="flex-1 min-w-[80px]"
+                    @click="onAddSub?.(level)" />
+                <UButton
+                    icon="i-lucide-trash"
+                    label="刪除"
+                    color="error"
+                    variant="ghost"
+                    size="xs"
+                    class="flex-1 min-w-[80px]"
+                    @click="onDelete?.(level)" />
+            </div>
+        </div>
+    </div>
+    
+    <!-- 桌面版：表格行佈局 -->
     <tr
-        class="hover:bg-gray-50 dark:hover:bg-gray-800/50"
+        class="hidden md:table-row hover:bg-gray-50 dark:hover:bg-gray-800/50"
         :data-depth="currentDepth"
         :data-level-id="level.id">
         <td class="py-2 px-4 border-b border-default">
@@ -232,6 +313,23 @@ onUnmounted(() => {
             </div>
         </td>
     </tr>
+    
+    <!-- 子層級（手機版） -->
+    <template v-if="hasChildren && isExpanded">
+        <div class="block md:hidden">
+            <TreeTableRow
+                v-for="child in childrenData"
+                :key="child.id"
+                :level="child"
+                :depth="currentDepth + 1"
+                :on-edit="onEdit"
+                :on-add-sub="onAddSub"
+                :on-update-sort-order="onUpdateSortOrder"
+                :on-delete="onDelete"
+                @refresh="emit('refresh')"/>
+        </div>
+    </template>
+    <!-- 子層級（桌面版） -->
     <template v-if="hasChildren && isExpanded">
         <tbody ref="childrenBodyRef" style="display: contents">
             <TreeTableRow

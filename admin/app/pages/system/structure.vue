@@ -113,53 +113,77 @@ onMounted(async () => {
             <div v-if="loading" class="flex items-center justify-center py-12">
                 <UIcon name="i-lucide-loader-2" class="w-6 h-6 animate-spin" />
             </div>
-            <div v-else class="overflow-x-auto">
-                <table
-                    class="w-full table-fixed border-separate border-spacing-0">
-                    <thead>
-                        <tr class="bg-elevated/50">
-                            <th
-                                class="py-2 px-4 text-left first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r font-semibold">
-                                名稱
-                            </th>
-                            <th
-                                class="w-[120px] py-2 px-4 text-left border-y border-default first:border-l last:border-r font-semibold">
-                                前台顯示
-                            </th>
-                            <th
-                                class="w-[120px] py-2 px-4 text-left border-y border-default first:border-l last:border-r font-semibold">
-                                後台顯示
-                            </th>
-                            <th
-                                class="w-[120px] py-2 px-4 text-left border-y border-default first:border-l last:border-r font-semibold">
-                                是否上線
-                            </th>
-                            <th
-                                class="py-2 px-4 text-left border-y border-default first:border-l last:border-r font-semibold">
-                                操作
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody ref="rootBodyRef">
-                        <template
-                            v-for="(level, idx) in rootLevels"
-                            :key="level?.id ?? `root-${idx}`">
-                            <StructureTreeTableRow
-                                v-if="level"
-                                :level="level"
-                                :depth="0"
-                                :on-edit="editLevel"
-                                :on-add-sub="addSubLevel"
-                                :on-update-sort-order="updateSortOrder"
+            <div v-else>
+                <!-- 手機版：卡片式佈局 -->
+                <div class="block md:hidden space-y-3">
+                    <template
+                        v-for="(level, idx) in rootLevels"
+                        :key="level?.id ?? `root-${idx}`">
+                        <StructureTreeTableRow
+                            v-if="level"
+                            :level="level"
+                            :depth="0"
+                            :on-edit="editLevel"
+                            :on-add-sub="addSubLevel"
+                            :on-update-sort-order="updateSortOrder"
                             :on-delete="handleDelete"
-                                @refresh="fetchData" />
-                        </template>
-                    </tbody>
-                </table>
-                <div
-                    v-if="!loading && data.length === 0"
-                    class="flex items-center justify-center py-12 text-gray-500">
-                    暫無資料
+                            @refresh="fetchData" />
+                    </template>
+                    <div
+                        v-if="!loading && data.length === 0"
+                        class="flex items-center justify-center py-12 text-gray-500">
+                        暫無資料
+                    </div>
+                </div>
+                <!-- 桌面版：表格佈局 -->
+                <div class="hidden md:block overflow-x-auto">
+                    <table
+                        class="w-full table-fixed border-separate border-spacing-0">
+                        <thead>
+                            <tr class="bg-elevated/50">
+                                <th
+                                    class="py-2 px-4 text-left first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r font-semibold">
+                                    名稱
+                                </th>
+                                <th
+                                    class="w-[120px] py-2 px-4 text-left border-y border-default first:border-l last:border-r font-semibold">
+                                    前台顯示
+                                </th>
+                                <th
+                                    class="w-[120px] py-2 px-4 text-left border-y border-default first:border-l last:border-r font-semibold">
+                                    後台顯示
+                                </th>
+                                <th
+                                    class="w-[120px] py-2 px-4 text-left border-y border-default first:border-l last:border-r font-semibold">
+                                    是否上線
+                                </th>
+                                <th
+                                    class="py-2 px-4 text-left border-y border-default first:border-l last:border-r font-semibold">
+                                    操作
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody ref="rootBodyRef">
+                            <template
+                                v-for="(level, idx) in rootLevels"
+                                :key="level?.id ?? `root-${idx}`">
+                                <StructureTreeTableRow
+                                    v-if="level"
+                                    :level="level"
+                                    :depth="0"
+                                    :on-edit="editLevel"
+                                    :on-add-sub="addSubLevel"
+                                    :on-update-sort-order="updateSortOrder"
+                                    :on-delete="handleDelete"
+                                    @refresh="fetchData" />
+                            </template>
+                        </tbody>
+                    </table>
+                    <div
+                        v-if="!loading && data.length === 0"
+                        class="flex items-center justify-center py-12 text-gray-500">
+                        暫無資料
+                    </div>
                 </div>
             </div>
         </template>
