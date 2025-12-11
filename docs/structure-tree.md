@@ -1,7 +1,7 @@
 # 系統架構樹狀表格說明
 
 ## 後端資料來源
-- API 路由：`GET /api/structure/get?tree=1`
+- API 路由：`GET /structure/get?tree=1`
 - Controller：`StructureController::getLevels()` 會在收到 `tree=1` 時呼叫 `StructureModel::getAllLevels()`。
 - Model：`getAllLevels()` 取得所有層級後，使用 `buildTree()` 將平面資料轉成樹狀結構（填入 `children` 陣列），然後回傳給前端。
 - 因此前端取得的 `data` 已經是樹狀結構，`TreeTableRow` 只需要遞迴渲染，不再自行組裝。
@@ -26,7 +26,7 @@
 - 前端只需消費已有的樹狀 JSON 並做遞迴渲染，不需重複轉換，避免額外計算與一致性問題。
 
 ## 常見維護點
-- 若需要平面列表，呼叫 `/api/structure/get`（不帶 `tree=1`）。
+- 若需要平面列表，呼叫 `/structure/get`（不帶 `tree=1`）。
 - 若要調整縮排，修改 `TreeTableRow.vue` 的 `indentWidth`。
 - 若要預設全部收合，可將 `isExpanded` 初始值改為 `false`，或只在第一層預設展開。
 - 新增排序欄位時，後端可調整 `sort_order`，前端不須改動遞迴邏輯。
@@ -42,7 +42,7 @@
 - 策略：每個「同層級容器」掛一個 `useSortable`，`onEnd` 時先在前端 array 重新排序，再呼叫 API 將最新順序寫回。
 
 ### API 邏輯（後端已存在）
-- 使用 `/api/structure/update`，傳入 `{ id, sort_order }`。
+- 使用 `/structure/update`，傳入 `{ id, sort_order }`。
 - 建議批次更新：根據當前 siblings 順序，依序送出 update。
 
 ### 前端實作步驟摘要
@@ -54,7 +54,7 @@
    - 在 `<tbody>`（根層級容器）加 `ref="rootBodyRef"`。  
    - 呼叫 `useSortable(rootBodyRef, { handle: ".drag-handle", animation: 150, onEnd })`。  
    - `onEnd` 中：依 `oldIndex/newIndex` 重新排列 `data.value`，然後呼叫 `persistOrder(null, data.value)`。
-   - `persistOrder(parentId, siblings)`：將 siblings 依序送 `/api/structure/update`，body `{ id, sort_order: index }`。
+   - `persistOrder(parentId, siblings)`：將 siblings 依序送 `/structure/update`，body `{ id, sort_order: index }`。
 
 3) 子層級（遞迴）  
    - 在 `TreeTableRow.vue` 中為「子節點群」放一個容器，掛上 `useSortable`。  
@@ -78,7 +78,7 @@ const persistOrder = async (parentId: number | null, siblings: any[]) => {
     const updates = siblings.map((item, index) => ({ id: item.id, sort_order: index }));
     await Promise.all(
       updates.map((u) =>
-        $fetch(`${apiBase}/api/structure/update`, {
+        $fetch(`${apiBase}/structure/update`, {
           method: "POST",
           body: u,
           headers: { "Content-Type": "application/json" },
@@ -184,7 +184,7 @@ watch(hasChildren, setupSortable);
 以下為樹狀表格的運作說明與文件產出，並回答 buildTree 的疑問。
 
 ### 樹狀表格如何運作
-- 前端載入：`fetchData()` 攜帶 `tree=1` 呼叫 `/api/structure/get`，取得後端已整理好的樹狀資料（含 `children`）。
+- 前端載入：`fetchData()` 攜帶 `tree=1` 呼叫 `/structure/get`，取得後端已整理好的樹狀資料（含 `children`）。
 ```27:43:admin/app/pages/system/structure.vue
 const fetchData = async () => {
     loading.value = true;
@@ -192,7 +192,7 @@ const fetchData = async () => {
         success: boolean;
         data: any[];
         message?: string;
-    }>(`${apiBase}/api/structure/get?tree=1`, { method: "GET" });
+    }>(`${apiBase}/structure/get?tree=1`, { method: "GET" });
     if (res?.success) {
         data.value = res.data;
     } else {

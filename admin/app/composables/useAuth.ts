@@ -24,7 +24,8 @@ export const useAuth = () => {
      * 登入（使用假資料模擬）
      */
     const login = async (username: string, password: string) => {
-
+        console.log(apiBase);
+        
         try {
             const response = await $fetch<{
                 success: boolean;
@@ -33,7 +34,7 @@ export const useAuth = () => {
                     user: any;
                     token: string;
                 };
-            }>(`${apiBase}/api/admins/login`, {
+            }>(`${apiBase}/admins/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -90,7 +91,7 @@ export const useAuth = () => {
      */
     const logout = async () => {
         try {
-            await $fetch(`${apiBase}/api/admins/logout`, {
+            await $fetch(`${apiBase}/admins/logout`, {
                 method: "POST",
                 credentials: "include",
             });
@@ -125,7 +126,7 @@ export const useAuth = () => {
                 success: boolean;
                 data?: any;
                 message?: string;
-            }>(`${apiBase}/api/admins/me`, {
+            }>(`${apiBase}/admins/me`, {
                 method: "GET",
                 credentials: "include",
             });

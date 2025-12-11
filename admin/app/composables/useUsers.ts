@@ -14,7 +14,7 @@ export const useUsers = () => {
                 success: boolean;
                 data: any[];
                 message?: string;
-            }>(`${apiBase}/api/admins/get`, {
+            }>(`${apiBase}/admins/get`, {
                 method: "GET",
                 headers: {
                     // Authorization: `Bearer ${token.value}`,

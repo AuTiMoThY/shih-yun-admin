@@ -5,6 +5,8 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "generate:prod": "set NODE_ENV=production&& set NUXT_PUBLIC_API_BASE=https://test-sys.srl.tw&& nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "lint": "eslint .",

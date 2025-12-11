@@ -14,6 +14,9 @@ Options -Indexes
 	# If you installed CodeIgniter in a subfolder, you will need to
 	# change the following line to match the subfolder you need.
 	# http://httpd.apache.org/docs/current/mod/mod_rewrite.html#rewritebase
+	# 如果部署在 /api 子目錄，取消下面這行的註解：
+	RewriteBase /api/
+	# 如果部署在根目錄，使用：
 	# RewriteBase /
 
 	# Redirect Trailing Slashes...

@@ -27,11 +27,6 @@ const addSubLevel = (level: any) => {
     addSubLevelModalOpen.value = true;
 };
 
-const debugLog = (...args: any[]) => {
-    // 集中控管排序相關除錯訊息
-    console.log("[structure-sort]", ...args);
-};
-
 const rootLevels = computed(() => (data.value || []).filter(Boolean));
 
 const fetchData = async () => {
@@ -40,12 +35,12 @@ const fetchData = async () => {
         success: boolean;
         data: any[];
         message?: string;
-    }>(`${apiBase}/api/structure/get?tree=1`, {
+    }>(`${apiBase}/structure/get?tree=1`, {
         method: "GET"
     });
     if (res?.success) {
         data.value = (res.data || []).filter(Boolean);
-        debugLog("fetchData success", {
+        console.log("fetchData success", {
             count: data.value.length,
             ids: data.value.map((x) => x?.id)
         });
@@ -61,44 +56,45 @@ const updateSortOrder = async (list: any[]) => {
         id: item?.id,
         sort_order: index
     }));
-    debugLog("updateSortOrder payload", payload);
-    const res = await $fetch<{
-        success: boolean;
-        message?: string;
-    }>(`${apiBase}/api/structure/update-sort-order`, {
-        method: "POST",
-        body: payload
-    });
-    if (res?.success) {
-        toast.add({ title: "排序已更新", color: "success" });
-    } else {
-        console.error(res.message);
-        toast.add({ title: res.message, color: "error" });
+    console.log("updateSortOrder payload", payload);
+    try {
+        const res = await $fetch<{
+            success: boolean;
+            message?: string;
+        }>(`${apiBase}/structure/update-sort-order`, {
+            method: "POST",
+            body: payload
+        });
+        if (res?.success) {
+            toast.add({ title: "排序已更新", color: "success" });
+        } else {
+            console.error(res.message);
+            toast.add({ title: res.message, color: "error" });
+        }
+    } catch (error: any) {
+        console.error(error.message);
+        toast.add({ title: error.message, color: "error" });
     }
 };
 
 const setupRootSortable = () => {
     useSortable(rootBodyRef, data, {
-        group: "nested",
+        // group: "nested",
         handle: "tr[data-depth='0']",
         animation: 150,
         draggable: "tr[data-depth='0']",
         fallbackOnBody: true,
-		swapThreshold: 0.65,
+        swapThreshold: 0.65,
         onUpdate: async (evt: any) => {
             console.log("onUpdate", evt);
             const list = data.value || [];
-            const rows = (
-                Array.from(
-                    rootBodyRef.value?.querySelectorAll(
-                        "tr[data-depth='0']"
-                    ) ?? []
-                ) || []
-            ) as HTMLElement[];
+            const rows = (Array.from(
+                rootBodyRef.value?.querySelectorAll("tr[data-depth='0']") ?? []
+            ) || []) as HTMLElement[];
             const idsAfterDom = rows
                 .map((r) => r.dataset.levelId)
                 .filter(Boolean);
-            debugLog("onUpdate start", {
+            console.log("onUpdate start", {
                 oldIndex: evt.oldIndex,
                 newIndex: evt.newIndex,
                 listLength: list.length,
@@ -128,15 +124,14 @@ const setupRootSortable = () => {
             }
 
             data.value = [...newList];
-            // updateSortOrder(data.value);
-            debugLog("onUpdate done", {
+            await updateSortOrder(data.value);
+            console.log("onUpdate done", {
                 movedId: evt.item?.dataset?.levelId,
                 idsAfter: data.value.map((x) => x?.id)
             });
         }
     });
 };
-
 
 onMounted(async () => {
     await fetchData();
@@ -200,6 +195,7 @@ onMounted(async () => {
                                 :depth="0"
                                 :on-edit="editLevel"
                                 :on-add-sub="addSubLevel"
+                                :on-update-sort-order="updateSortOrder"
                                 @refresh="fetchData" />
                         </template>
                     </tbody>

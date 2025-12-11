@@ -5,19 +5,19 @@ use CodeIgniter\Model;
 
 class StructureModel extends Model
 {
-    protected $table         = 'structure';
-    protected $primaryKey    = 'id';
+    protected $table = 'structure';
+    protected $primaryKey = 'id';
     protected $allowedFields = [
         'parent_id',
-        'name',
+        'label',
         'is_show_frontend',
         'is_show_backend',
         'status',
         'sort_order',
     ];
     protected $useTimestamps = true;
-    protected $createdField  = 'created_at';
-    protected $updatedField  = 'updated_at';
+    protected $createdField = 'created_at';
+    protected $updatedField = 'updated_at';
 
     /**
      * 取得所有層級（樹狀結構）
@@ -27,16 +27,16 @@ class StructureModel extends Model
     public function getAllLevels($onlyActive = false)
     {
         $builder = $this->builder();
-        
+
         if ($onlyActive) {
             $builder->where('status', 1);
         }
-        
+
         $builder->orderBy('sort_order', 'ASC');
         $builder->orderBy('id', 'ASC');
-        
+
         $levels = $builder->get()->getResultArray();
-        
+
         // 轉換為樹狀結構
         return $this->buildTree($levels);
     }
@@ -50,19 +50,19 @@ class StructureModel extends Model
     private function buildTree($levels, $parentId = null)
     {
         $tree = [];
-        
+
         foreach ($levels as $level) {
-            $levelParentId = $level['parent_id'] ? (int)$level['parent_id'] : null;
-            
+            $levelParentId = $level['parent_id'] ? (int) $level['parent_id'] : null;
+
             if ($levelParentId === $parentId) {
-                $children = $this->buildTree($levels, (int)$level['id']);
+                $children = $this->buildTree($levels, (int) $level['id']);
                 if (!empty($children)) {
                     $level['children'] = $children;
                 }
                 $tree[] = $level;
             }
         }
-        
+
         return $tree;
     }
 
@@ -75,14 +75,14 @@ class StructureModel extends Model
     {
         $builder = $this->builder();
         $builder->where('parent_id IS NULL');
-        
+
         if ($onlyActive) {
             $builder->where('status', 1);
         }
-        
+
         $builder->orderBy('sort_order', 'ASC');
         $builder->orderBy('id', 'ASC');
-        
+
         return $builder->get()->getResultArray();
     }
 
@@ -96,14 +96,14 @@ class StructureModel extends Model
     {
         $builder = $this->builder();
         $builder->where('parent_id', $parentId);
-        
+
         if ($onlyActive) {
             $builder->where('status', 1);
         }
-        
+
         $builder->orderBy('sort_order', 'ASC');
         $builder->orderBy('id', 'ASC');
-        
+
         return $builder->get()->getResultArray();
     }
 
@@ -114,7 +114,26 @@ class StructureModel extends Model
      */
     public function updateSortOrder($list)
     {
-        $this->updateBatch($list, 'id');
+        if (empty($list) || !is_array($list)) {
+            throw new \InvalidArgumentException('updateBatch() has no data.');
+        }
+
+        // 確保每個項目都有 id 和 sort_order
+        $validList = [];
+        foreach ($list as $item) {
+            if (isset($item['id']) && isset($item['sort_order'])) {
+                $validList[] = [
+                    'id' => (int) $item['id'],
+                    'sort_order' => (int) $item['sort_order'],
+                ];
+            }
+        }
+
+        if (empty($validList)) {
+            throw new \InvalidArgumentException('updateBatch() has no data.');
+        }
+
+        $this->updateBatch($validList, 'id');
         return true;
     }
 }

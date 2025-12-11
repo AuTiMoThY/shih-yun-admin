@@ -18,7 +18,7 @@ class Database extends Config
      * Lets you choose which connection group to use if no other is specified.
      */
     public string $defaultGroup = 'default';
-
+    
     /**
      * The default database connection.
      *
@@ -26,6 +26,10 @@ class Database extends Config
      */
     public array $default = [
         'DSN'          => '',
+        // 'hostname'     => 'localhost',
+        // 'username'     => 'srltw_test_sys',
+        // 'password'     => '42M4w5TCcsDN3eGE',
+        // 'database'     => 'srltw_test_sys',
         'hostname'     => 'localhost',
         'username'     => 'root',
         'password'     => '',

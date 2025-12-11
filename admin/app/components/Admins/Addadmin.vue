@@ -109,7 +109,7 @@ const addAdmin = async (event?: Event) => {
     loading.value = true;
     try {
         const response = await $fetch<{ success: boolean; message: string }>(
-            "/api/admins/add",
+            "/admins/add",
             {
                 baseURL: apiBase,
                 method: "POST",

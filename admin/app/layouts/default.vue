@@ -1,15 +1,41 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from "@nuxt/ui";
+
 import { website } from "~/data/menu/website";
 import { company } from "~/data/menu/company";
 import { system } from "~/data/menu/system";
 
 const route = useRoute();
 const toast = useToast();
-
+const { public: runtimePublic } = useRuntimeConfig();
+const apiBase = runtimePublic.apiBase;
 const open = ref(false);
 
-const links = [[website, company, system]] as NavigationMenuItem[][];
+const structure = ref<any[]>([]);
+const fetchStructure = async () => {
+    try {
+        const res = await $fetch<{
+            success: boolean;
+            data: any[];
+            message?: string;
+        }>(`${apiBase}/structure/get`, {
+            method: "GET"
+        });
+        if (res?.success) {
+            structure.value = res.data;
+            console.log("fetchStructure success", structure.value);
+        } else {
+            console.error(res.message);
+            toast.add({ title: res.message, color: "error" });
+        }
+    } catch (error: any) {
+        console.error(error.message);
+        toast.add({ title: error.message, color: "error" });
+    }
+};
+
+
+const links = computed(() => [[website, company, system]] as NavigationMenuItem[][]);
 
 // const groups = computed(() => [
 //     {
@@ -20,6 +46,7 @@ const links = [[website, company, system]] as NavigationMenuItem[][];
 // ]);
 
 onMounted(async () => {
+    await fetchStructure();
     // const cookie = useCookie("cookie-consent");
     // if (cookie.value === "accepted") {
     //     return;

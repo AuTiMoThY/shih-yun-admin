@@ -135,7 +135,7 @@ const updateAdmin = async (event?: Event) => {
         }
 
         const response = await $fetch<{ success: boolean; message: string }>(
-            "/api/admins/update",
+            "/admins/update",
             {
                 baseURL: apiBase,
                 method: "POST",

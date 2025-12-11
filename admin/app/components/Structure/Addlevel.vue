@@ -14,21 +14,21 @@ const loading = ref(false);
 const submitError = ref("");
 
 const form = reactive<AddLevelForm>({
-    name: "",
+    label: "",
     is_show_frontend: true,
     is_show_backend: true,
     status: true
 });
 
 const errors = reactive<AddLevelFormErrors>({
-    name: false,
+    label: false,
     is_show_frontend: false,
     is_show_backend: false,
     status: false
 });
 
 const resetForm = () => {
-    form.name = "";
+    form.label = "";
     form.is_show_frontend = true;
     form.is_show_backend = true;
     form.status = true;
@@ -51,13 +51,13 @@ const validateForm = (): boolean => {
         errors[key] = false;
     });
 
-    if (!form.name || form.name.trim() === "") {
-        errors.name = "請輸入層級名稱";
+    if (!form.label || form.label.trim() === "") {
+        errors.label = "請輸入層級名稱";
         return false;
     }
 
-    if (form.name.trim().length > 100) {
-        errors.name = "層級名稱長度不能超過100個字元";
+    if (form.label.trim().length > 100) {
+        errors.label = "層級名稱長度不能超過100個字元";
         return false;
     }
 
@@ -71,7 +71,7 @@ const addLevel = async (event?: Event) => {
     loading.value = true;
     try {
         const response = await $fetch<{ success: boolean; message: string; data?: { id: number } }>(
-            "/api/structure/add",
+            "/structure/add",
             {
                 baseURL: apiBase,
                 method: "POST",
@@ -143,15 +143,15 @@ const addLevel = async (event?: Event) => {
                 <UFormField
                     label="層級名稱"
                     name="name"
-                    :error="errors.name"
+                    :error="errors.label"
                     required>
                     <UInput
-                        v-model="form.name"
+                        v-model="form.label"
                         placeholder="請輸入層級名稱"
                         size="lg"
                         :disabled="loading"
                         class="w-full"
-                        @input="clearError('name')" />
+                        @input="clearError('label')" />
                 </UFormField>
                 <UCheckbox
                     v-model="form.is_show_frontend"

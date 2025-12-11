@@ -98,7 +98,7 @@ const deleteAdmin = async (admin: any) => {
     console.log(admin);
     try {
         const response = await $fetch<{ success: boolean; message: string }>(
-            "/api/admins/delete",
+            "/admins/delete",
             {
                 baseURL: apiBase,
                 method: "POST",

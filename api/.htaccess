@@ -1,0 +1,16 @@
+# 將 /api 子目錄的所有請求重定向到 public 資料夾
+# 此檔案應放在 public_html/api/ 目錄中（與 public 資料夾同層級）
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # 如果請求的檔案或資料夾不存在，重定向到 public 資料夾
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ public/$1 [L]
+    
+    # 如果直接訪問 /api/，重定向到 /api/public/
+    RewriteCond %{REQUEST_URI} ^/api/?$
+    RewriteRule ^$ public/ [L]
+</IfModule>
+

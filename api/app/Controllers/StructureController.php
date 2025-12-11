@@ -22,11 +22,11 @@ class StructureController extends BaseController
 
         // 將布林/字串狀態轉成 '0'/'1'
         $truthy = ['1', 1, true, 'true', 'on', 'yes'];
-        
+
         $isShowFrontend = $data['is_show_frontend'] ?? null;
         $isShowBackend = $data['is_show_backend'] ?? null;
         $status = $data['status'] ?? null;
-        
+
         $data['is_show_frontend'] = in_array($isShowFrontend, $truthy, true) ? '1' : '0';
         $data['is_show_backend'] = in_array($isShowBackend, $truthy, true) ? '1' : '0';
         $data['status'] = in_array($status, $truthy, true) ? '1' : '0';
@@ -37,7 +37,7 @@ class StructureController extends BaseController
         }
 
         $rules = [
-            'name' => 'required|min_length[1]|max_length[100]',
+            'label' => 'required|min_length[1]|max_length[100]',
             'is_show_frontend' => 'required|in_list[0,1]',
             'is_show_backend' => 'required|in_list[0,1]',
             'status' => 'required|in_list[0,1]',
@@ -55,7 +55,7 @@ class StructureController extends BaseController
 
         try {
             $insertData = [
-                'name' => $data['name'],
+                'label' => $data['label'],
                 'is_show_frontend' => (int) $data['is_show_frontend'],
                 'is_show_backend' => (int) $data['is_show_backend'],
                 'status' => (int) $data['status'],
@@ -160,24 +160,24 @@ class StructureController extends BaseController
 
         // 將布林/字串狀態轉成 '0'/'1'
         $truthy = ['1', 1, true, 'true', 'on', 'yes'];
-        
+
         if (isset($data['is_show_frontend'])) {
             $isShowFrontend = $data['is_show_frontend'];
             $data['is_show_frontend'] = in_array($isShowFrontend, $truthy, true) ? '1' : '0';
         }
-        
+
         if (isset($data['is_show_backend'])) {
             $isShowBackend = $data['is_show_backend'];
             $data['is_show_backend'] = in_array($isShowBackend, $truthy, true) ? '1' : '0';
         }
-        
+
         if (isset($data['status'])) {
             $status = $data['status'];
             $data['status'] = in_array($status, $truthy, true) ? '1' : '0';
         }
 
         $rules = [
-            'name' => 'permit_empty|min_length[1]|max_length[100]',
+            'label' => 'permit_empty|min_length[1]|max_length[100]',
             'is_show_frontend' => 'permit_empty|in_list[0,1]',
             'is_show_backend' => 'permit_empty|in_list[0,1]',
             'status' => 'permit_empty|in_list[0,1]',
@@ -196,8 +196,8 @@ class StructureController extends BaseController
         try {
             $updateData = [];
 
-            if (isset($data['name'])) {
-                $updateData['name'] = $data['name'];
+            if (isset($data['label'])) {
+                $updateData['label'] = $data['label'];
             }
             if (isset($data['is_show_frontend'])) {
                 $updateData['is_show_frontend'] = (int) $data['is_show_frontend'];
@@ -268,7 +268,7 @@ class StructureController extends BaseController
     {
         $data = $this->request->getJSON(true) ?: $this->request->getPost();
         $id = $data['id'] ?? null;
-        
+
         if (!$id) {
             return $this->response->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST)->setJSON([
                 'success' => false,
@@ -306,6 +306,57 @@ class StructureController extends BaseController
             'success' => true,
             'message' => '刪除層級成功',
         ]);
+    }
+
+
+    /**
+     * 更新排序順序
+     */
+    public function updateSortOrder()
+    {
+        $data = $this->request->getJSON(true) ?: $this->request->getPost();
+
+        // 如果直接是數組，使用數組；否則從 list 鍵取得
+        $list = is_array($data) && isset($data[0]) ? $data : ($data['list'] ?? []);
+
+        if (empty($list) || !is_array($list)) {
+            return $this->response->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST)->setJSON([
+                'success' => false,
+                'message' => '缺少排序資料',
+            ]);
+        }
+
+        // 驗證資料格式
+        foreach ($list as $item) {
+            if (!isset($item['id']) || !isset($item['sort_order'])) {
+                return $this->response->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST)->setJSON([
+                    'success' => false,
+                    'message' => '排序資料格式錯誤，缺少 id 或 sort_order',
+                ]);
+            }
+        }
+
+        try {
+            $updated = $this->structureModel->updateSortOrder($list);
+            if (!$updated) {
+                return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON([
+                    'success' => false,
+                    'message' => '更新排序順序失敗，請稍後再試',
+                ]);
+            }
+
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => '更新排序順序成功',
+            ]);
+        } catch (\Throwable $e) {
+            log_message('error', 'updateSortOrder failed: {message}', ['message' => $e->getMessage()]);
+            return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON([
+                'success' => false,
+                'message' => '更新排序順序失敗，請稍後再試',
+                'error' => ENVIRONMENT !== 'production' ? $e->getMessage() : null,
+            ]);
+        }
     }
 }
 

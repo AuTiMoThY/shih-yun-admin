@@ -81,7 +81,7 @@ const addSubLevel = async (event?: Event) => {
     loading.value = true;
     try {
         const response = await $fetch<{ success: boolean; message: string; data?: { id: number } }>(
-            "/api/structure/add",
+            "/structure/add",
             {
                 baseURL: apiBase,
                 method: "POST",
