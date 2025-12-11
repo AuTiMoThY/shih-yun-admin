@@ -11,19 +11,19 @@ const { public: runtimePublic } = useRuntimeConfig();
 const apiBase = runtimePublic.apiBase;
 const open = ref(false);
 
-const structure = ref<any[]>([]);
+const structureData = ref<any[]>([]);
 const fetchStructure = async () => {
     try {
         const res = await $fetch<{
             success: boolean;
             data: any[];
             message?: string;
-        }>(`${apiBase}/structure/get`, {
+        }>(`${apiBase}/structure/get?tree=1`, {
             method: "GET"
         });
         if (res?.success) {
-            structure.value = res.data;
-            console.log("fetchStructure success", structure.value);
+            structureData.value = res.data;
+            console.log("fetchStructure success", structureData.value);
         } else {
             console.error(res.message);
             toast.add({ title: res.message, color: "error" });
@@ -34,8 +34,20 @@ const fetchStructure = async () => {
     }
 };
 
+const buildStructureMenu = (): NavigationMenuItem[] => {
+    return structureData.value.map((item) => ({
+        label: item.label,
+        icon: "lucide:network",
+        to: `/system/structure/${item.id}`
+    }));
+};
 
-const links = computed(() => [[website, company, system]] as NavigationMenuItem[][]);
+const links = computed(() => {
+    const structureMenuItems = buildStructureMenu();
+    return [
+        [website, ...structureMenuItems, company, system]
+    ] as NavigationMenuItem[][];
+});
 
 // const groups = computed(() => [
 //     {
@@ -82,9 +94,9 @@ onMounted(async () => {
             collapsible
             resizable
             class="bg-elevated/25"
-            :ui="{ 
+            :ui="{
                 header: 'dark:bg-gray-100',
-                footer: 'lg:border-t lg:border-default' 
+                footer: 'lg:border-t lg:border-default'
             }">
             <template #header="{ collapsed }">
                 <NuxtLink to="/">
