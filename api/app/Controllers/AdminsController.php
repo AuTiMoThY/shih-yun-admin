@@ -186,6 +186,15 @@ class AdminsController extends BaseController
             ]);
         }
         try {
+            // 檢查是否只剩下一個管理員帳號
+            $totalAdmins = $this->userModel->countAllResults();
+            if ($totalAdmins <= 1) {
+                return $this->response->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST)->setJSON([
+                    'success' => false,
+                    'message' => '無法刪除，系統至少需要保留一個管理員帳號',
+                ]);
+            }
+            
             $deleted = $this->userModel->delete($id);
             if (!$deleted) {
                 return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON([

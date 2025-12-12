@@ -1,22 +1,22 @@
 <?php
 namespace App\Controllers;
 
-use App\Models\StructureModel;
+use App\Models\SysstructureModel;
 use CodeIgniter\HTTP\ResponseInterface;
 
 class StructureController extends BaseController
 {
-    protected $structureModel;
+    protected $sysstructureModel;
 
     public function __construct()
     {
-        $this->structureModel = new StructureModel();
+        $this->sysstructureModel = new SysstructureModel();
     }
 
     /**
      * 新增層級
      */
-    public function addLevel()
+    public function add()
     {
         $data = $this->request->getJSON(true) ?: $this->request->getPost();
 
@@ -56,6 +56,7 @@ class StructureController extends BaseController
         try {
             $insertData = [
                 'label' => $data['label'],
+                'module_id' => $data['module_id'],
                 'is_show_frontend' => (int) $data['is_show_frontend'],
                 'is_show_backend' => (int) $data['is_show_backend'],
                 'status' => (int) $data['status'],
@@ -65,7 +66,7 @@ class StructureController extends BaseController
             // 如果有 parent_id，驗證父層級是否存在
             if (isset($data['parent_id']) && $data['parent_id'] !== null && $data['parent_id'] !== '') {
                 $parentId = (int) $data['parent_id'];
-                $parent = $this->structureModel->find($parentId);
+                $parent = $this->sysstructureModel->find($parentId);
                 if (!$parent) {
                     return $this->response->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST)->setJSON([
                         'success' => false,
@@ -77,7 +78,7 @@ class StructureController extends BaseController
                 $insertData['parent_id'] = null;
             }
 
-            $insertId = $this->structureModel->insert($insertData);
+            $insertId = $this->sysstructureModel->insert($insertData);
 
             if (!$insertId) {
                 return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON([
@@ -107,16 +108,16 @@ class StructureController extends BaseController
     /**
      * 取得所有層級
      */
-    public function getLevels()
+    public function get()
     {
         try {
             $onlyActive = $this->request->getGet('only_active') === '1' || $this->request->getGet('only_active') === 'true';
             $tree = $this->request->getGet('tree') === '1' || $this->request->getGet('tree') === 'true';
 
             if ($tree) {
-                $levels = $this->structureModel->getAllLevels($onlyActive);
+                $levels = $this->sysstructureModel->getAllLevels($onlyActive);
             } else {
-                $levels = $this->structureModel->findAll();
+                $levels = $this->sysstructureModel->findAll();
             }
 
             return $this->response->setJSON([
@@ -137,7 +138,7 @@ class StructureController extends BaseController
     /**
      * 更新層級
      */
-    public function updateLevel()
+    public function update()
     {
         $data = $this->request->getJSON(true) ?: $this->request->getPost();
 
@@ -150,7 +151,7 @@ class StructureController extends BaseController
         }
 
         // 檢查層級是否存在
-        $level = $this->structureModel->find($id);
+        $level = $this->sysstructureModel->find($id);
         if (!$level) {
             return $this->response->setStatusCode(ResponseInterface::HTTP_NOT_FOUND)->setJSON([
                 'success' => false,
@@ -199,6 +200,9 @@ class StructureController extends BaseController
             if (isset($data['label'])) {
                 $updateData['label'] = $data['label'];
             }
+            if (isset($data['module_id'])) {
+                $updateData['module_id'] = $data['module_id'];
+            }
             if (isset($data['is_show_frontend'])) {
                 $updateData['is_show_frontend'] = (int) $data['is_show_frontend'];
             }
@@ -226,7 +230,7 @@ class StructureController extends BaseController
                         ]);
                     }
                     // 驗證父層級是否存在
-                    $parent = $this->structureModel->find($parentId);
+                    $parent = $this->sysstructureModel->find($parentId);
                     if (!$parent) {
                         return $this->response->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST)->setJSON([
                             'success' => false,
@@ -237,7 +241,7 @@ class StructureController extends BaseController
                 }
             }
 
-            $updated = $this->structureModel->update($id, $updateData);
+            $updated = $this->sysstructureModel->update($id, $updateData);
 
             if (!$updated) {
                 return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON([
@@ -264,7 +268,7 @@ class StructureController extends BaseController
     /**
      * 刪除層級
      */
-    public function deleteLevel()
+    public function delete()
     {
         $data = $this->request->getJSON(true) ?: $this->request->getPost();
         $id = $data['id'] ?? null;
@@ -278,7 +282,7 @@ class StructureController extends BaseController
 
         try {
             // 檢查是否有子層級
-            $children = $this->structureModel->getChildren($id);
+            $children = $this->sysstructureModel->getChildren($id);
             if (!empty($children)) {
                 return $this->response->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST)->setJSON([
                     'success' => false,
@@ -286,7 +290,7 @@ class StructureController extends BaseController
                 ]);
             }
 
-            $deleted = $this->structureModel->delete($id);
+            $deleted = $this->sysstructureModel->delete($id);
             if (!$deleted) {
                 return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON([
                     'success' => false,
@@ -337,7 +341,7 @@ class StructureController extends BaseController
         }
 
         try {
-            $updated = $this->structureModel->updateSortOrder($list);
+            $updated = $this->sysstructureModel->updateSortOrder($list);
             if (!$updated) {
                 return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON([
                     'success' => false,

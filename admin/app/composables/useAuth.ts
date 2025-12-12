@@ -21,11 +21,10 @@ export const useAuth = () => {
     const isAuthenticated = computed(() => !!token.value && !!user.value);
 
     /**
-     * 登入（使用假資料模擬）
+     * 登入
      */
     const login = async (username: string, password: string) => {
         console.log(apiBase);
-        
         try {
             const response = await $fetch<{
                 success: boolean;

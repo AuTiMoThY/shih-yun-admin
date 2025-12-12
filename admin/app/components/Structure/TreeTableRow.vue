@@ -1,5 +1,14 @@
 <script setup lang="ts">
-import { h, ref, resolveComponent, computed, nextTick, watch, shallowRef, onUnmounted } from "vue";
+import {
+    h,
+    ref,
+    resolveComponent,
+    computed,
+    nextTick,
+    watch,
+    shallowRef,
+    onUnmounted
+} from "vue";
 import { useSortable } from "@vueuse/integrations/useSortable";
 import { IS_SHOW_FRONTEND_LABEL_MAP } from "~/constants/is_show_frontend";
 import { IS_SHOW_BACKEND_LABEL_MAP } from "~/constants/is_show_backend";
@@ -31,6 +40,17 @@ let sortableStop: (() => void) | null = null;
 const isShowFrontendLabelMap = IS_SHOW_FRONTEND_LABEL_MAP;
 const isShowBackendLabelMap = IS_SHOW_BACKEND_LABEL_MAP;
 const levelStatusLabelMap = LEVEL_STATUS_LABEL_MAP;
+
+const { data: modulesData } = useModule();
+// console.log("modulesData", modulesData.value);
+const moduleName = computed(() => {
+    const target = modulesData.value?.find(
+        (module) => module.id === props.level.module_id
+    );
+    return target ? `${target.label} (${target.name})` : "";
+});
+
+const canAddSub = computed(() => !props.level?.module_id);
 
 const hasChildren = computed(() => {
     return props.level.children && props.level.children.length > 0;
@@ -82,13 +102,11 @@ const setupChildrenSortable = () => {
             });
 
             const list = childrenData.value || [];
-            const rows = (
-                Array.from(
-                    childrenBodyRef.value?.querySelectorAll(
-                        `tr[data-depth="${depth}"]`
-                    ) ?? []
-                ) || []
-            ) as HTMLElement[];
+            const rows = (Array.from(
+                childrenBodyRef.value?.querySelectorAll(
+                    `tr[data-depth="${depth}"]`
+                ) ?? []
+            ) || []) as HTMLElement[];
             const idsAfterDom = rows
                 .map((r) => r.dataset.levelId)
                 .filter(Boolean);
@@ -161,7 +179,6 @@ onUnmounted(() => {
         sortableStop = null;
     }
 });
-
 </script>
 
 <template>
@@ -177,44 +194,71 @@ onUnmounted(() => {
                 <UIcon
                     name="i-lucide-grip-vertical"
                     :data-depth="currentDepth"
-                    class="w-4 h-4 text-gray-500 drag-handle cursor-grab flex-shrink-0" />
+                    class="w-4 h-4 text-gray-500 drag-handle cursor-grab shrink-0" />
                 <button
                     v-if="hasChildren"
                     @click="toggleExpand"
-                    class="flex items-center justify-center w-5 h-5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex-shrink-0">
+                    class="flex items-center justify-center w-5 h-5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors shrink-0">
                     <UIcon
-                        :name="isExpanded ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
+                        :name="
+                            isExpanded
+                                ? 'i-lucide-chevron-down'
+                                : 'i-lucide-chevron-right'
+                        "
                         class="w-4 h-4" />
                 </button>
-                <span v-else class="w-5 flex-shrink-0"></span>
-                <span class="font-medium text-base flex-1">{{ level.label }}</span>
+                <span v-else class="w-5 shrink-0"></span>
+                <span class="font-medium text-base flex-1">
+                    {{ level.label }}
+                </span>
             </div>
-            
+
             <!-- 資訊欄位 -->
             <div class="grid grid-cols-2 gap-2 text-sm">
                 <div class="flex flex-col gap-1">
-                    <span class="text-gray-500 dark:text-gray-400 text-xs">前台顯示</span>
+                    <span class="text-gray-500 dark:text-gray-400 text-xs">
+                        模組： {{ moduleName }}
+                    </span>
+                    <span class="text-gray-500 dark:text-gray-400 text-xs">
+                        前台顯示
+                    </span>
                     <UBadge
-                        :label="isShowFrontendLabelMap[level.is_show_frontend] ?? level.is_show_frontend"
-                        :color="level.is_show_frontend === '1' ? 'success' : 'error'"
+                        :label="
+                            isShowFrontendLabelMap[level.is_show_frontend] ??
+                            level.is_show_frontend
+                        "
+                        :color="
+                            level.is_show_frontend === '1' ? 'success' : 'error'
+                        "
                         size="sm" />
                 </div>
                 <div class="flex flex-col gap-1">
-                    <span class="text-gray-500 dark:text-gray-400 text-xs">後台顯示</span>
+                    <span class="text-gray-500 dark:text-gray-400 text-xs">
+                        後台顯示
+                    </span>
                     <UBadge
-                        :label="isShowBackendLabelMap[level.is_show_backend] ?? level.is_show_backend"
-                        :color="level.is_show_backend === '1' ? 'success' : 'error'"
+                        :label="
+                            isShowBackendLabelMap[level.is_show_backend] ??
+                            level.is_show_backend
+                        "
+                        :color="
+                            level.is_show_backend === '1' ? 'success' : 'error'
+                        "
                         size="sm" />
                 </div>
                 <div class="flex flex-col gap-1">
-                    <span class="text-gray-500 dark:text-gray-400 text-xs">是否上線</span>
+                    <span class="text-gray-500 dark:text-gray-400 text-xs">
+                        是否上線
+                    </span>
                     <UBadge
-                        :label="levelStatusLabelMap[level.status] ?? level.status"
+                        :label="
+                            levelStatusLabelMap[level.status] ?? level.status
+                        "
                         :color="level.status === '1' ? 'success' : 'error'"
                         size="sm" />
                 </div>
             </div>
-            
+
             <!-- 操作按鈕 -->
             <div class="flex flex-wrap gap-2 pt-2 border-t border-default">
                 <UButton
@@ -232,6 +276,8 @@ onUnmounted(() => {
                     size="xs"
                     variant="outline"
                     class="flex-1 min-w-[80px]"
+                    :disabled="!canAddSub"
+                    :title="!canAddSub ? '已有模組，無法新增子層級' : ''"
                     @click="onAddSub?.(level)" />
                 <UButton
                     icon="i-lucide-trash"
@@ -244,14 +290,16 @@ onUnmounted(() => {
             </div>
         </div>
     </div>
-    
+
     <!-- 桌面版：表格行佈局 -->
     <tr
         class="hidden md:table-row hover:bg-gray-50 dark:hover:bg-gray-800/50"
         :data-depth="currentDepth"
         :data-level-id="level.id">
         <td class="py-2 px-4 border-b border-default">
-            <div class="flex items-center gap-2" :style="{ paddingLeft: `${currentDepth * indentWidth}px` }">
+            <div
+                class="flex items-center gap-2"
+                :style="{ paddingLeft: `${currentDepth * indentWidth}px` }">
                 <UIcon
                     name="i-lucide-grip-vertical"
                     :data-depth="currentDepth"
@@ -261,7 +309,11 @@ onUnmounted(() => {
                     @click="toggleExpand"
                     class="flex items-center justify-center w-5 h-5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
                     <UIcon
-                        :name="isExpanded ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
+                        :name="
+                            isExpanded
+                                ? 'i-lucide-chevron-down'
+                                : 'i-lucide-chevron-right'
+                        "
                         class="w-4 h-4" />
                 </button>
                 <span v-else class="w-5"></span>
@@ -269,17 +321,30 @@ onUnmounted(() => {
             </div>
         </td>
         <td class="py-2 px-4 border-b border-default">
+            <span class="font-medium">{{ moduleName }}</span>
+        </td>
+        <td class="py-2 px-4 border-b border-default">
             <div class="flex items-center gap-2">
                 <UBadge
-                    :label="isShowFrontendLabelMap[level.is_show_frontend] ?? level.is_show_frontend"
-                    :color="level.is_show_frontend === '1' ? 'success' : 'error'" />
+                    :label="
+                        isShowFrontendLabelMap[level.is_show_frontend] ??
+                        level.is_show_frontend
+                    "
+                    :color="
+                        level.is_show_frontend === '1' ? 'success' : 'error'
+                    " />
             </div>
         </td>
         <td class="py-2 px-4 border-b border-default">
             <div class="flex items-center gap-2">
                 <UBadge
-                    :label="isShowBackendLabelMap[level.is_show_backend] ?? level.is_show_backend"
-                    :color="level.is_show_backend === '1' ? 'success' : 'error'" />
+                    :label="
+                        isShowBackendLabelMap[level.is_show_backend] ??
+                        level.is_show_backend
+                    "
+                    :color="
+                        level.is_show_backend === '1' ? 'success' : 'error'
+                    " />
             </div>
         </td>
         <td class="py-2 px-4 border-b border-default">
@@ -295,13 +360,17 @@ onUnmounted(() => {
                     icon="i-lucide-edit"
                     label="編輯"
                     color="primary"
+                    variant="outline"
                     size="xs"
                     @click="onEdit?.(level)" />
                 <UButton
                     icon="i-lucide-plus"
                     label="加入子層級"
                     color="primary"
+                    variant="outline"
                     size="xs"
+                    :disabled="!canAddSub"
+                    :title="!canAddSub ? '已有模組，無法新增子層級' : ''"
                     @click="onAddSub?.(level)" />
                 <UButton
                     icon="i-lucide-trash"
@@ -313,7 +382,7 @@ onUnmounted(() => {
             </div>
         </td>
     </tr>
-    
+
     <!-- 子層級（手機版） -->
     <template v-if="hasChildren && isExpanded">
         <div class="block md:hidden">
@@ -326,7 +395,7 @@ onUnmounted(() => {
                 :on-add-sub="onAddSub"
                 :on-update-sort-order="onUpdateSortOrder"
                 :on-delete="onDelete"
-                @refresh="emit('refresh')"/>
+                @refresh="emit('refresh')" />
         </div>
     </template>
     <!-- 子層級（桌面版） -->
@@ -341,8 +410,7 @@ onUnmounted(() => {
                 :on-add-sub="onAddSub"
                 :on-update-sort-order="onUpdateSortOrder"
                 :on-delete="onDelete"
-                @refresh="emit('refresh')"/>
+                @refresh="emit('refresh')" />
         </tbody>
     </template>
 </template>
-

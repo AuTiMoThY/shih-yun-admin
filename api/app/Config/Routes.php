@@ -24,10 +24,14 @@ $routes->get('/admins/me', 'AuthController::me');
 $routes->post('/admins/logout', 'AuthController::logout');
 
 // 系統架構層級相關路由
-$routes->post('/structure/add', 'StructureController::addLevel');
-$routes->post('/structure/update', 'StructureController::updateLevel');
+$routes->post('/structure/add', 'StructureController::add');
+$routes->post('/structure/update', 'StructureController::update');
 $routes->post('/structure/update-sort-order', 'StructureController::updateSortOrder');
-$routes->post('/structure/delete', 'StructureController::deleteLevel');
-$routes->get('/structure/get', 'StructureController::getLevels');
+$routes->post('/structure/delete', 'StructureController::delete');
+$routes->get('/structure/get', 'StructureController::get');
 
-
+// 模組相關路由
+$routes->post('/module/add', 'ModuleController::add');
+$routes->post('/module/update', 'ModuleController::update');
+$routes->post('/module/delete', 'ModuleController::delete');
+$routes->get('/module/get', 'ModuleController::get');

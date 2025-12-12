@@ -4,24 +4,23 @@ definePageMeta({
 });
 import { computed, nextTick, onMounted, ref, shallowRef } from "vue";
 import { useSortable } from "@vueuse/integrations/useSortable";
-import StructureAddSubLevel from "~/components/Structure/AddSubLevel.vue";
+import StructureLevelModal from "~/components/Structure/LevelModal.vue";
 import StructureTreeTableRow from "~/components/Structure/TreeTableRow.vue";
 
 const { data, loading, fetchData, updateSortOrder, deleteLevel } = useStructure();
-const addSubLevelModalOpen = ref(false);
 const rootBodyRef = ref<HTMLElement | null>(null);
+
+// Modal 狀態
+const addRootModalOpen = ref(false);
+const addSubLevelModalOpen = ref(false);
+const editModalOpen = ref(false);
+
+// 當前操作的層級資料
 const currentParentLevel = ref<any>(null);
+const currentEditLevel = ref<any>(null);
 
-const editLevel = (level: any) => {
-    console.log(typeof level.id);
-};
-
-
-const addSubLevel = (level: any) => {
-    console.log(level);
-
-    currentParentLevel.value = level;
-    addSubLevelModalOpen.value = true;
+const handleModalSuccess = () => {
+    fetchData();
 };
 
 const rootLevels = computed(() => (data.value || []).filter(Boolean));
@@ -30,12 +29,25 @@ const handleDelete = async (level: any) => {
     await deleteLevel(level, { onSuccess: fetchData });
 };
 
+const handleEdit = (level: any) => {
+    console.log("handleEdit", level);
+    currentEditLevel.value = level;
+    editModalOpen.value = true;
+};
 
+const handleAddSub = (level: any) => {
+    console.log("handleAddSub", level);
+    if (level?.module_id) {
+        return;
+    }
+    currentParentLevel.value = level;
+    addSubLevelModalOpen.value = true;
+};
 
 const setupRootSortable = () => {
     useSortable(rootBodyRef, data, {
         // group: "nested",
-        handle: "tr[data-depth='0']",
+        handle: "tr[data-depth='0'] .drag-handle",
         animation: 150,
         draggable: "tr[data-depth='0']",
         fallbackOnBody: true,
@@ -105,7 +117,12 @@ onMounted(async () => {
             </UDashboardNavbar>
             <UDashboardToolbar>
                 <template #right>
-                    <StructureAddlevel @added="fetchData" />
+                    <UButton
+                        color="primary"
+                        variant="outline"
+                        icon="lucide:plus"
+                        label="新增層級1"
+                        @click="addRootModalOpen = true" />
                 </template>
             </UDashboardToolbar>
         </template>
@@ -123,8 +140,8 @@ onMounted(async () => {
                             v-if="level"
                             :level="level"
                             :depth="0"
-                            :on-edit="editLevel"
-                            :on-add-sub="addSubLevel"
+                            :on-edit="handleEdit"
+                            :on-add-sub="handleAddSub"
                             :on-update-sort-order="updateSortOrder"
                             :on-delete="handleDelete"
                             @refresh="fetchData" />
@@ -144,6 +161,10 @@ onMounted(async () => {
                                 <th
                                     class="py-2 px-4 text-left first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r font-semibold">
                                     名稱
+                                </th>
+                                <th
+                                    class="py-2 px-4 text-left first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r font-semibold">
+                                    模組名稱
                                 </th>
                                 <th
                                     class="w-[120px] py-2 px-4 text-left border-y border-default first:border-l last:border-r font-semibold">
@@ -171,8 +192,8 @@ onMounted(async () => {
                                     v-if="level"
                                     :level="level"
                                     :depth="0"
-                                    :on-edit="editLevel"
-                                    :on-add-sub="addSubLevel"
+                                    :on-edit="handleEdit"
+                                    :on-add-sub="handleAddSub"
                                     :on-update-sort-order="updateSortOrder"
                                     :on-delete="handleDelete"
                                     @refresh="fetchData" />
@@ -189,11 +210,24 @@ onMounted(async () => {
         </template>
     </UDashboardPanel>
 
-    <StructureAddSubLevel
+    <!-- 新增層級1 Modal -->
+    <StructureLevelModal
+        v-model:open="addRootModalOpen"
+        mode="add-root"
+        @added="handleModalSuccess" />
+
+    <!-- 新增子層級 Modal -->
+    <StructureLevelModal
         v-model:open="addSubLevelModalOpen"
-        :parent-id="
-            currentParentLevel?.id ? parseInt(currentParentLevel.id) : 0
-        "
-        :parent-name="currentParentLevel?.name"
-        @added="fetchData" />
+        mode="add-sub"
+        :parent-id="currentParentLevel?.id ? parseInt(currentParentLevel.id) : 0"
+        :parent-name="currentParentLevel?.label"
+        @added="handleModalSuccess" />
+
+    <!-- 編輯層級 Modal -->
+    <StructureLevelModal
+        v-model:open="editModalOpen"
+        mode="edit"
+        :level="currentEditLevel"
+        @updated="handleModalSuccess" />
 </template>
