@@ -8,7 +8,6 @@ use CodeIgniter\Router\RouteCollection;
 $routes->get('/', 'Home::index');
 $routes->get('/test-db-connection', 'testDbConnection::index');
 $routes->get('/test-db-connection2', 'testDbConnection2::index');
-// 注意：因為 RewriteBase /api/ 已設定，路由定義中不需要包含 /api/ 前綴
 $routes->get('/test-cors', 'TestCors::index');
 
 
