@@ -2,13 +2,14 @@
 definePageMeta({
     middleware: "auth"
 });
-import { computed, nextTick, onMounted, ref, shallowRef } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, ref, shallowRef } from "vue";
 import { useSortable } from "@vueuse/integrations/useSortable";
 import StructureLevelModal from "~/components/Structure/LevelModal.vue";
 import StructureTreeTableRow from "~/components/Structure/TreeTableRow.vue";
 
 const { data, loading, fetchData, updateSortOrder, deleteLevel } = useStructure();
 const rootBodyRef = ref<HTMLElement | null>(null);
+let sortableStop: (() => void) | null = null;
 
 // Modal 狀態
 const addRootModalOpen = ref(false);
@@ -19,14 +20,23 @@ const editModalOpen = ref(false);
 const currentParentLevel = ref<any>(null);
 const currentEditLevel = ref<any>(null);
 
-const handleModalSuccess = () => {
-    fetchData();
+const handleModalSuccess = async () => {
+    await fetchData();
+    await nextTick();
+    setupRootSortable();
+
 };
 
 const rootLevels = computed(() => (data.value || []).filter(Boolean));
 
 const handleDelete = async (level: any) => {
-    await deleteLevel(level, { onSuccess: fetchData });
+    await deleteLevel(level, { 
+        onSuccess: async () => {
+            await fetchData();
+            await nextTick();
+            setupRootSortable();
+        }
+    });
 };
 
 const handleEdit = (level: any) => {
@@ -45,7 +55,17 @@ const handleAddSub = (level: any) => {
 };
 
 const setupRootSortable = () => {
-    useSortable(rootBodyRef, data, {
+    // 清理舊的實例
+    if (sortableStop) {
+        sortableStop();
+        sortableStop = null;
+    }
+
+    if (!rootBodyRef.value) {
+        return;
+    }
+
+    const { stop } = useSortable(rootBodyRef, data, {
         // group: "nested",
         handle: "tr[data-depth='0'] .drag-handle",
         animation: 150,
@@ -98,7 +118,16 @@ const setupRootSortable = () => {
             });
         }
     });
+    sortableStop = stop;
 };
+
+// 組件卸載時清理
+onUnmounted(() => {
+    if (sortableStop) {
+        sortableStop();
+        sortableStop = null;
+    }
+});
 
 onMounted(async () => {
     await fetchData();
@@ -159,27 +188,27 @@ onMounted(async () => {
                         <thead>
                             <tr class="bg-elevated/50">
                                 <th
-                                    class="py-2 px-4 text-left first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r font-semibold">
+                                    class="py-2 px-4 text-left first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r">
                                     名稱
                                 </th>
                                 <th
-                                    class="py-2 px-4 text-left first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r font-semibold">
+                                    class="py-2 px-4 text-left first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r">
                                     模組名稱
                                 </th>
                                 <th
-                                    class="w-[120px] py-2 px-4 text-left border-y border-default first:border-l last:border-r font-semibold">
+                                    class="w-[120px] py-2 px-4 text-left border-y border-default first:border-l last:border-r">
                                     前台顯示
                                 </th>
                                 <th
-                                    class="w-[120px] py-2 px-4 text-left border-y border-default first:border-l last:border-r font-semibold">
+                                    class="w-[120px] py-2 px-4 text-left border-y border-default first:border-l last:border-r">
                                     後台顯示
                                 </th>
                                 <th
-                                    class="w-[120px] py-2 px-4 text-left border-y border-default first:border-l last:border-r font-semibold">
+                                    class="w-[120px] py-2 px-4 text-left border-y border-default first:border-l last:border-r">
                                     是否上線
                                 </th>
                                 <th
-                                    class="py-2 px-4 text-left border-y border-default first:border-l last:border-r font-semibold">
+                                    class="py-2 px-4 text-left border-y border-default first:border-l last:border-r">
                                     操作
                                 </th>
                             </tr>

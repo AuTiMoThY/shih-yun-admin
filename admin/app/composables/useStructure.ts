@@ -53,7 +53,7 @@ export const useStructure = () => {
     const updateSortOrder = async (list: any[]) => {
         const payload = (list || []).map((item, index) => ({
             id: item?.id,
-            sort_order: index
+            sort_order: index + 1
         }));
         console.log("updateSortOrder payload", payload);
         try {

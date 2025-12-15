@@ -34,3 +34,12 @@ $routes->post('/module/add', 'ModuleController::add');
 $routes->post('/module/update', 'ModuleController::update');
 $routes->post('/module/delete', 'ModuleController::delete');
 $routes->get('/module/get', 'ModuleController::get');
+
+// 公司基本資料相關路由
+$routes->get('/company-base/get', 'CompanyBaseController::get');
+$routes->post('/company-base/save', 'CompanyBaseController::save');
+
+// 關於頁面區塊設定
+$routes->get('/appabout/get', 'AppaboutController::get');
+$routes->post('/appabout/save', 'AppaboutController::save');
+$routes->post('/upload/image', 'UploadController::image');
