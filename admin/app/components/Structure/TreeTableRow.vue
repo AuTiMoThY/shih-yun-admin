@@ -10,8 +10,6 @@ import {
     onUnmounted
 } from "vue";
 import { useSortable } from "@vueuse/integrations/useSortable";
-import { IS_SHOW_FRONTEND_LABEL_MAP } from "~/constants/is_show_frontend";
-import { IS_SHOW_BACKEND_LABEL_MAP } from "~/constants/is_show_backend";
 import { LEVEL_STATUS_LABEL_MAP } from "~/constants/level_status";
 import TreeTableRow from "./TreeTableRow.vue";
 
@@ -37,8 +35,7 @@ const childrenBodyRef = ref<HTMLElement | null>(null);
 const childrenData = shallowRef<any[]>([]);
 let sortableStop: (() => void) | null = null;
 
-const isShowFrontendLabelMap = IS_SHOW_FRONTEND_LABEL_MAP;
-const isShowBackendLabelMap = IS_SHOW_BACKEND_LABEL_MAP;
+
 const levelStatusLabelMap = LEVEL_STATUS_LABEL_MAP;
 
 const { data: modulesData } = useModule();
@@ -217,37 +214,6 @@ onUnmounted(() => {
             <div class="grid grid-cols-2 gap-2 text-sm">
                 <div class="flex flex-col gap-1">
                     <span class="text-gray-500 dark:text-gray-400 text-xs">
-                        模組： {{ moduleName }}
-                    </span>
-                    <span class="text-gray-500 dark:text-gray-400 text-xs">
-                        前台顯示
-                    </span>
-                    <UBadge
-                        :label="
-                            isShowFrontendLabelMap[level.is_show_frontend] ??
-                            level.is_show_frontend
-                        "
-                        :color="
-                            level.is_show_frontend === '1' ? 'success' : 'error'
-                        "
-                        size="sm" />
-                </div>
-                <div class="flex flex-col gap-1">
-                    <span class="text-gray-500 dark:text-gray-400 text-xs">
-                        後台顯示
-                    </span>
-                    <UBadge
-                        :label="
-                            isShowBackendLabelMap[level.is_show_backend] ??
-                            level.is_show_backend
-                        "
-                        :color="
-                            level.is_show_backend === '1' ? 'success' : 'error'
-                        "
-                        size="sm" />
-                </div>
-                <div class="flex flex-col gap-1">
-                    <span class="text-gray-500 dark:text-gray-400 text-xs">
                         是否上線
                     </span>
                     <UBadge
@@ -322,30 +288,6 @@ onUnmounted(() => {
         </td>
         <td class="py-2 px-4 border-b border-default">
             <span class="font-medium">{{ moduleName }}</span>
-        </td>
-        <td class="py-2 px-4 border-b border-default">
-            <div class="flex items-center gap-2">
-                <UBadge
-                    :label="
-                        isShowFrontendLabelMap[level.is_show_frontend] ??
-                        level.is_show_frontend
-                    "
-                    :color="
-                        level.is_show_frontend === '1' ? 'success' : 'error'
-                    " />
-            </div>
-        </td>
-        <td class="py-2 px-4 border-b border-default">
-            <div class="flex items-center gap-2">
-                <UBadge
-                    :label="
-                        isShowBackendLabelMap[level.is_show_backend] ??
-                        level.is_show_backend
-                    "
-                    :color="
-                        level.is_show_backend === '1' ? 'success' : 'error'
-                    " />
-            </div>
         </td>
         <td class="py-2 px-4 border-b border-default">
             <div class="flex items-center gap-2">

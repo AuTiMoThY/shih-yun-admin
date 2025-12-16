@@ -9,9 +9,9 @@ const { buildId } = useAbout();
 const { hasPermission, isSuperAdmin } = usePermission();
 
 // 權限檢查
-const canCreateField = computed(() => isSuperAdmin() || hasPermission('about.field.create'));
-const canDeleteSection = computed(() => isSuperAdmin() || hasPermission('about.section.delete'));
-const canSortSection = computed(() => isSuperAdmin() || hasPermission('about.section.sort'));
+// const canCreateField = computed(() => isSuperAdmin() || hasPermission('about.field.create'));
+// const canDeleteSection = computed(() => isSuperAdmin() || hasPermission('about.section.delete'));
+// const canSortSection = computed(() => isSuperAdmin() || hasPermission('about.section.sort'));
 
 const props = defineProps<{
     index: string | number;
@@ -152,51 +152,55 @@ watch(
 </script>
 
 <template>
-    <UCollapsible class="flex flex-col" :default-open="true" :data-id="sectionData.id">
+    <UCollapsible
+        class="flex flex-col"
+        :default-open="true"
+        :data-id="sectionData.id">
         <div
             class="flex items-center justify-between bg-primary/10 p-4 rounded-lg sticky top-0 z-10 backdrop-blur-xs">
-            <div class="leading flex items-center gap-2 cursor-pointer ">
+            <div class="leading flex items-center gap-2 cursor-pointer">
                 <UIcon name="i-lucide-list-collapse" class="size-5" />
 
-                <h3 class="text-lg font-semibold">
-                    第{{ index }}卡內容編輯
-                </h3>
+                <h3 class="text-lg font-semibold">第{{ index }}卡內容編輯</h3>
             </div>
             <div class="flex items-center gap-2">
-                <UButton
-                    v-if="canSortSection"
-                    icon="i-lucide-arrow-up"
-                    color="neutral"
-                    variant="ghost"
-                    size="sm"
-                    :disabled="!canMoveUp"
-                    @click="handleMoveSection($event, 'up')" />
-                <UButton
-                    v-if="canSortSection"
-                    icon="i-lucide-arrow-down"
-                    color="neutral"
-                    variant="ghost"
-                    size="sm"
-                    :disabled="!canMoveDown"
-                    @click="handleMoveSection($event, 'down')" />
-                <UButton
-                    v-if="canCreateField"
+                <PermissionGuard permission="about.section.sort">
+                    <UButton
+                        icon="i-lucide-arrow-up"
+                        color="neutral"
+                        variant="ghost"
+                        size="sm"
+                        :disabled="!canMoveUp"
+                        @click="handleMoveSection($event, 'up')" />
+                </PermissionGuard>
+                <PermissionGuard permission="about.section.sort">
+                    <UButton
+                        icon="i-lucide-arrow-down"
+                        color="neutral"
+                        variant="ghost"
+                        size="sm"
+                        :disabled="!canMoveDown"
+                        @click="handleMoveSection($event, 'down')" />
+                </PermissionGuard>
+
+                <PermissionGuard permission="about.field.create">
+                    <UButton
                     :label="showFieldSelector ? '取消' : '新增欄位'"
-                    :icon="
-                        showFieldSelector ? 'i-lucide-x' : 'i-lucide-plus'
-                    "
+                    :icon="showFieldSelector ? 'i-lucide-x' : 'i-lucide-plus'"
                     color="primary"
                     variant="outline"
                     size="sm"
                     @click="handleAddField($event)" />
-                <UButton
-                    v-if="canDeleteSection"
+                </PermissionGuard>
+                <PermissionGuard permission="about.section.delete">
+                    <UButton
                     label="刪除"
                     icon="i-lucide-trash-2"
                     color="error"
                     variant="ghost"
                     size="sm"
                     @click="handleDeleteSection($event)" />
+                </PermissionGuard>
             </div>
         </div>
 

@@ -22,6 +22,21 @@ export type Role = {
     permissions?: Permission[];
 };
 
+export type RermissionForm = {
+    name: string;
+    label: string;
+    description?: string;
+    module_id?: number | null;
+    category?: string | null;
+    action?: string | null;
+    status: number;
+};
+
+export type RermissionFormErrors = {
+    name: string | boolean;
+    label: string | boolean;
+};
+
 export type RoleForm = {
     name: string;
     label: string;

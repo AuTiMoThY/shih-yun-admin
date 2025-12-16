@@ -197,14 +197,6 @@ onMounted(async () => {
                                 </th>
                                 <th
                                     class="w-[120px] py-2 px-4 text-left border-y border-default first:border-l last:border-r">
-                                    前台顯示
-                                </th>
-                                <th
-                                    class="w-[120px] py-2 px-4 text-left border-y border-default first:border-l last:border-r">
-                                    後台顯示
-                                </th>
-                                <th
-                                    class="w-[120px] py-2 px-4 text-left border-y border-default first:border-l last:border-r">
                                     是否上線
                                 </th>
                                 <th

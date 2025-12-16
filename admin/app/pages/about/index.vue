@@ -16,14 +16,9 @@ const {
 const { hasPermission, isSuperAdmin } = usePermission();
 
 // 權限檢查
-const canCreateSection = computed(
-    () => isSuperAdmin() || hasPermission("about.section.create")
-);
+// 注意：canSortSection 仍需要保留，因為用於 props 傳遞和邏輯運算
 const canSortSection = computed(
     () => isSuperAdmin() || hasPermission("about.section.sort")
-);
-const canDeleteSection = computed(
-    () => isSuperAdmin() || hasPermission("about.section.delete")
 );
 const deleteConfirmModalOpen = ref(false);
 const deleteTarget = ref<{ id: string; label: string } | null>(null);
@@ -128,15 +123,16 @@ onMounted(async () => {
                     <UDashboardSidebarCollapse />
                 </template>
                 <template #right>
+                    <PermissionGuard permission="about.section.create">
+                        <UButton
+                            label="新增區塊(卡)"
+                            color="primary"
+                            icon="i-lucide-plus"
+                            @click="addCutSection"
+                            :ui="{ base: 'justify-center' }" />
+                    </PermissionGuard>
                     <UButton
-                        v-if="canCreateSection"
-                        label="新增區塊(卡)"
-                        color="primary"
-                        icon="i-lucide-plus"
-                        @click="addCutSection"
-                        :ui="{ base: 'justify-center' }" />
-                    <UButton
-                        label="儲存所有區塊"
+                        label="儲存"
                         color="success"
                         icon="i-lucide-save"
                         @click="saveAllSections"
@@ -176,15 +172,16 @@ onMounted(async () => {
                         @move-down="moveSection(section.id, 'down')" />
                 </template>
                 <div class="flex justify-end gap-3">
+                    <PermissionGuard permission="about.section.create">
+                        <UButton
+                            label="新增區塊(卡)"
+                            color="primary"
+                            icon="i-lucide-plus"
+                            @click="addCutSection"
+                            :ui="{ base: 'justify-center' }" />
+                    </PermissionGuard>
                     <UButton
-                        v-if="canCreateSection"
-                        label="新增區塊(卡)"
-                        color="primary"
-                        icon="i-lucide-plus"
-                        @click="addCutSection"
-                        :ui="{ base: 'justify-center' }" />
-                    <UButton
-                        label="儲存所有區塊"
+                        label="儲存"
                         color="success"
                         icon="i-lucide-save"
                         @click="saveAllSections"

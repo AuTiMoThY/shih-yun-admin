@@ -13,8 +13,6 @@ export const useStructure = () => {
     const form = reactive<LevelForm>({
         label: "",
         module_id: null,
-        is_show_frontend: true,
-        is_show_backend: true,
         status: true,
         parent_id: null
     });
@@ -22,8 +20,6 @@ export const useStructure = () => {
     const errors = reactive<LevelFormErrors>({
         label: false,
         module_id: false,
-        is_show_frontend: false,
-        is_show_backend: false,
         status: false
     });
 
@@ -81,8 +77,6 @@ export const useStructure = () => {
     const resetForm = (parentId: LevelForm["parent_id"] = null) => {
         form.label = "";
         form.module_id = null;
-        form.is_show_frontend = true;
-        form.is_show_backend = true;
         form.status = true;
         form.parent_id = parentId ?? null;
 
@@ -123,8 +117,6 @@ export const useStructure = () => {
         if (!level) return;
         form.label = level.label || "";
         form.module_id = level.module_id ?? null;
-        form.is_show_frontend = level.is_show_frontend === "1" || level.is_show_frontend === 1 || level.is_show_frontend === true;
-        form.is_show_backend = level.is_show_backend === "1" || level.is_show_backend === 1 || level.is_show_backend === true;
         form.status = level.status === "1" || level.status === 1 || level.status === true;
         form.parent_id = level.parent_id ?? null;
     };

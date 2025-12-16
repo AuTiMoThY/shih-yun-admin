@@ -4,44 +4,44 @@
 
 ## 權限定義
 
-系統選單中的每個項目都有對應的權限，只有擁有權限的使用者才能看到該選單項目。
+系統選單中的每個項目可以綁定一個權限名稱；只有擁有該權限的使用者才能看到該選單項目。若某項目未綁定權限（`permission` 為空），表示所有登入管理員皆可見。
 
 | 選單項目 | 路由 | 權限名稱 |
 |---------|------|---------|
 | 管理系統架構 | `/system/structure` | `system.structure.view` |
 | 模組設定 | `/system/module` | `system.module.view` |
-| 管理員設定 | `/system/admins` | `system.admins.view` |
+| 管理員設定 | `/system/admins` | *(未設定，預設所有管理員可見)* |
 | 權限設定 | `/system/permissions` | `system.permissions.view` |
 | 角色設定 | `/system/roles` | `system.roles.view` |
 
 ## 權限邏輯
 
 ### 超級管理員 (super_admin)
-- **自動擁有所有權限**
-- 可以看到所有系統選單項目
-- 無需額外配置
+- **自動擁有所有權限**（`usePermission().isSuperAdmin()` 會直接返回 `true`）
+- 可以看到所有系統選單項目，無需額外配置
 
 ### 其他角色
-- **預設沒有權限**
-- 看不到任何系統選單項目
-- 需要手動分配權限才能看到對應的選單項目
+- 需要逐項檢查 `permission`：只有具備對應權限才會看到該選單
+- 若選單項目未設定 `permission`，則任何登入的管理員都能看到該項目
+- 如果所有子項目都被過濾掉，整個「系統設定」區塊不會出現在側欄
 
 ## 實作方式
 
 ### 1. 選單過濾邏輯
 
-在 `admin/app/constants/menu/system.ts` 中：
+在 `admin/app/constants/menu/system.ts` 中，先定義所有子選單，再透過 `isSuperAdmin` 及 `hasPermission` 進行過濾：
 
 ```typescript
 // 過濾出有權限的選單項目
 const filteredChildren = allMenuItems
     .filter((item) => {
-        // 超級管理員可以看到所有選單
+        // super_admin 直接放行
         if (isSuperAdmin()) {
             return true;
         }
-        // 其他角色需要檢查權限
-        return hasPermission(item.permission);
+        // 其他角色：未設定 permission 的項目照樣顯示；
+        // 有設定者必須通過 hasPermission
+        return !item.permission || hasPermission(item.permission);
     })
     .map((item) => ({
         label: item.label,
@@ -53,17 +53,16 @@ const filteredChildren = allMenuItems
 
 ### 2. 空選單處理
 
-在 `admin/app/layouts/default.vue` 中：
+在 `admin/app/layouts/default.vue` 中，只有當系統選單仍有子項目時才會顯示「系統設定」這個群組：
 
 ```typescript
-// 只有當系統選單有子項目時才加入
 const systemMenuItem = systemMenu.value;
 if (systemMenuItem.children && systemMenuItem.children.length > 0) {
     menuItems.push(systemMenuItem);
 }
 ```
 
-如果使用者沒有任何系統選單的權限，整個「系統設定」選單項目將不會顯示。
+若目前登入者沒有任何符合條件的系統子選單，整塊「系統設定」會被排除，側欄看起來就像「沒有權限」。
 
 ## SQL 範例
 
@@ -75,7 +74,6 @@ INSERT INTO `sys_permissions` (`name`, `label`, `description`, `status`, `module
 VALUES
 ('system.structure.view', '系統架構-查看', '查看系統架構管理頁面', 1, NULL, NULL, 'view'),
 ('system.module.view', '模組設定-查看', '查看模組設定頁面', 1, NULL, NULL, 'view'),
-('system.admins.view', '管理員設定-查看', '查看管理員設定頁面', 1, NULL, NULL, 'view'),
 ('system.permissions.view', '權限設定-查看', '查看權限設定頁面', 1, NULL, NULL, 'view'),
 ('system.roles.view', '角色設定-查看', '查看角色設定頁面', 1, NULL, NULL, 'view');
 ```
@@ -96,13 +94,10 @@ WHERE r.name = 'admin'
 ### 預設行為
 
 根據目前的實作：
-- **super_admin** 角色：自動擁有所有權限，可以看到所有選單
-- **其他角色**：預設看不到任何系統選單項目
+- **super_admin**：不檢查權限，所有系統選單皆顯示
+- **其他角色**：僅顯示未設定 `permission` 的選單，或是使用者確實擁有的權限對應項目
 
-如果需要讓其他角色看到系統選單，需要：
-1. 確保權限已建立（使用上面的 SQL）
-2. 將權限分配給對應的角色（使用 `sys_role_permissions` 表）
-3. 將角色分配給使用者（使用 `sys_user_roles` 表）
+如果希望「其他管理員完全看不到任何系統選單」，務必為每一個子項目都設定 `permission`，並且不要將這些權限分配給非 super_admin 的角色。
 
 ## 測試步驟
 

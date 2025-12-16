@@ -23,12 +23,8 @@ class StructureController extends BaseController
         // 將布林/字串狀態轉成 '0'/'1'
         $truthy = ['1', 1, true, 'true', 'on', 'yes'];
 
-        $isShowFrontend = $data['is_show_frontend'] ?? null;
-        $isShowBackend = $data['is_show_backend'] ?? null;
         $status = $data['status'] ?? null;
 
-        $data['is_show_frontend'] = in_array($isShowFrontend, $truthy, true) ? '1' : '0';
-        $data['is_show_backend'] = in_array($isShowBackend, $truthy, true) ? '1' : '0';
         $data['status'] = in_array($status, $truthy, true) ? '1' : '0';
 
         // 如果是新增層級1，parent_id 應該為 null
@@ -38,8 +34,6 @@ class StructureController extends BaseController
 
         $rules = [
             'label' => 'required|min_length[1]|max_length[100]',
-            'is_show_frontend' => 'required|in_list[0,1]',
-            'is_show_backend' => 'required|in_list[0,1]',
             'status' => 'required|in_list[0,1]',
             'parent_id' => 'permit_empty|is_natural',
             'sort_order' => 'permit_empty|integer',
@@ -57,8 +51,6 @@ class StructureController extends BaseController
             $insertData = [
                 'label' => $data['label'],
                 'module_id' => $data['module_id'],
-                'is_show_frontend' => (int) $data['is_show_frontend'],
-                'is_show_backend' => (int) $data['is_show_backend'],
                 'status' => (int) $data['status'],
                 'sort_order' => isset($data['sort_order']) ? (int) $data['sort_order'] : 0,
             ];
@@ -162,16 +154,6 @@ class StructureController extends BaseController
         // 將布林/字串狀態轉成 '0'/'1'
         $truthy = ['1', 1, true, 'true', 'on', 'yes'];
 
-        if (isset($data['is_show_frontend'])) {
-            $isShowFrontend = $data['is_show_frontend'];
-            $data['is_show_frontend'] = in_array($isShowFrontend, $truthy, true) ? '1' : '0';
-        }
-
-        if (isset($data['is_show_backend'])) {
-            $isShowBackend = $data['is_show_backend'];
-            $data['is_show_backend'] = in_array($isShowBackend, $truthy, true) ? '1' : '0';
-        }
-
         if (isset($data['status'])) {
             $status = $data['status'];
             $data['status'] = in_array($status, $truthy, true) ? '1' : '0';
@@ -179,8 +161,6 @@ class StructureController extends BaseController
 
         $rules = [
             'label' => 'permit_empty|min_length[1]|max_length[100]',
-            'is_show_frontend' => 'permit_empty|in_list[0,1]',
-            'is_show_backend' => 'permit_empty|in_list[0,1]',
             'status' => 'permit_empty|in_list[0,1]',
             'parent_id' => 'permit_empty|is_natural',
             'sort_order' => 'permit_empty|integer',
@@ -202,12 +182,6 @@ class StructureController extends BaseController
             }
             if (isset($data['module_id'])) {
                 $updateData['module_id'] = $data['module_id'];
-            }
-            if (isset($data['is_show_frontend'])) {
-                $updateData['is_show_frontend'] = (int) $data['is_show_frontend'];
-            }
-            if (isset($data['is_show_backend'])) {
-                $updateData['is_show_backend'] = (int) $data['is_show_backend'];
             }
             if (isset($data['status'])) {
                 $updateData['status'] = (int) $data['status'];

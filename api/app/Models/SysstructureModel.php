@@ -11,8 +11,6 @@ class SysStructureModel extends Model
         'parent_id',
         'label',
         'module_id',
-        'is_show_frontend',
-        'is_show_backend',
         'status',
         'sort_order',
     ];

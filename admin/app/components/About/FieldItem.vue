@@ -6,7 +6,7 @@ const { hasPermission, isSuperAdmin } = usePermission();
 
 // 權限檢查
 const canSortField = computed(() => isSuperAdmin() || hasPermission('about.field.sort'));
-const canDeleteField = computed(() => isSuperAdmin() || hasPermission('about.field.delete'));
+// const canDeleteField = computed(() => isSuperAdmin() || hasPermission('about.field.delete'));
 
 const props = defineProps<{
     field: FieldConfig;
@@ -24,7 +24,8 @@ const localField = ref<FieldConfig>({ ...props.field });
 // console.log("localField:", localField.value);
 
 // 控制標題區的即時編輯
-const isEditingLabel = ref(false);import { useDateFormat, useNow } from "@vueuse/core";
+const isEditingLabel = ref(false);
+import { useDateFormat, useNow } from "@vueuse/core";
 
 // 監聽外部變更
 watch(
@@ -216,27 +217,33 @@ watch(isEditingLabel, async (editing) => {
                     </div>
                 </div>
                 <div class="flex items-center gap-1">
-                    <UButton
-                        v-if="index > 0 && canSortField"
-                        icon="i-lucide-arrow-up"
-                        size="xs"
-                        color="neutral"
-                        variant="ghost"
-                        @click="emit('move-up', index)" />
-                    <UButton
-                        v-if="canSortField"
-                        icon="i-lucide-arrow-down"
-                        size="xs"
-                        color="neutral"
-                        variant="ghost"
-                        @click="emit('move-down', index)" />
-                    <UButton
-                        v-if="canDeleteField"
-                        icon="i-lucide-trash-2"
-                        size="xs"
-                        color="error"
-                        variant="ghost"
-                        @click="emit('delete', field.id)" />
+                    <PermissionGuard permission="about.field.sort">
+                        <UButton
+                            v-if="index > 0 && canSortField"
+                            icon="i-lucide-arrow-up"
+                            size="xs"
+                            color="neutral"
+                            variant="ghost"
+                            @click="emit('move-up', index)" />
+                    </PermissionGuard>
+
+                    <PermissionGuard permission="about.field.sort">
+                        <UButton
+                            icon="i-lucide-arrow-down"
+                            size="xs"
+                            color="neutral"
+                            variant="ghost"
+                            @click="emit('move-down', index)" />
+                    </PermissionGuard>
+
+                    <PermissionGuard permission="about.field.delete">
+                        <UButton
+                            icon="i-lucide-trash-2"
+                            size="xs"
+                            color="error"
+                            variant="ghost"
+                            @click="emit('delete', field.id)" />
+                    </PermissionGuard>
                 </div>
             </div>
         </template>
@@ -275,12 +282,16 @@ watch(isEditingLabel, async (editing) => {
                             @change="handleImageUpload" />
                         <div
                             v-if="imagePreview || localField.value"
-                            class="relative w-full max-w-lg ">
+                            class="relative w-full max-w-lg">
                             <img
                                 :src="imagePreview || localField.value"
                                 alt="預覽"
                                 class="w-full max-w-lg object-cover rounded-lg border"
-                                :style="imageAspectRatio ? { aspectRatio: imageAspectRatio } : undefined" />
+                                :style="
+                                    imageAspectRatio
+                                        ? { aspectRatio: imageAspectRatio }
+                                        : undefined
+                                " />
                             <UButton
                                 icon="i-lucide-x"
                                 size="xs"

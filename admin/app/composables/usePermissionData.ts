@@ -1,3 +1,4 @@
+import type { RermissionForm, RermissionFormErrors } from "~/types";
 export const usePermissionData = () => {
     const { public: runtimePublic } = useRuntimeConfig();
     const apiBase = runtimePublic.apiBase;
@@ -6,7 +7,7 @@ export const usePermissionData = () => {
     const loading = useState("permission-loading", () => false);
     const submitError = ref("");
 
-    const form = reactive({
+    const form = reactive<RermissionForm>({
         name: "",
         label: "",
         description: "",
@@ -16,7 +17,7 @@ export const usePermissionData = () => {
         status: 1
     });
 
-    const errors = reactive({
+    const errors = reactive<RermissionFormErrors>({
         name: false,
         label: false
     });
@@ -30,7 +31,7 @@ export const usePermissionData = () => {
         try {
             const params: any = {};
             if (moduleId) params.module_id = moduleId;
-            
+
             const res = await $fetch<{
                 success: boolean;
                 data: any[];
@@ -45,7 +46,10 @@ export const usePermissionData = () => {
                 data.value = [];
             }
         } catch (error: any) {
-            const msg = error?.data?.message || error?.message || "取得權限資料失敗，請稍後再試";
+            const msg =
+                error?.data?.message ||
+                error?.message ||
+                "取得權限資料失敗，請稍後再試";
             toast.add({ title: msg, color: "error" });
             console.error("fetchData error", error);
             data.value = [];
@@ -71,7 +75,10 @@ export const usePermissionData = () => {
                 return null;
             }
         } catch (error: any) {
-            const msg = error?.data?.message || error?.message || "取得權限資料失敗，請稍後再試";
+            const msg =
+                error?.data?.message ||
+                error?.message ||
+                "取得權限資料失敗，請稍後再試";
             toast.add({ title: msg, color: "error" });
             console.error("fetchById error", error);
             return null;
@@ -133,20 +140,18 @@ export const usePermissionData = () => {
         form.category = data.category || "";
         form.action = data.action || "";
         form.status = data.status !== undefined ? data.status : 1;
-    }
+    };
 
-    const addPermission = async (
-        options?: {
-            closeModalRef?: Ref<boolean>;
-            onSuccess?: () => void;
-        }
-    ) => {
+    const addPermission = async (options?: {
+        closeModalRef?: Ref<boolean>;
+        onSuccess?: () => void;
+    }) => {
         if (!validateForm()) return false;
-        
+
         loading.value = true;
 
         const targetModal = options?.closeModalRef;
-        
+
         try {
             const res = await $fetch<{
                 success: boolean;
@@ -159,11 +164,17 @@ export const usePermissionData = () => {
                 resetForm();
                 if (targetModal) targetModal.value = false;
                 options?.onSuccess?.();
-                toast.add({ title: res.message || "新增權限成功", color: "success" });
+                toast.add({
+                    title: res.message || "新增權限成功",
+                    color: "success"
+                });
                 return true;
             } else {
                 submitError.value = res?.message;
-                toast.add({ title: res?.message || "新增權限失敗", color: "error" });
+                toast.add({
+                    title: res?.message || "新增權限失敗",
+                    color: "error"
+                });
                 return false;
             }
         } catch (error: any) {
@@ -174,7 +185,9 @@ export const usePermissionData = () => {
                     : null;
             if (fieldErrors) {
                 Object.entries(fieldErrors).forEach(([key, val]) => {
-                    const msg = Array.isArray(val) ? val.join(", ") : String(val);
+                    const msg = Array.isArray(val)
+                        ? val.join(", ")
+                        : String(val);
                     // @ts-ignore
                     errors[key] = msg;
                 });
@@ -191,21 +204,19 @@ export const usePermissionData = () => {
         } finally {
             loading.value = false;
         }
-    }
+    };
 
-    const editPermission = async (
-        options?: {
-            closeModalRef?: Ref<boolean>;
-            onSuccess?: () => void;
-            id?: number | string;
-        }
-    ) => {
+    const editPermission = async (options?: {
+        closeModalRef?: Ref<boolean>;
+        onSuccess?: () => void;
+        id?: number | string;
+    }) => {
         if (!validateForm()) return false;
-        
+
         loading.value = true;
 
         const targetModal = options?.closeModalRef;
-        
+
         try {
             const res = await $fetch<{
                 success: boolean;
@@ -221,11 +232,17 @@ export const usePermissionData = () => {
                 resetForm();
                 if (targetModal) targetModal.value = false;
                 options?.onSuccess?.();
-                toast.add({ title: res.message || "更新權限成功", color: "success" });
+                toast.add({
+                    title: res.message || "更新權限成功",
+                    color: "success"
+                });
                 return true;
             } else {
                 submitError.value = res?.message;
-                toast.add({ title: res?.message || "更新權限失敗", color: "error" });
+                toast.add({
+                    title: res?.message || "更新權限失敗",
+                    color: "error"
+                });
                 return false;
             }
         } catch (error: any) {
@@ -236,7 +253,9 @@ export const usePermissionData = () => {
                     : null;
             if (fieldErrors) {
                 Object.entries(fieldErrors).forEach(([key, val]) => {
-                    const msg = Array.isArray(val) ? val.join(", ") : String(val);
+                    const msg = Array.isArray(val)
+                        ? val.join(", ")
+                        : String(val);
                     // @ts-ignore
                     errors[key] = msg;
                 });
@@ -253,14 +272,12 @@ export const usePermissionData = () => {
         } finally {
             loading.value = false;
         }
-    }
+    };
 
-    const deletePermission = async (
-        options?: {
-            id?: number | string;
-            onSuccess?: () => void;
-        }
-    ) => {
+    const deletePermission = async (options?: {
+        id?: number | string;
+        onSuccess?: () => void;
+    }) => {
         if (!options?.id) return false;
         loading.value = true;
         try {
@@ -294,7 +311,9 @@ export const usePermissionData = () => {
                     : null;
             if (fieldErrors) {
                 Object.entries(fieldErrors).forEach(([key, val]) => {
-                    const msg = Array.isArray(val) ? val.join(", ") : String(val);
+                    const msg = Array.isArray(val)
+                        ? val.join(", ")
+                        : String(val);
                     // @ts-ignore
                     errors[key] = msg;
                 });
@@ -311,7 +330,7 @@ export const usePermissionData = () => {
         } finally {
             loading.value = false;
         }
-    }
+    };
 
     return {
         form,
@@ -327,5 +346,5 @@ export const usePermissionData = () => {
         addPermission,
         editPermission,
         deletePermission
-    }
-}
+    };
+};
