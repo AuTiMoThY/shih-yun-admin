@@ -3,9 +3,9 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class SysmoduleModel extends Model
+class SysModuleModel extends Model
 {
-    protected $table = 'sysmodule';
+    protected $table = 'sys_module';
     protected $primaryKey = 'id';
     protected $allowedFields = [
         'label',

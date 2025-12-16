@@ -184,7 +184,7 @@ onMounted(async () => {
                 <!-- 桌面版：表格佈局 -->
                 <div class="hidden md:block overflow-x-auto">
                     <table
-                        class="w-full table-fixed border-separate border-spacing-0">
+                        class="w-full table-fixed border-separate border-spacing-0 text-sm">
                         <thead>
                             <tr class="bg-elevated/50">
                                 <th

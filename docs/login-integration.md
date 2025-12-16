@@ -1,12 +1,12 @@
 # 後台登入串接資料庫說明
 
-本文件說明如何讓前端登入流程直接使用 `sysadmin` 資料表驗證，並介紹相關 API、資料流與測試步驟。
+本文件說明如何讓前端登入流程直接使用 `sys_admin` 資料表驗證，並介紹相關 API、資料流與測試步驟。
 
 ## 資料表
 
-- 表名：`sysadmin`
+- 表名：`sys_admin`
 - 重要欄位：`username`、`password_hash`（bcrypt）、`status`（1 啟用 / 0 停用）
-- 參考範例：`sysadmin.sql`（已含示範帳號/密碼雜湊）
+- 參考範例：`sys_admin.sql`（已含示範帳號/密碼雜湊）
 
 ## 後端（CodeIgniter 4）
 
@@ -18,7 +18,7 @@
   - `login()`：驗證 `username`/`password`、檢查 `status`，寫入 `admin_user` Session，回傳 `user` 與 `token(session_id)`
   - `me()`：從 Session 讀取 `admin_user`，未登入回 401
   - `logout()`：移除 Session 並回傳成功
-- Model：`api/app/Models/SysadminModel.php` 對應 `sysadmin` 表，使用 `password_hash` 儲存密碼。
+- Model：`api/app/Models/SysAdminModel.php` 對應 `sys_admin` 表，使用 `password_hash` 儲存密碼。
 - 注意事項：
   - 新增帳號請使用 `password_hash($plain, PASSWORD_DEFAULT)` 生成雜湊。
   - 預設 Session 以檔案儲存，登入會 `regenerate()` 以避免固定式攻擊。
@@ -37,7 +37,7 @@
 
 ## 測試流程
 
-1. 匯入 `sysadmin.sql` 至資料庫，確認有測試帳號（密碼為對應雜湊前的明文）。
+1. 匯入 `sys_admin.sql` 至資料庫，確認有測試帳號（密碼為對應雜湊前的明文）。
 2. 後端啟動（預設 8080）：`php spark serve --port 8080`
 3. 前端啟動（預設 3000）：於 `admin` 執行 `npm run dev` 或對應指令。
 4. 以瀏覽器開啟前端，使用資料庫中的帳密登入。

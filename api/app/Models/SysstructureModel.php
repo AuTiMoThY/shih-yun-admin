@@ -3,9 +3,9 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class SysstructureModel extends Model
+class SysStructureModel extends Model
 {
-    protected $table = 'sysstructure';
+    protected $table = 'sys_structure';
     protected $primaryKey = 'id';
     protected $allowedFields = [
         'parent_id',

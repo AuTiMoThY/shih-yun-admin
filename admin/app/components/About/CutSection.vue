@@ -6,6 +6,12 @@ import type {
 } from "~/types/CutSectionField";
 
 const { buildId } = useAbout();
+const { hasPermission, isSuperAdmin } = usePermission();
+
+// 權限檢查
+const canCreateField = computed(() => isSuperAdmin() || hasPermission('about.field.create'));
+const canDeleteSection = computed(() => isSuperAdmin() || hasPermission('about.section.delete'));
+const canSortSection = computed(() => isSuperAdmin() || hasPermission('about.section.sort'));
 
 const props = defineProps<{
     index: string | number;
@@ -158,6 +164,7 @@ watch(
             </div>
             <div class="flex items-center gap-2">
                 <UButton
+                    v-if="canSortSection"
                     icon="i-lucide-arrow-up"
                     color="neutral"
                     variant="ghost"
@@ -165,6 +172,7 @@ watch(
                     :disabled="!canMoveUp"
                     @click="handleMoveSection($event, 'up')" />
                 <UButton
+                    v-if="canSortSection"
                     icon="i-lucide-arrow-down"
                     color="neutral"
                     variant="ghost"
@@ -172,6 +180,7 @@ watch(
                     :disabled="!canMoveDown"
                     @click="handleMoveSection($event, 'down')" />
                 <UButton
+                    v-if="canCreateField"
                     :label="showFieldSelector ? '取消' : '新增欄位'"
                     :icon="
                         showFieldSelector ? 'i-lucide-x' : 'i-lucide-plus'
@@ -181,6 +190,7 @@ watch(
                     size="sm"
                     @click="handleAddField($event)" />
                 <UButton
+                    v-if="canDeleteSection"
                     label="刪除"
                     icon="i-lucide-trash-2"
                     color="error"

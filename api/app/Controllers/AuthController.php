@@ -1,16 +1,99 @@
 <?php
 namespace App\Controllers;
 
-use App\Models\SysadminModel;
+use App\Models\SysAdminModel;
+use App\Models\UserRoleModel;
+use App\Models\UserPermissionModel;
+use App\Models\RoleModel;
+use App\Models\PermissionModel;
+use App\Models\RolePermissionModel;
 use CodeIgniter\HTTP\ResponseInterface;
 
 class AuthController extends BaseController
 {
     protected $userModel;
+    protected $userRoleModel;
+    protected $userPermissionModel;
+    protected $roleModel;
+    protected $permissionModel;
+    protected $rolePermissionModel;
 
     public function __construct()
     {
-        $this->userModel = new SysadminModel();
+        $this->userModel = new SysAdminModel();
+        $this->userRoleModel = new UserRoleModel();
+        $this->userPermissionModel = new UserPermissionModel();
+        $this->roleModel = new RoleModel();
+        $this->permissionModel = new PermissionModel();
+        $this->rolePermissionModel = new RolePermissionModel();
+    }
+
+    /**
+     * 取得使用者的所有權限（從角色和直接授予的權限）
+     */
+    protected function getUserPermissions($userId)
+    {
+        $permissions = [];
+        $permissionIds = [];
+
+        // 從角色獲取權限
+        $userRoles = $this->userRoleModel->where('user_id', $userId)->findAll();
+        foreach ($userRoles as $userRole) {
+            $rolePermissions = $this->rolePermissionModel
+                ->where('role_id', $userRole['role_id'])
+                ->findAll();
+            foreach ($rolePermissions as $rp) {
+                if (!in_array($rp['permission_id'], $permissionIds)) {
+                    $permissionIds[] = $rp['permission_id'];
+                }
+            }
+        }
+
+        // 從直接授予的權限獲取（is_granted = 1）
+        $directPermissions = $this->userPermissionModel
+            ->where('user_id', $userId)
+            ->where('is_granted', 1)
+            ->findAll();
+        foreach ($directPermissions as $dp) {
+            if (!in_array($dp['permission_id'], $permissionIds)) {
+                $permissionIds[] = $dp['permission_id'];
+            }
+        }
+
+        // 移除被撤銷的權限（is_granted = 0）
+        $revokedPermissions = $this->userPermissionModel
+            ->where('user_id', $userId)
+            ->where('is_granted', 0)
+            ->findAll();
+        $revokedIds = array_column($revokedPermissions, 'permission_id');
+        $permissionIds = array_diff($permissionIds, $revokedIds);
+
+        // 取得權限詳細資料
+        if (!empty($permissionIds)) {
+            $permissionList = $this->permissionModel
+                ->whereIn('id', $permissionIds)
+                ->where('status', 1)
+                ->findAll();
+            $permissions = array_column($permissionList, 'name');
+        }
+
+        return $permissions;
+    }
+
+    /**
+     * 取得使用者的所有角色
+     */
+    protected function getUserRoles($userId)
+    {
+        $roles = [];
+        $userRoles = $this->userRoleModel
+            ->select('sys_roles.*')
+            ->join('sys_roles', 'sys_roles.id = sys_user_roles.role_id', 'inner')
+            ->where('sys_user_roles.user_id', $userId)
+            ->where('sys_roles.status', 1)
+            ->findAll();
+        
+        return $userRoles;
     }
     /**
      * 管理員登入：驗證帳號密碼並寫入 Session
@@ -63,6 +146,10 @@ class AuthController extends BaseController
         $session = session();
         $session->regenerate(true);
 
+        // 取得使用者的角色和權限
+        $roles = $this->getUserRoles($admin['id']);
+        $permissions = $this->getUserPermissions($admin['id']);
+
         $user = [
             'id'              => $admin['id'],
             'permission_name' => $admin['permission_name'],
@@ -73,6 +160,8 @@ class AuthController extends BaseController
             'address'         => $admin['address'],
             'created_at'      => $admin['created_at'],
             'updated_at'      => $admin['updated_at'],
+            'roles'           => $roles,
+            'permissions'     => $permissions,
         ];
 
         $session->set('admin_user', $user);
@@ -101,6 +190,15 @@ class AuthController extends BaseController
                 'message' => '尚未登入',
             ]);
         }
+
+        // 重新載入最新的角色和權限
+        $roles = $this->getUserRoles($user['id']);
+        $permissions = $this->getUserPermissions($user['id']);
+        $user['roles'] = $roles;
+        $user['permissions'] = $permissions;
+
+        // 更新 Session
+        $session->set('admin_user', $user);
 
         return $this->response->setJSON([
             'success' => true,

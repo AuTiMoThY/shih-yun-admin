@@ -1,7 +1,9 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 
 // 判斷是否為生產環境（generate/build）
-const processEnv = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env;
+const processEnv = (
+    globalThis as { process?: { env?: Record<string, string | undefined> } }
+).process?.env;
 const isProduction = processEnv?.NODE_ENV === "production";
 
 // 設定 API Base URL
@@ -11,7 +13,6 @@ const isProduction = processEnv?.NODE_ENV === "production";
 const apiBase =
     processEnv?.NUXT_PUBLIC_API_BASE ||
     (isProduction ? "https://test-sys.srl.tw/api" : "http://localhost:8080");
-
 
 console.log("========== apiBase ==========", apiBase);
 export default defineNuxtConfig({
@@ -49,9 +50,7 @@ export default defineNuxtConfig({
         },
         // 靜態生成時預渲染圖片路徑（當 ssr: false 時需要）
         prerender: {
-            routes: isProduction ? [
-                "/_ipx/q_80/images/logo.svg"
-            ] : []
+            routes: isProduction ? ["/_ipx/q_80/images/logo.svg"] : []
         }
     },
 
@@ -65,7 +64,6 @@ export default defineNuxtConfig({
         }
     },
 
-    
     image: {
         // 圖片優化配置
         quality: 80,
@@ -81,5 +79,5 @@ export default defineNuxtConfig({
         // Nuxt Image 目前僅支援 ipx 等動態 provider，static 不是有效值
         // 若要完全靜態化，請改用原生 <img> 引用 public/ 下的檔案
         provider: "ipx"
-    },
+    }
 });

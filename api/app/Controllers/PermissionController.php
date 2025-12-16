@@ -1,0 +1,312 @@
+<?php
+namespace App\Controllers;
+
+use App\Models\PermissionModel;
+use App\Models\RolePermissionModel;
+use App\Models\UserPermissionModel;
+use CodeIgniter\HTTP\ResponseInterface;
+
+class PermissionController extends BaseController
+{
+    protected $permissionModel;
+    protected $rolePermissionModel;
+    protected $userPermissionModel;
+
+    public function __construct()
+    {
+        $this->permissionModel = new PermissionModel();
+        $this->rolePermissionModel = new RolePermissionModel();
+        $this->userPermissionModel = new UserPermissionModel();
+    }
+
+    /**
+     * 取得所有權限
+     */
+    public function get()
+    {
+        try {
+            $moduleId = $this->request->getGet('module_id');
+            $query = $this->permissionModel->orderBy('id', 'ASC');
+            
+            if ($moduleId) {
+                $query->where('module_id', $moduleId);
+            }
+
+            $permissions = $query->findAll();
+
+            return $this->response->setJSON([
+                'success' => true,
+                'data' => $permissions,
+            ]);
+        } catch (\Throwable $e) {
+            log_message('error', 'getPermissions failed: {message}', ['message' => $e->getMessage()]);
+
+            return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON([
+                'success' => false,
+                'message' => '取得權限失敗，請稍後再試',
+                'error' => ENVIRONMENT !== 'production' ? $e->getMessage() : null,
+            ]);
+        }
+    }
+
+    /**
+     * 取得單一權限
+     */
+    public function getById()
+    {
+        $data = $this->request->getJSON(true) ?: $this->request->getGet();
+        $id = $data['id'] ?? null;
+
+        if (!$id) {
+            return $this->response->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST)->setJSON([
+                'success' => false,
+                'message' => '缺少權限 ID',
+            ]);
+        }
+
+        try {
+            $permission = $this->permissionModel->find($id);
+            if (!$permission) {
+                return $this->response->setStatusCode(ResponseInterface::HTTP_NOT_FOUND)->setJSON([
+                    'success' => false,
+                    'message' => '權限不存在',
+                ]);
+            }
+
+            return $this->response->setJSON([
+                'success' => true,
+                'data' => $permission,
+            ]);
+        } catch (\Throwable $e) {
+            log_message('error', 'getPermissionById failed: {message}', ['message' => $e->getMessage()]);
+
+            return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON([
+                'success' => false,
+                'message' => '取得權限失敗，請稍後再試',
+                'error' => ENVIRONMENT !== 'production' ? $e->getMessage() : null,
+            ]);
+        }
+    }
+
+    /**
+     * 新增權限
+     */
+    public function add()
+    {
+        $data = $this->request->getJSON(true) ?: $this->request->getPost();
+
+        $rules = [
+            'name' => 'required|min_length[1]|max_length[255]',
+            'label' => 'required|min_length[1]|max_length[255]',
+        ];
+
+        if (!$this->validateData($data, $rules)) {
+            return $this->response->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)->setJSON([
+                'success' => false,
+                'message' => '驗證失敗',
+                'errors' => $this->validator->getErrors(),
+            ]);
+        }
+
+        try {
+            // 檢查權限名稱是否已存在
+            $existingPermission = $this->permissionModel->where('name', $data['name'])->first();
+            if ($existingPermission) {
+                return $this->response->setStatusCode(ResponseInterface::HTTP_CONFLICT)->setJSON([
+                    'success' => false,
+                    'message' => '權限名稱已存在',
+                    'errors' => [
+                        'name' => '此權限名稱已被使用',
+                    ],
+                ]);
+            }
+
+            $insertData = [
+                'name' => trim($data['name']),
+                'label' => trim($data['label']),
+                'description' => $data['description'] ?? null,
+                'module_id' => isset($data['module_id']) && $data['module_id'] ? (int)$data['module_id'] : null,
+                'category' => $data['category'] ?? null,
+                'action' => $data['action'] ?? null,
+                'status' => isset($data['status']) ? (int)$data['status'] : 1,
+            ];
+
+            $insertId = $this->permissionModel->insert($insertData);
+
+            if (!$insertId) {
+                return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON([
+                    'success' => false,
+                    'message' => '新增權限失敗，請稍後再試',
+                ]);
+            }
+
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => '新增權限成功',
+                'data' => [
+                    'id' => $insertId,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            log_message('error', 'addPermission failed: {message}', ['message' => $e->getMessage()]);
+
+            return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON([
+                'success' => false,
+                'message' => '新增權限失敗，請稍後再試',
+                'error' => ENVIRONMENT !== 'production' ? $e->getMessage() : null,
+            ]);
+        }
+    }
+
+    /**
+     * 更新權限
+     */
+    public function update()
+    {
+        $data = $this->request->getJSON(true) ?: $this->request->getPost();
+
+        $id = $data['id'] ?? null;
+        if (!$id) {
+            return $this->response->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST)->setJSON([
+                'success' => false,
+                'message' => '缺少權限 ID',
+            ]);
+        }
+
+        // 檢查權限是否存在
+        $permission = $this->permissionModel->find($id);
+        if (!$permission) {
+            return $this->response->setStatusCode(ResponseInterface::HTTP_NOT_FOUND)->setJSON([
+                'success' => false,
+                'message' => '權限不存在',
+            ]);
+        }
+
+        $rules = [
+            'name' => 'permit_empty|min_length[1]|max_length[255]',
+            'label' => 'permit_empty|min_length[1]|max_length[255]',
+        ];
+
+        if (!$this->validateData($data, $rules)) {
+            return $this->response->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)->setJSON([
+                'success' => false,
+                'message' => '驗證失敗',
+                'errors' => $this->validator->getErrors(),
+            ]);
+        }
+
+        try {
+            $updateData = [];
+
+            if (isset($data['name'])) {
+                // 檢查權限名稱是否已被其他權限使用
+                $existingPermission = $this->permissionModel->where('name', trim($data['name']))->where('id !=', $id)->first();
+                if ($existingPermission) {
+                    return $this->response->setStatusCode(ResponseInterface::HTTP_CONFLICT)->setJSON([
+                        'success' => false,
+                        'message' => '權限名稱已存在',
+                        'errors' => [
+                            'name' => '此權限名稱已被其他權限使用',
+                        ],
+                    ]);
+                }
+                $updateData['name'] = trim($data['name']);
+            }
+            if (isset($data['label'])) {
+                $updateData['label'] = trim($data['label']);
+            }
+            if (isset($data['description'])) {
+                $updateData['description'] = $data['description'];
+            }
+            if (isset($data['module_id'])) {
+                $updateData['module_id'] = $data['module_id'] ? (int)$data['module_id'] : null;
+            }
+            if (isset($data['category'])) {
+                $updateData['category'] = $data['category'];
+            }
+            if (isset($data['action'])) {
+                $updateData['action'] = $data['action'];
+            }
+            if (isset($data['status'])) {
+                $updateData['status'] = (int)$data['status'];
+            }
+
+            if (empty($updateData)) {
+                return $this->response->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST)->setJSON([
+                    'success' => false,
+                    'message' => '沒有需要更新的資料',
+                ]);
+            }
+
+            $updated = $this->permissionModel->update($id, $updateData);
+
+            if (!$updated) {
+                return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON([
+                    'success' => false,
+                    'message' => '更新權限失敗，請稍後再試',
+                ]);
+            }
+
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => '更新權限成功',
+            ]);
+        } catch (\Throwable $e) {
+            log_message('error', 'updatePermission failed: {message}', ['message' => $e->getMessage()]);
+
+            return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON([
+                'success' => false,
+                'message' => '更新權限失敗，請稍後再試',
+                'error' => ENVIRONMENT !== 'production' ? $e->getMessage() : null,
+            ]);
+        }
+    }
+
+    /**
+     * 刪除權限
+     */
+    public function delete()
+    {
+        $data = $this->request->getJSON(true) ?: $this->request->getPost();
+        $id = $data['id'] ?? null;
+
+        if (!$id) {
+            return $this->response->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST)->setJSON([
+                'success' => false,
+                'message' => '缺少權限 ID',
+            ]);
+        }
+
+        try {
+            // 檢查權限是否存在
+            $permission = $this->permissionModel->find($id);
+            if (!$permission) {
+                return $this->response->setStatusCode(ResponseInterface::HTTP_NOT_FOUND)->setJSON([
+                    'success' => false,
+                    'message' => '權限不存在',
+                ]);
+            }
+
+            // 刪除權限（會自動刪除關聯的 role_permissions 和 user_permissions，因為有外鍵約束）
+            $deleted = $this->permissionModel->delete($id);
+            if (!$deleted) {
+                return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON([
+                    'success' => false,
+                    'message' => '刪除權限失敗，請稍後再試',
+                ]);
+            }
+        } catch (\Throwable $e) {
+            log_message('error', 'deletePermission failed: {message}', ['message' => $e->getMessage()]);
+            return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON([
+                'success' => false,
+                'message' => '刪除權限失敗，請稍後再試',
+                'error' => ENVIRONMENT !== 'production' ? $e->getMessage() : null,
+            ]);
+        }
+
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => '刪除權限成功',
+        ]);
+    }
+}

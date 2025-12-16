@@ -6,7 +6,25 @@ definePageMeta({
     middleware: "auth"
 });
 
-const { buildId, sections: cutSections, loading, fetchData, saveAbout } = useAbout();
+const {
+    buildId,
+    sections: cutSections,
+    loading,
+    fetchData,
+    saveAbout
+} = useAbout();
+const { hasPermission, isSuperAdmin } = usePermission();
+
+// 權限檢查
+const canCreateSection = computed(
+    () => isSuperAdmin() || hasPermission("about.section.create")
+);
+const canSortSection = computed(
+    () => isSuperAdmin() || hasPermission("about.section.sort")
+);
+const canDeleteSection = computed(
+    () => isSuperAdmin() || hasPermission("about.section.delete")
+);
 const deleteConfirmModalOpen = ref(false);
 const deleteTarget = ref<{ id: string; label: string } | null>(null);
 
@@ -21,7 +39,9 @@ const addCutSection = () => {
 
 // 更新區塊資料
 const updateSection = (updatedSection: CutSectionData) => {
-    const index = cutSections.value.findIndex((s) => s.id === updatedSection.id);
+    const index = cutSections.value.findIndex(
+        (s) => s.id === updatedSection.id
+    );
     if (index !== -1) {
         cutSections.value[index] = { ...updatedSection };
         // 這裡可以實作自動儲存或手動儲存邏輯
@@ -67,7 +87,8 @@ const moveSection = async (sectionId: string, direction: "up" | "down") => {
     const currentIndex = cutSections.value.findIndex((s) => s.id === sectionId);
     if (currentIndex === -1) return;
 
-    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+    const targetIndex =
+        direction === "up" ? currentIndex - 1 : currentIndex + 1;
     if (targetIndex < 0 || targetIndex >= cutSections.value.length) return;
 
     const sections = [...cutSections.value];
@@ -92,13 +113,11 @@ const saveAllSections = async () => {
     // await fetchData();
 };
 
-
 // 初始化資料
 onMounted(async () => {
     await fetchData();
     await nextTick();
     console.log("cutSections:", cutSections.value);
-
 });
 </script>
 <template>
@@ -110,6 +129,7 @@ onMounted(async () => {
                 </template>
                 <template #right>
                     <UButton
+                        v-if="canCreateSection"
                         label="新增區塊(卡)"
                         color="primary"
                         icon="i-lucide-plus"
@@ -141,8 +161,10 @@ onMounted(async () => {
                         :key="section.id"
                         :index="section.index"
                         :data="section"
-                        :can-move-up="section.index > 1"
-                        :can-move-down="section.index < cutSections.length"
+                        :can-move-up="section.index > 1 && canSortSection"
+                        :can-move-down="
+                            section.index < cutSections.length && canSortSection
+                        "
                         @update="updateSection"
                         @delete-request="
                             requestDeleteSection(
@@ -155,6 +177,7 @@ onMounted(async () => {
                 </template>
                 <div class="flex justify-end gap-3">
                     <UButton
+                        v-if="canCreateSection"
                         label="新增區塊(卡)"
                         color="primary"
                         icon="i-lucide-plus"

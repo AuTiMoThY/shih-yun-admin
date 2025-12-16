@@ -15,7 +15,7 @@ export const useAbout = () => {
 
 
     const fetchData = async () => {
-        loading.value = true;
+        // loading.value = true;
         submitError.value = "";
         try {
             const res = await $fetch<{
@@ -34,7 +34,7 @@ export const useAbout = () => {
             submitError.value = error?.message || "載入時發生錯誤";
             console.error(error);
         } finally {
-            loading.value = false;
+            // loading.value = false;
         }
     };
 

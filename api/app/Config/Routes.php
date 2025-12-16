@@ -18,6 +18,7 @@ $routes->post('/admins/add', 'AdminsController::addAdmin');
 $routes->post('/admins/update', 'AdminsController::updateAdmin');
 $routes->post('/admins/delete', 'AdminsController::deleteAdmin');
 $routes->get('/admins/get', 'AdminsController::getAdmins');
+$routes->get('/admins/get-by-id', 'AdminsController::getAdminById');
 $routes->post('/admins/login', 'AuthController::login');
 $routes->get('/admins/me', 'AuthController::me');
 $routes->post('/admins/logout', 'AuthController::logout');
@@ -43,3 +44,17 @@ $routes->post('/company-base/save', 'CompanyBaseController::save');
 $routes->get('/appabout/get', 'AppaboutController::get');
 $routes->post('/appabout/save', 'AppaboutController::save');
 $routes->post('/upload/image', 'UploadController::image');
+
+// 角色相關路由
+$routes->get('/role/get', 'RoleController::get');
+$routes->get('/role/get-by-id', 'RoleController::getById');
+$routes->post('/role/add', 'RoleController::add');
+$routes->post('/role/update', 'RoleController::update');
+$routes->post('/role/delete', 'RoleController::delete');
+
+// 權限相關路由
+$routes->get('/permission/get', 'PermissionController::get');
+$routes->get('/permission/get-by-id', 'PermissionController::getById');
+$routes->post('/permission/add', 'PermissionController::add');
+$routes->post('/permission/update', 'PermissionController::update');
+$routes->post('/permission/delete', 'PermissionController::delete');

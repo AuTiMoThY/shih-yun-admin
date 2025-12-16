@@ -3,9 +3,9 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class SysadminModel extends Model
+class SysAdminModel extends Model
 {
-    protected $table         = 'sysadmin';
+    protected $table         = 'sys_admin';
     protected $primaryKey    = 'id';
     protected $allowedFields = [
         'permission_name',

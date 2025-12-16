@@ -2,6 +2,11 @@
 import type { FieldConfig, FieldType } from "~/types/CutSectionField";
 
 const toast = useToast();
+const { hasPermission, isSuperAdmin } = usePermission();
+
+// 權限檢查
+const canSortField = computed(() => isSuperAdmin() || hasPermission('about.field.sort'));
+const canDeleteField = computed(() => isSuperAdmin() || hasPermission('about.field.delete'));
 
 const props = defineProps<{
     field: FieldConfig;
@@ -212,19 +217,21 @@ watch(isEditingLabel, async (editing) => {
                 </div>
                 <div class="flex items-center gap-1">
                     <UButton
-                        v-if="index > 0"
+                        v-if="index > 0 && canSortField"
                         icon="i-lucide-arrow-up"
                         size="xs"
                         color="neutral"
                         variant="ghost"
                         @click="emit('move-up', index)" />
                     <UButton
+                        v-if="canSortField"
                         icon="i-lucide-arrow-down"
                         size="xs"
                         color="neutral"
                         variant="ghost"
                         @click="emit('move-down', index)" />
                     <UButton
+                        v-if="canDeleteField"
                         icon="i-lucide-trash-2"
                         size="xs"
                         color="error"

@@ -85,9 +85,7 @@ onMounted(async () => {
             </UDashboardNavbar>
         </template>
         <template #body>
-            <div v-if="loading" class="flex items-center justify-center py-12">
-                <UIcon name="i-lucide-loader-2" class="w-6 h-6 animate-spin" />
-            </div>
+            <PageLoading v-if="loading" />
             <UForm
                 v-else
                 :state="form"

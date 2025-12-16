@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- 主機： 127.0.0.1
--- 產生時間： 2025-12-10
+-- 產生時間： 2025-12-16 03:11:37
 -- 伺服器版本： 10.4.32-MariaDB
 -- PHP 版本： 8.1.25
 
@@ -51,6 +51,13 @@ CREATE TABLE `company_base` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='公司基本資訊表';
 
 --
+-- 傾印資料表的資料 `company_base`
+--
+
+INSERT INTO `company_base` (`id`, `name`, `copyright`, `phone`, `fax`, `email`, `case_email`, `zipcode`, `city`, `district`, `address`, `fb_url`, `yt_url`, `line_url`, `keywords`, `description`, `head_code`, `body_code`, `created_at`, `updated_at`) VALUES
+(1, '石云建設股份有限公司1', 'Copyright © 2025石云建設股份有限公司版權所有', '04-2376-4599', NULL, NULL, NULL, '403', '台中市', '西區', '五權路1之67號18樓之2', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-12-14 19:23:42', '2025-12-14 23:45:25');
+
+--
 -- 已傾印資料表的索引
 --
 
@@ -68,7 +75,7 @@ ALTER TABLE `company_base`
 -- 使用資料表自動遞增(AUTO_INCREMENT) `company_base`
 --
 ALTER TABLE `company_base`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主鍵', AUTO_INCREMENT=1;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主鍵', AUTO_INCREMENT=2;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

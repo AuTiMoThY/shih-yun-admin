@@ -43,7 +43,10 @@ export const useModule = () => {
                 data.value = [];
             }
         } catch (error: any) {
-            const msg = error?.data?.message || error?.message || "取得模組資料失敗，請稍後再試";
+            const msg =
+                error?.data?.message ||
+                error?.message ||
+                "取得模組資料失敗，請稍後再試";
             toast.add({ title: msg, color: "error" });
             console.error("fetchData error", error);
             data.value = [];
@@ -105,22 +108,20 @@ export const useModule = () => {
         if (!data) return;
         form.label = data.label || "";
         form.name = data.name || "";
-    }
+    };
 
-    const addModule = async (
-        options?: {
-            closeModalRef?: Ref<boolean>;
-            onSuccess?: () => void;
-        }
-    ) => {
+    const addModule = async (options?: {
+        closeModalRef?: Ref<boolean>;
+        onSuccess?: () => void;
+    }) => {
         if (!validateForm()) return false;
-        
+
         loading.value = true;
 
         const targetModal = options?.closeModalRef ?? modalOpen;
 
         console.log("add", form);
-        
+
         try {
             const res = await $fetch<{
                 success: boolean;
@@ -144,7 +145,9 @@ export const useModule = () => {
                     : null;
             if (fieldErrors) {
                 Object.entries(fieldErrors).forEach(([key, val]) => {
-                    const msg = Array.isArray(val) ? val.join(", ") : String(val);
+                    const msg = Array.isArray(val)
+                        ? val.join(", ")
+                        : String(val);
                     // @ts-ignore
                     errors[key] = msg;
                 });
@@ -161,23 +164,21 @@ export const useModule = () => {
         } finally {
             loading.value = false;
         }
-    }
+    };
 
-    const editModule = async (
-        options?: {
-            closeModalRef?: Ref<boolean>;
-            onSuccess?: () => void;
-            id?: number | string;
-        }
-    ) => {
+    const editModule = async (options?: {
+        closeModalRef?: Ref<boolean>;
+        onSuccess?: () => void;
+        id?: number | string;
+    }) => {
         if (!validateForm()) return false;
-        
+
         loading.value = true;
 
         const targetModal = options?.closeModalRef ?? modalOpen;
 
         console.log("edit", form);
-        
+
         try {
             const res = await $fetch<{
                 success: boolean;
@@ -204,7 +205,9 @@ export const useModule = () => {
                     : null;
             if (fieldErrors) {
                 Object.entries(fieldErrors).forEach(([key, val]) => {
-                    const msg = Array.isArray(val) ? val.join(", ") : String(val);
+                    const msg = Array.isArray(val)
+                        ? val.join(", ")
+                        : String(val);
                     // @ts-ignore
                     errors[key] = msg;
                 });
@@ -221,13 +224,11 @@ export const useModule = () => {
         } finally {
             loading.value = false;
         }
-    }
-    const deleteModule = async (
-        options?: {
-            id?: number | string;
-            onSuccess?: () => void;
-        }
-    ) => {
+    };
+    const deleteModule = async (options?: {
+        id?: number | string;
+        onSuccess?: () => void;
+    }) => {
         if (!options?.id) return false;
         loading.value = true;
         try {
@@ -261,7 +262,9 @@ export const useModule = () => {
                     : null;
             if (fieldErrors) {
                 Object.entries(fieldErrors).forEach(([key, val]) => {
-                    const msg = Array.isArray(val) ? val.join(", ") : String(val);
+                    const msg = Array.isArray(val)
+                        ? val.join(", ")
+                        : String(val);
                     // @ts-ignore
                     errors[key] = msg;
                 });
@@ -278,8 +281,7 @@ export const useModule = () => {
         } finally {
             loading.value = false;
         }
-    
-    }
+    };
     return {
         form,
         errors,
@@ -293,5 +295,5 @@ export const useModule = () => {
         addModule,
         editModule,
         deleteModule
-    }
-}
+    };
+};

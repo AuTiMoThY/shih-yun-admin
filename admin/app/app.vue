@@ -1,4 +1,44 @@
 <script setup>
+const route = useRoute();
+const router = useRouter();
+
+const { getUserPermissions, hasPermission } = usePermission();
+console.log("所有權限:", getUserPermissions());
+console.log("是否有 system.admin.view:", hasPermission("system.admin.view"));
+
+// 使用 Nuxt 的路由鉤子來監聽路由變化
+router.afterEach((to, from) => {
+    console.log(
+        "[app.vue] Route changed (afterEach):",
+        from.path,
+        "->",
+        to.path
+    );
+});
+
+router.beforeEach((to, from) => {
+    console.log(
+        "[app.vue] Route changing (beforeEach):",
+        from.path,
+        "->",
+        to.path
+    );
+    return true;
+});
+
+// 也保留 watch 作為備用
+watch(
+    () => route.path,
+    (newPath, oldPath) => {
+        console.log("[app.vue] Route changed (watch):", oldPath, "->", newPath);
+    },
+    { immediate: true }
+);
+
+onMounted(() => {
+    console.log("[app.vue] App mounted, current route:", route.path);
+});
+
 const colorMode = useColorMode();
 
 // 確保初始模式為 light

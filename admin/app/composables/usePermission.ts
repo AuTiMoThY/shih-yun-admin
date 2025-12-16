@@ -29,12 +29,14 @@ export const usePermission = () => {
       })
     }
     
-    // 加入直接授予的權限，排除被撤銷的權限
+    // 加入直接授予的權限
+    // 注意：後端返回的 user.value.permissions 是字串陣列（權限名稱），不是物件陣列
     if (user.value.permissions) {
-      user.value.permissions.forEach((permission: Permission) => {
-        // 這裡需要從 UserPermission 檢查 is_granted，簡化示例直接加入
-        if (!permissions.includes(permission.name)) {
-          permissions.push(permission.name)
+      user.value.permissions.forEach((permission: string | Permission) => {
+        // 判斷是字串還是物件
+        const permissionName = typeof permission === 'string' ? permission : permission.name
+        if (permissionName && !permissions.includes(permissionName)) {
+          permissions.push(permissionName)
         }
       })
     }

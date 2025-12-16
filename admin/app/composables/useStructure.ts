@@ -38,11 +38,11 @@ export const useStructure = () => {
         });
         if (res?.success) {
             data.value = (res.data || []).filter(Boolean);
-            console.log("fetchData success", {
-                count: data.value.length,
-                ids: data.value.map((x) => x?.id),
-                data: data.value
-            });
+            // console.log("fetchData success", {
+            //     count: data.value.length,
+            //     ids: data.value.map((x) => x?.id),
+            //     data: data.value
+            // });
         } else {
             console.error(res.message);
             toast.add({ title: res.message, color: "error" });

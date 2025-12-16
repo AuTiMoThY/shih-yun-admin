@@ -1,16 +1,16 @@
 <?php
 namespace App\Controllers;
 
-use App\Models\SysmoduleModel;
+use App\Models\SysModuleModel;
 use CodeIgniter\HTTP\ResponseInterface;
 
 class ModuleController extends BaseController
 {
-    protected $sysmoduleModel;
+    protected $SysModuleModel;
 
     public function __construct()
     {
-        $this->sysmoduleModel = new SysmoduleModel();
+        $this->SysModuleModel = new SysModuleModel();
     }
 
     /**
@@ -19,7 +19,7 @@ class ModuleController extends BaseController
     public function get()
     {
         try {
-            $modules = $this->sysmoduleModel->orderBy('id', 'ASC')->findAll();
+            $modules = $this->SysModuleModel->orderBy('id', 'ASC')->findAll();
 
             return $this->response->setJSON([
                 'success' => true,
@@ -58,7 +58,7 @@ class ModuleController extends BaseController
 
         try {
             // 檢查模組代碼是否已存在
-            $existingModule = $this->sysmoduleModel->where('name', $data['name'])->first();
+            $existingModule = $this->SysModuleModel->where('name', $data['name'])->first();
             if ($existingModule) {
                 return $this->response->setStatusCode(ResponseInterface::HTTP_CONFLICT)->setJSON([
                     'success' => false,
@@ -74,7 +74,7 @@ class ModuleController extends BaseController
                 'name' => trim($data['name']),
             ];
 
-            $insertId = $this->sysmoduleModel->insert($insertData);
+            $insertId = $this->SysModuleModel->insert($insertData);
 
             if (!$insertId) {
                 return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON([
@@ -117,7 +117,7 @@ class ModuleController extends BaseController
         }
 
         // 檢查模組是否存在
-        $module = $this->sysmoduleModel->find($id);
+        $module = $this->SysModuleModel->find($id);
         if (!$module) {
             return $this->response->setStatusCode(ResponseInterface::HTTP_NOT_FOUND)->setJSON([
                 'success' => false,
@@ -146,7 +146,7 @@ class ModuleController extends BaseController
             }
             if (isset($data['name'])) {
                 // 檢查模組代碼是否已被其他模組使用
-                $existingModule = $this->sysmoduleModel->where('name', trim($data['name']))->where('id !=', $id)->first();
+                $existingModule = $this->SysModuleModel->where('name', trim($data['name']))->where('id !=', $id)->first();
                 if ($existingModule) {
                     return $this->response->setStatusCode(ResponseInterface::HTTP_CONFLICT)->setJSON([
                         'success' => false,
@@ -166,7 +166,7 @@ class ModuleController extends BaseController
                 ]);
             }
 
-            $updated = $this->sysmoduleModel->update($id, $updateData);
+            $updated = $this->SysModuleModel->update($id, $updateData);
 
             if (!$updated) {
                 return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON([
@@ -207,7 +207,7 @@ class ModuleController extends BaseController
 
         try {
             // 檢查模組是否存在
-            $module = $this->sysmoduleModel->find($id);
+            $module = $this->SysModuleModel->find($id);
             if (!$module) {
                 return $this->response->setStatusCode(ResponseInterface::HTTP_NOT_FOUND)->setJSON([
                     'success' => false,
@@ -215,7 +215,7 @@ class ModuleController extends BaseController
                 ]);
             }
 
-            $deleted = $this->sysmoduleModel->delete($id);
+            $deleted = $this->SysModuleModel->delete($id);
             if (!$deleted) {
                 return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON([
                     'success' => false,

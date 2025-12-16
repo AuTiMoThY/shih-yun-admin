@@ -229,7 +229,21 @@ export const useAuth = () => {
     const initAuth = async () => {
         // 如果有 token 則嘗試刷新使用者狀態
         if (token.value) {
-            await fetchUser();
+            try {
+                // 添加超時機制，避免請求卡住
+                const timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error("認證請求超時")), 5000);
+                });
+                
+                await Promise.race([fetchUser(), timeoutPromise]);
+            } catch (error) {
+                console.error("initAuth error:", error);
+                // 如果認證失敗，清除 token 和 user，但不強制登出
+                // 讓中間件根據 isAuthenticated 狀態決定是否導向登入頁
+                if (error instanceof Error && error.message === "認證請求超時") {
+                    console.warn("認證請求超時，繼續載入頁面");
+                }
+            }
         }
     };
 
