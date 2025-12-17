@@ -1,8 +1,6 @@
 <script setup lang="ts">
 type ModalMode = "add" | "edit";
 
-import { STATUS_LABEL_MAP } from "~/constants/system/status";
-
 const props = withDefaults(
     defineProps<{
         mode: ModalMode;
@@ -72,19 +70,6 @@ const handleSubmit = async () => {
         });
     }
 };
-
-// 狀態的計算屬性，用於 UCheckbox 的 v-model（需要 boolean 類型）
-const statusBoolean = computed({
-    get: () => {
-        if (typeof form.status === "boolean") {
-            return form.status;
-        }
-        return form.status === 1;
-    },
-    set: (value: boolean) => {
-        form.status = value ? 1 : 0;
-    }
-});
 
 // 當 modal 開啟時重置表單或載入資料
 watch(
@@ -177,11 +162,12 @@ watch(
                         class="w-full"
                         :rows="3" />
                 </UFormField>
-                <UFormField label="狀態" name="status" :ui="{ root: 'mb-4' }">
-                    <UCheckbox
-                        v-model="statusBoolean"
-                        :label="STATUS_LABEL_MAP[statusBoolean ? '1' : '0']" />
-                </UFormField>
+                <FormStatusField
+                    label="狀態"
+                    name="status"
+                    v-model="form.status"
+                    :disabled="loading"
+                    :field-ui="{ root: 'mb-4' }"/>
                 <UButton
                     type="submit"
                     block

@@ -25,8 +25,8 @@ class RoleModel extends Model
 
     protected $validationMessages = [
         'name' => [
-            'required' => '角色名稱不能為空',
-            'is_unique' => '角色名稱已存在',
+            'required' => '角色代碼不能為空',
+            'is_unique' => '角色代碼已存在',
         ],
         'label' => [
             'required' => '角色顯示名稱不能為空',

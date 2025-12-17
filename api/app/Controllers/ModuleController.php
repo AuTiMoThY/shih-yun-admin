@@ -141,22 +141,29 @@ class ModuleController extends BaseController
         try {
             $updateData = [];
 
-            if (isset($data['label'])) {
-                $updateData['label'] = trim($data['label']);
-            }
             if (isset($data['name'])) {
-                // 檢查模組代碼是否已被其他模組使用
-                $existingModule = $this->SysModuleModel->where('name', trim($data['name']))->where('id !=', $id)->first();
-                if ($existingModule) {
-                    return $this->response->setStatusCode(ResponseInterface::HTTP_CONFLICT)->setJSON([
-                        'success' => false,
-                        'message' => '模組代碼已存在',
-                        'errors' => [
-                            'name' => '此模組代碼已被其他模組使用',
-                        ],
-                    ]);
+                $newName = trim($data['name']);
+                // 檢查代碼是否真的改變了
+                if ($module['name'] !== $newName) {
+                    // 只有代碼改變時才需要檢查唯一性
+                    $existingModule = $this->SysModuleModel->where('name', $newName)->where('id !=', $id)->first();
+                    if ($existingModule) {
+                        return $this->response->setStatusCode(ResponseInterface::HTTP_CONFLICT)->setJSON([
+                            'success' => false,
+                            'message' => '模組代碼已存在',
+                            'errors' => [
+                                'name' => '此模組代碼已被其他模組使用',
+                            ],
+                        ]);
+                    }
+                    $updateData['name'] = $newName;
                 }
-                $updateData['name'] = trim($data['name']);
+            }
+            if (isset($data['label'])) {
+                $newLabel = trim($data['label']);
+                if (($module['label'] ?? null) !== $newLabel) {
+                    $updateData['label'] = $newLabel;
+                }
             }
 
             if (empty($updateData)) {
@@ -166,13 +173,18 @@ class ModuleController extends BaseController
                 ]);
             }
 
-            $updated = $this->SysModuleModel->update($id, $updateData);
+            // 跳過 Model 驗證，因為我們已經在 Controller 中手動驗證了
+            $updated = $this->SysModuleModel->skipValidation(true)->update($id, $updateData);
 
             if (!$updated) {
-                return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON([
+                $error = $this->SysModuleModel->errors();
+                $response = [
                     'success' => false,
                     'message' => '更新模組失敗，請稍後再試',
-                ]);
+                    'error' => 'Model update failed',
+                    'model_errors' => $error,
+                ];
+                return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON($response);
             }
 
             return $this->response->setJSON([

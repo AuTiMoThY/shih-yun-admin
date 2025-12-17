@@ -1,9 +1,17 @@
+<script setup lang="ts">
+definePageMeta({
+    middleware: "auth"
+});
+</script>
+
 <template>
     <UDashboardPanel id="home">
         <template #header>
-            <UDashboardNavbar title="Home" :ui="{ right: 'gap-3' }">
+            <UDashboardNavbar
+                title="Home"
+                :ui="{ right: 'gap-3', title: 'text-primary' }">
                 <template #leading>
-                    <UDashboardSidebarCollapse />
+                    <UDashboardSidebarCollapse color="primary" />
                 </template>
 
                 <template #right> </template>
@@ -12,9 +20,7 @@
 
         <template #body>
             <div class="p-6">
-                <h2 class="text-2xl font-bold mb-4">
-                    歡迎回來！
-                </h2>
+                <h2 class="text-2xl font-bold mb-4">歡迎回來！</h2>
                 <p class="text-gray-600 dark:text-gray-400">
                     這是您的後台管理介面首頁。
                 </p>
@@ -25,9 +31,3 @@
         </template>
     </UDashboardPanel>
 </template>
-
-<script setup lang="ts">
-definePageMeta({
-    middleware: 'auth',
-});
-</script>

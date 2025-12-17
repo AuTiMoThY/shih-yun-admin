@@ -194,8 +194,16 @@ export const useModule = () => {
                 resetForm();
                 targetModal.value = false;
                 options?.onSuccess?.();
+                toast.add({
+                    title: res.message ?? "修改成功",
+                    color: "success"
+                });
             } else {
                 submitError.value = res?.message;
+                toast.add({
+                    title: res?.message ?? "修改失敗",
+                    color: "error"
+                });
             }
         } catch (error: any) {
             const data = error?.data || error?.response?._data;

@@ -207,7 +207,7 @@ watch(
         <template #content>
             <div class="p-4">
                 <!-- 欄位列表 -->
-                <div v-if="sectionData.fields.length > 0" class="space-y-4">
+                <div v-if="sectionData.fields.length > 0" class="">
                     <AboutFieldItem
                         v-for="(field, index) in sectionData.fields"
                         :key="field.id"

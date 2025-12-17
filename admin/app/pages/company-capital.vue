@@ -67,20 +67,18 @@ onMounted(async () => {
 <template>
     <UDashboardPanel>
         <template #header>
-            <UDashboardNavbar title="公司資本資料設定" :ui="{ right: 'gap-3' }">
+            <UDashboardNavbar title="公司資本資料設定" :ui="{ right: 'gap-3', title: 'text-primary' }">
                 <template #leading>
-                    <UDashboardSidebarCollapse />
+                    <UDashboardSidebarCollapse color="primary" />
                 </template>
                 <template #right>
                     <UButton
-                        type="button"
-                        color="primary"
-                        size="lg"
+                        label="儲存"
+                        color="success"
+                        icon="i-lucide-save"
                         :loading="loading"
                         :disabled="loading"
-                        @click="handleSave($event)">
-                        儲存
-                    </UButton>
+                        @click="handleSave($event)" />
                 </template>
             </UDashboardNavbar>
         </template>
@@ -357,13 +355,12 @@ onMounted(async () => {
                 <!-- 提交按鈕 -->
                 <div class="flex justify-end gap-4 pt-4">
                     <UButton
-                        type="submit"
-                        color="primary"
-                        size="lg"
+                        label="儲存"
+                        color="success"
+                        icon="i-lucide-save"
                         :loading="loading"
-                        :disabled="loading">
-                        儲存
-                    </UButton>
+                        :disabled="loading"
+                        @click="handleSave($event)" />
                 </div>
 
                 <div
@@ -372,6 +369,9 @@ onMounted(async () => {
                     {{ submitError }}
                 </div>
             </UForm>
+        </template>
+        <template #footer>
+            <PageFooter />
         </template>
     </UDashboardPanel>
 </template>

@@ -248,7 +248,7 @@ watch(isEditingLabel, async (editing) => {
             </div>
         </template>
 
-        <div class="space-y-4">
+        <div class="">
             <!-- 根據欄位類型顯示不同的輸入元件 -->
             <template
                 v-if="field.type === 'title' || field.type === 'subtitle'">

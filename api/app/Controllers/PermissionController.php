@@ -199,36 +199,58 @@ class PermissionController extends BaseController
             $updateData = [];
 
             if (isset($data['name'])) {
-                // 檢查權限名稱是否已被其他權限使用
-                $existingPermission = $this->permissionModel->where('name', trim($data['name']))->where('id !=', $id)->first();
-                if ($existingPermission) {
-                    return $this->response->setStatusCode(ResponseInterface::HTTP_CONFLICT)->setJSON([
-                        'success' => false,
-                        'message' => '權限名稱已存在',
-                        'errors' => [
-                            'name' => '此權限名稱已被其他權限使用',
-                        ],
-                    ]);
+                $newName = trim($data['name']);
+                // 檢查代碼是否真的改變了
+                if ($permission['name'] !== $newName) {
+                    // 只有代碼改變時才需要檢查唯一性
+                    $existingPermission = $this->permissionModel->where('name', $newName)->where('id !=', $id)->first();
+                    if ($existingPermission) {
+                        return $this->response->setStatusCode(ResponseInterface::HTTP_CONFLICT)->setJSON([
+                            'success' => false,
+                            'message' => '權限代碼已存在~',
+                            'errors' => [
+                                'name' => '此權限代碼已被其他權限使用',
+                            ],
+                        ]);
+                    }
+                    $updateData['name'] = $newName;
                 }
-                $updateData['name'] = trim($data['name']);
             }
             if (isset($data['label'])) {
-                $updateData['label'] = trim($data['label']);
+                $newLabel = trim($data['label']);
+                if (($permission['label'] ?? null) !== $newLabel) {
+                    $updateData['label'] = $newLabel;
+                }
             }
             if (isset($data['description'])) {
-                $updateData['description'] = $data['description'];
+                $newDescription = $data['description'];
+                if (($permission['description'] ?? null) !== $newDescription) {
+                    $updateData['description'] = $newDescription;
+                }
             }
             if (isset($data['module_id'])) {
-                $updateData['module_id'] = $data['module_id'] ? (int)$data['module_id'] : null;
+                $newModuleId = $data['module_id'] ? (int)$data['module_id'] : null;
+                if (($permission['module_id'] ?? null) !== $newModuleId) {
+                    $updateData['module_id'] = $newModuleId;
+                }
             }
             if (isset($data['category'])) {
-                $updateData['category'] = $data['category'];
+                $newCategory = $data['category'];
+                if (($permission['category'] ?? null) !== $newCategory) {
+                    $updateData['category'] = $newCategory;
+                }
             }
             if (isset($data['action'])) {
-                $updateData['action'] = $data['action'];
+                $newAction = $data['action'];
+                if (($permission['action'] ?? null) !== $newAction) {
+                    $updateData['action'] = $newAction;
+                }
             }
             if (isset($data['status'])) {
-                $updateData['status'] = (int)$data['status'];
+                $newStatus = (int)$data['status'];
+                if ((int)($permission['status'] ?? 1) !== $newStatus) {
+                    $updateData['status'] = $newStatus;
+                }
             }
 
             if (empty($updateData)) {
@@ -238,13 +260,18 @@ class PermissionController extends BaseController
                 ]);
             }
 
-            $updated = $this->permissionModel->update($id, $updateData);
+            // 跳過 Model 驗證，因為我們已經在 Controller 中手動驗證了
+            $updated = $this->permissionModel->skipValidation(true)->update($id, $updateData);
 
             if (!$updated) {
-                return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON([
+                $error = $this->permissionModel->errors();
+                $response = [
                     'success' => false,
                     'message' => '更新權限失敗，請稍後再試',
-                ]);
+                    'error' => 'Model update failed',
+                    'model_errors' => $error,
+                ];
+                return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON($response);
             }
 
             return $this->response->setJSON([

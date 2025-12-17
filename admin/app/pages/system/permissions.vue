@@ -71,7 +71,7 @@ const columns: TableColumn<any>[] = [
 
 const addPermission = () => {
     addPermissionModalOpen.value = true;
-}
+};
 
 const editPermission = async (data: any) => {
     const permissionData = await usePermissionData().fetchById(data.id);
@@ -79,7 +79,7 @@ const editPermission = async (data: any) => {
         editData.value = permissionData;
         editPermissionModalOpen.value = true;
     }
-}
+};
 
 const handleDelete = async (data: any) => {
     await deletePermission({
@@ -89,12 +89,12 @@ const handleDelete = async (data: any) => {
             fetchData(moduleId ?? undefined);
         }
     });
-}
+};
 
 const handleModuleFilter = () => {
     const moduleId = selectedModuleId.value;
     fetchData(moduleId ?? undefined);
-}
+};
 
 onMounted(async () => {
     await fetchModules();
@@ -104,9 +104,18 @@ onMounted(async () => {
 <template>
     <UDashboardPanel>
         <template #header>
-            <UDashboardNavbar title="權限設定" :ui="{ right: 'gap-3' }">
+            <UDashboardNavbar
+                title="權限設定"
+                :ui="{ right: 'gap-3', title: 'text-primary' }">
                 <template #leading>
-                    <UDashboardSidebarCollapse />
+                    <UDashboardSidebarCollapse color="primary" />
+                </template>
+                <template #right>
+                    <UButton
+                        label="新增權限"
+                        color="primary"
+                        icon="lucide:plus"
+                        @click="addPermission" />
                 </template>
             </UDashboardNavbar>
             <UDashboardToolbar>
@@ -121,47 +130,35 @@ onMounted(async () => {
                         @change="handleModuleFilter"
                         class="w-48" />
                 </template>
-                <template #right>
-                    <UButton
-                        color="primary"
-                        variant="outline"
-                        icon="lucide:plus"
-                        label="新增權限"
-                        @click="addPermission" />
-                </template>
             </UDashboardToolbar>
         </template>
         <template #body>
-            <UTable
-                ref="table"
-                class="shrink-0"
+            <DataTable
                 :data="data"
                 :columns="columns"
-                :loading="loading"
-                :ui="{
-                    base: 'table-fixed border-separate border-spacing-0',
-                    thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-                    tbody: '[&>tr]:last:[&>td]:border-b-0',
-                    th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-                    td: 'border-b border-default',
-                    separator: 'h-0'
-                }" />
+                :loading="loading" />
+        </template>
+        <template #footer>
+            <PageFooter />
         </template>
     </UDashboardPanel>
     <PermissionFrmModal
         v-model:open="addPermissionModalOpen"
         mode="add"
-        @added="() => {
-            const moduleId = selectedModuleId;
-            fetchData(moduleId ?? undefined);
-        }" />
+        @added="
+            () => {
+                const moduleId = selectedModuleId;
+                fetchData(moduleId ?? undefined);
+            }
+        " />
     <PermissionFrmModal
         v-model:open="editPermissionModalOpen"
         mode="edit"
         :data="editData"
-        @updated="() => {
-            const moduleId = selectedModuleId;
-            fetchData(moduleId ?? undefined);
-        }" />
+        @updated="
+            () => {
+                const moduleId = selectedModuleId;
+                fetchData(moduleId ?? undefined);
+            }
+        " />
 </template>
-

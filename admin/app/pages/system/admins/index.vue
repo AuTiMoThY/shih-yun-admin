@@ -30,8 +30,7 @@ const columns: TableColumn<any>[] = [
                     h(
                         "span",
                         {
-                            class:
-                                "px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800"
+                            class: "px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800"
                         },
                         role.label || role.name
                     )
@@ -102,37 +101,29 @@ onMounted(() => {
 <template>
     <UDashboardPanel id="admins">
         <template #header>
-            <UDashboardNavbar title="管理員設定" :ui="{ right: 'gap-3' }">
+            <UDashboardNavbar
+                title="管理員設定"
+                :ui="{ right: 'gap-3', title: 'text-primary' }">
                 <template #leading>
-                    <UDashboardSidebarCollapse />
+                    <UDashboardSidebarCollapse color="primary" />
                 </template>
-            </UDashboardNavbar>
-
-            <UDashboardToolbar>
                 <template #right>
                     <UButton
-                        color="primary"
-                        variant="outline"
-                        icon="lucide:plus"
                         label="新增管理員"
+                        color="primary"
+                        icon="lucide:plus"
                         to="/system/admins/add" />
                 </template>
-            </UDashboardToolbar>
+            </UDashboardNavbar>
         </template>
         <template #body>
-            <UTable
-                class="shrink-0"
+            <DataTable
                 :data="data"
                 :columns="columns"
-                :loading="loading"
-                :ui="{
-                    base: 'table-fixed border-separate border-spacing-0',
-                    thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-                    tbody: '[&>tr]:last:[&>td]:border-b-0',
-                    th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-                    td: 'border-b border-default',
-                    separator: 'h-0'
-                }" />
+                :loading="loading" />
+        </template>
+        <template #footer>
+            <PageFooter />
         </template>
     </UDashboardPanel>
 </template>

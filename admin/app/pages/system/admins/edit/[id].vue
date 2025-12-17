@@ -48,30 +48,31 @@ onMounted(async () => {
 <template>
     <UDashboardPanel>
         <template #header>
-            <UDashboardNavbar title="編輯管理員" :ui="{ right: 'gap-3' }">
+            <UDashboardNavbar
+                title="編輯管理員"
+                :ui="{ right: 'gap-3', title: 'text-primary' }">
                 <template #leading>
-                    <UDashboardSidebarCollapse />
+                    <UDashboardSidebarCollapse color="primary" />
                 </template>
                 <template #right>
                     <UButton
+                        label="更新管理員"
                         type="button"
-                        color="primary"
-                        variant="outline"
+                        color="success"
                         icon="lucide:save"
                         :loading="loading"
                         :disabled="loading"
-                        @click="handleSubmit()"
-                        label="更新管理員" />
+                        @click="handleSubmit()" />
                 </template>
             </UDashboardNavbar>
             <UDashboardToolbar>
                 <template #left>
                     <UButton
-                        color="neutral"
-                        variant="outline"
-                        icon="i-lucide-arrow-left"
                         label="返回列表"
-                        @click="router.push('/system/admins')" />
+                        color="neutral"
+                        variant="ghost"
+                        icon="i-lucide-arrow-left"
+                        to="/system/admins" />
                 </template>
             </UDashboardToolbar>
         </template>
@@ -82,6 +83,9 @@ onMounted(async () => {
                 ref="adminFormRef"
                 mode="edit"
                 :initial-data="adminData" />
+        </template>
+        <template #footer>
+            <PageFooter />
         </template>
     </UDashboardPanel>
 </template>

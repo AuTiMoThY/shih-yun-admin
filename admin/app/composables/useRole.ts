@@ -139,7 +139,9 @@ export const useRole = () => {
         form.status = data.status !== undefined ? Number(data.status) : 1;
         // 確保 permission_ids 是數字陣列
         form.permission_ids = Array.isArray(data.permission_ids)
-            ? data.permission_ids.map((id: any) => Number(id)).filter((id: number) => !isNaN(id))
+            ? data.permission_ids
+                  .map((id: any) => Number(id))
+                  .filter((id: number) => !isNaN(id))
             : [];
     };
 
@@ -194,9 +196,8 @@ export const useRole = () => {
                 });
             }
             const msg =
-                (typeof data?.message === "string" && data.message) ||
-                (typeof data === "string" ? data : null) ||
-                error?.message ||
+                data?.model_errors?.name ||
+                data?.message ||
                 "新增角色失敗，請稍後再試";
             submitError.value = msg;
             toast.add({ title: msg, color: "error" });
@@ -226,25 +227,26 @@ export const useRole = () => {
             description: form.description || null,
             status: Number(form.status),
             permission_ids: Array.isArray(form.permission_ids)
-                ? form.permission_ids.map((id: any) => Number(id)).filter((id: number) => !isNaN(id))
+                ? form.permission_ids
+                      .map((id: any) => Number(id))
+                      .filter((id: number) => !isNaN(id))
                 : []
         };
-        const requestUrl = `${apiBase}/role/update`;
 
-        // 記錄請求資訊
-        console.group("🔵 [editRole] 請求資訊");
-        console.log("URL:", requestUrl);
-        console.log("Method:", "POST");
-        console.log("Request Body:", JSON.stringify(requestBody, null, 2));
-        console.log("Form Data:", JSON.stringify(form, null, 2));
-        console.log("Role ID:", options?.id);
-        console.groupEnd();
+        // // 記錄請求資訊
+        // console.group("🔵 [editRole] 請求資訊");
+        // console.log("URL:", `${apiBase}/role/update`);
+        // console.log("Method:", "POST");
+        // console.log("Request Body:", JSON.stringify(requestBody, null, 2));
+        // console.log("Form Data:", JSON.stringify(form, null, 2));
+        // console.log("Role ID:", options?.id);
+        // console.groupEnd();
 
         try {
             const res = await $fetch<{
                 success: boolean;
                 message: string;
-            }>(requestUrl, {
+            }>(`${apiBase}/role/update`, {
                 method: "POST",
                 body: requestBody
             });
@@ -252,11 +254,11 @@ export const useRole = () => {
                 resetForm();
                 if (targetModal) targetModal.value = false;
                 options?.onSuccess?.();
-                
+
                 // 重新載入用戶資料以更新權限
                 const { fetchUser } = useAuth();
                 await fetchUser();
-                
+
                 toast.add({
                     title: res.message || "更新角色成功",
                     color: "success"
@@ -273,7 +275,7 @@ export const useRole = () => {
             }
         } catch (error: any) {
             const data = error?.data || error?.response?._data;
-            
+
             // 處理欄位錯誤
             const fieldErrors =
                 data?.errors && typeof data.errors === "object"
@@ -290,10 +292,13 @@ export const useRole = () => {
             }
 
             // 組合錯誤訊息
-            const msg = data?.message || "更新角色失敗，請稍後再試";
+            const msg =
+                data?.model_errors?.name ||
+                data?.message ||
+                "更新角色失敗，請稍後再試";
             submitError.value = msg;
-            toast.add({ 
-                title: msg, 
+            toast.add({
+                title: msg,
                 color: "error"
             });
             return false;

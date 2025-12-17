@@ -292,6 +292,7 @@ onUnmounted(() => {
         <td class="py-2 px-4 border-b border-default">
             <div class="flex items-center gap-2">
                 <UBadge
+                    variant="outline"
                     :label="levelStatusLabelMap[level.status] ?? level.status"
                     :color="level.status === '1' ? 'success' : 'error'" />
             </div>
@@ -302,14 +303,12 @@ onUnmounted(() => {
                     icon="i-lucide-edit"
                     label="編輯"
                     color="primary"
-                    variant="outline"
                     size="xs"
                     @click="onEdit?.(level)" />
                 <UButton
                     icon="i-lucide-plus"
                     label="加入子層級"
                     color="primary"
-                    variant="outline"
                     size="xs"
                     :disabled="!canAddSub"
                     :title="!canAddSub ? '已有模組，無法新增子層級' : ''"

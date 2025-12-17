@@ -22,7 +22,7 @@ export const useAbout = () => {
                 success: boolean;
                 data?: { title?: string | null; sections?: CutSectionData[] };
                 message?: string;
-            }>(`${apiBase}/appabout/get`);
+            }>(`${apiBase}/app-about/get`);
 
             if (res?.success && res.data) {
                 title.value = res.data.title ?? null;
@@ -43,7 +43,7 @@ export const useAbout = () => {
         submitError.value = "";
         try {
             const res = await $fetch<{ success: boolean; message?: string }>(
-                `${apiBase}/appabout/save`,
+                `${apiBase}/app-about/save`,
                 {
                     method: "POST",
                     body: {

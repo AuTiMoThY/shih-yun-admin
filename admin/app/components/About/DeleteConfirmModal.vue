@@ -18,7 +18,7 @@ const props = defineProps<{
             class: 'rounded-full'
         }">
         <template #body>
-            <div class="space-y-4">
+            <div class="">
                 <div class="flex items-start gap-3">
                     <UIcon
                         name="i-lucide-alert-triangle"

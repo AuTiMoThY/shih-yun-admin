@@ -136,18 +136,11 @@ watch(
                         class="w-full"
                         :rows="3" />
                 </UFormField>
-                <UFormField
-                    label="狀態"
-                    name="status">
-                    <USelect
+                <FormStatusField
                         v-model="form.status"
-                        :options="[
-                            { label: '啟用', value: 1 },
-                            { label: '停用', value: 0 }
-                        ]"
-                        :disabled="loading"
-                        class="w-full" />
-                </UFormField>
+                        label="狀態"
+                        name="status"
+                        :disabled="loading" />
                 <UFormField
                     label="權限"
                     name="permission_ids">

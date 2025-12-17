@@ -16,7 +16,13 @@ const apiBase =
 
 console.log("========== apiBase ==========", apiBase);
 export default defineNuxtConfig({
-    modules: ["@nuxt/eslint", "@nuxt/ui", "@nuxt/image", "@vueuse/nuxt"],
+    modules: [
+        "@nuxt/eslint",
+        "@nuxt/ui",
+        "@nuxt/image",
+        "@vueuse/nuxt",
+        "nuxt-tiptap-editor"
+    ],
 
     ssr: false, // 禁用 SSR，只使用客戶端渲染
 
@@ -79,5 +85,9 @@ export default defineNuxtConfig({
         // Nuxt Image 目前僅支援 ipx 等動態 provider，static 不是有效值
         // 若要完全靜態化，請改用原生 <img> 引用 public/ 下的檔案
         provider: "ipx"
+    },
+
+    tiptap: {
+        prefix: "Tiptap" //prefix for Tiptap imports, composables not included
     }
 });

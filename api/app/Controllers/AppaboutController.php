@@ -10,7 +10,7 @@ class AppaboutController extends BaseController
 
     public function __construct()
     {
-        $this->appaboutModel = new AppaboutModel();
+        $this->appaboutModel = new AppAboutModel();
     }
 
     /**

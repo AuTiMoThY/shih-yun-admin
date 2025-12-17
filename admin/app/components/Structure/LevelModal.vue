@@ -188,18 +188,6 @@ onMounted(async () => {
                     </p>
                 </UFormField>
                 <UCheckbox
-                    v-model="form.is_show_frontend"
-                    indicator="end"
-                    label="是否顯示前台"
-                    :disabled="loading"
-                    :ui="checkboxUI" />
-                <UCheckbox
-                    v-model="form.is_show_backend"
-                    indicator="end"
-                    label="是否顯示後台"
-                    :disabled="loading"
-                    :ui="checkboxUI" />
-                <UCheckbox
                     v-model="form.status"
                     indicator="end"
                     label="是否上線"

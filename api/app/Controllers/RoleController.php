@@ -208,9 +208,9 @@ class RoleController extends BaseController
 
             if (isset($data['name'])) {
                 $newName = trim($data['name']);
-                // 檢查名稱是否真的改變了
+                // 只有在值真的改變時才處理
                 if ($role['name'] !== $newName) {
-                    // 只有名稱改變時才需要檢查唯一性
+                    // 檢查唯一性
                     $existingRole = $this->roleModel->where('name', $newName)->where('id !=', $id)->first();
                     if ($existingRole) {
                         return $this->response->setStatusCode(ResponseInterface::HTTP_CONFLICT)->setJSON([
@@ -221,32 +221,46 @@ class RoleController extends BaseController
                             ],
                         ]);
                     }
+                    $updateData['name'] = $newName;
                 }
-                $updateData['name'] = $newName;
             }
             if (isset($data['label'])) {
-                $updateData['label'] = trim($data['label']);
+                $newLabel = trim($data['label']);
+                if (($role['label'] ?? null) !== $newLabel) {
+                    $updateData['label'] = $newLabel;
+                }
             }
             if (isset($data['description'])) {
-                $updateData['description'] = $data['description'];
+                $newDescription = $data['description'];
+                if (($role['description'] ?? null) !== $newDescription) {
+                    $updateData['description'] = $newDescription;
+                }
             }
             if (isset($data['status'])) {
-                $updateData['status'] = (int)$data['status'];
+                $newStatus = (int)$data['status'];
+                if ((int)($role['status'] ?? 1) !== $newStatus) {
+                    $updateData['status'] = $newStatus;
+                }
             }
 
-            if (!empty($updateData)) {
-                // 跳過 Model 驗證，因為我們已經在 Controller 中手動驗證了
-                $updated = $this->roleModel->skipValidation(true)->update($id, $updateData);
-                if (!$updated) {
-                    $error = $this->roleModel->errors();
-                    $response = [
-                        'success' => false,
-                        'message' => '更新角色失敗，請稍後再試',
-                        'error' => 'Model update failed',
-                        'model_errors' => $error,
-                    ];
-                    return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON($response);
-                }
+            if (empty($updateData)) {
+                return $this->response->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST)->setJSON([
+                    'success' => false,
+                    'message' => '沒有需要更新的資料',
+                ]);
+            }
+
+            // 跳過 Model 驗證，因為我們已經在 Controller 中手動驗證了
+            $updated = $this->roleModel->skipValidation(true)->update($id, $updateData);
+            if (!$updated) {
+                $error = $this->roleModel->errors();
+                $response = [
+                    'success' => false,
+                    'message' => '更新角色失敗，請稍後再試',
+                    'error' => 'Model update failed',
+                    'model_errors' => $error,
+                ];
+                return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON($response);
             }
 
             // 更新權限關聯

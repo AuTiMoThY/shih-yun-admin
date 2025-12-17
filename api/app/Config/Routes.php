@@ -36,13 +36,7 @@ $routes->post('/module/update', 'ModuleController::update');
 $routes->post('/module/delete', 'ModuleController::delete');
 $routes->get('/module/get', 'ModuleController::get');
 
-// 公司基本資料相關路由
-$routes->get('/company-base/get', 'CompanyBaseController::get');
-$routes->post('/company-base/save', 'CompanyBaseController::save');
-
-// 關於頁面區塊設定
-$routes->get('/appabout/get', 'AppaboutController::get');
-$routes->post('/appabout/save', 'AppaboutController::save');
+// 上傳圖片相關路由
 $routes->post('/upload/image', 'UploadController::image');
 
 // 角色相關路由
@@ -58,3 +52,18 @@ $routes->get('/permission/get-by-id', 'PermissionController::getById');
 $routes->post('/permission/add', 'PermissionController::add');
 $routes->post('/permission/update', 'PermissionController::update');
 $routes->post('/permission/delete', 'PermissionController::delete');
+
+// 公司基本資料相關路由
+$routes->get('/company-base/get', 'CompanyBaseController::get');
+$routes->post('/company-base/save', 'CompanyBaseController::save');
+
+// 關於我們相關路由
+$routes->get('/app-about/get', 'AppAboutController::get');
+$routes->post('/app-about/save', 'AppAboutController::save');
+
+// 最新消息相關路由
+$routes->get('/app-news/get', 'AppNewsController::get');
+$routes->get('/app-news/get-by-id', 'AppNewsController::getById');
+$routes->post('/app-news/add', 'AppNewsController::add');
+$routes->post('/app-news/update', 'AppNewsController::update');
+$routes->post('/app-news/delete', 'AppNewsController::delete');

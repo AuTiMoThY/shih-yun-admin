@@ -2,12 +2,20 @@
 definePageMeta({
     middleware: "auth"
 });
-import { computed, nextTick, onMounted, onUnmounted, ref, shallowRef } from "vue";
+import {
+    computed,
+    nextTick,
+    onMounted,
+    onUnmounted,
+    ref,
+    shallowRef
+} from "vue";
 import { useSortable } from "@vueuse/integrations/useSortable";
 import StructureLevelModal from "~/components/Structure/LevelModal.vue";
 import StructureTreeTableRow from "~/components/Structure/TreeTableRow.vue";
 
-const { data, loading, fetchData, updateSortOrder, deleteLevel } = useStructure();
+const { data, loading, fetchData, updateSortOrder, deleteLevel } =
+    useStructure();
 const rootBodyRef = ref<HTMLElement | null>(null);
 let sortableStop: (() => void) | null = null;
 
@@ -24,13 +32,12 @@ const handleModalSuccess = async () => {
     await fetchData();
     await nextTick();
     setupRootSortable();
-
 };
 
 const rootLevels = computed(() => (data.value || []).filter(Boolean));
 
 const handleDelete = async (level: any) => {
-    await deleteLevel(level, { 
+    await deleteLevel(level, {
         onSuccess: async () => {
             await fetchData();
             await nextTick();
@@ -139,21 +146,18 @@ onMounted(async () => {
 <template>
     <UDashboardPanel>
         <template #header>
-            <UDashboardNavbar title="管理系統架構" :ui="{ right: 'gap-3' }">
+            <UDashboardNavbar title="管理系統架構" :ui="{ right: 'gap-3', title: 'text-primary' }">
                 <template #leading>
-                    <UDashboardSidebarCollapse />
+                    <UDashboardSidebarCollapse color="primary" />
                 </template>
-            </UDashboardNavbar>
-            <UDashboardToolbar>
                 <template #right>
                     <UButton
-                        color="primary"
-                        variant="outline"
-                        icon="lucide:plus"
                         label="新增層級1"
+                        color="primary"
+                        icon="lucide:plus"
                         @click="addRootModalOpen = true" />
                 </template>
-            </UDashboardToolbar>
+            </UDashboardNavbar>
         </template>
         <template #body>
             <div v-if="loading" class="flex items-center justify-center py-12">
@@ -229,6 +233,9 @@ onMounted(async () => {
                 </div>
             </div>
         </template>
+        <template #footer>
+            <PageFooter />
+        </template>
     </UDashboardPanel>
 
     <!-- 新增層級1 Modal -->
@@ -241,7 +248,9 @@ onMounted(async () => {
     <StructureLevelModal
         v-model:open="addSubLevelModalOpen"
         mode="add-sub"
-        :parent-id="currentParentLevel?.id ? parseInt(currentParentLevel.id) : 0"
+        :parent-id="
+            currentParentLevel?.id ? parseInt(currentParentLevel.id) : 0
+        "
         :parent-name="currentParentLevel?.label"
         @added="handleModalSuccess" />
 

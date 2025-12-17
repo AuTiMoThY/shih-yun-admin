@@ -118,9 +118,9 @@ onMounted(async () => {
 <template>
     <UDashboardPanel>
         <template #header>
-            <UDashboardNavbar title="關於我們" :ui="{ right: 'gap-3' }">
+            <UDashboardNavbar title="關於我們" :ui="{ right: 'gap-3', title: 'text-primary' }">
                 <template #leading>
-                    <UDashboardSidebarCollapse />
+                    <UDashboardSidebarCollapse color="primary" />
                 </template>
                 <template #right>
                     <PermissionGuard permission="about.section.create">
@@ -135,8 +135,9 @@ onMounted(async () => {
                         label="儲存"
                         color="success"
                         icon="i-lucide-save"
-                        @click="saveAllSections"
-                        :ui="{ base: 'justify-center' }" />
+                        :loading="loading"
+                        :disabled="loading"
+                        @click="saveAllSections" />
                 </template>
             </UDashboardNavbar>
         </template>
@@ -184,10 +185,14 @@ onMounted(async () => {
                         label="儲存"
                         color="success"
                         icon="i-lucide-save"
-                        @click="saveAllSections"
-                        :ui="{ base: 'justify-center' }" />
+                        :loading="loading"
+                        :disabled="loading"
+                        @click="saveAllSections" />
                 </div>
             </template>
+        </template>
+        <template #footer>
+            <PageFooter />
         </template>
     </UDashboardPanel>
     <AboutDeleteConfirmModal

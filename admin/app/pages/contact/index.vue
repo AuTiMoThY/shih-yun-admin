@@ -8,9 +8,9 @@ definePageMeta({
 <template>
     <UDashboardPanel>
         <template #header>
-            <UDashboardNavbar title="聯絡我們" :ui="{ right: 'gap-3' }">
+            <UDashboardNavbar title="聯絡我們" :ui="{ right: 'gap-3', title: 'text-primary' }">
                 <template #leading>
-                    <UDashboardSidebarCollapse />
+                    <UDashboardSidebarCollapse color="primary" />
                 </template>
             </UDashboardNavbar>
         </template>
@@ -20,6 +20,9 @@ definePageMeta({
                     此功能尚未開發
                 </div>
             </UCard>
+        </template>
+        <template #footer>
+            <PageFooter />
         </template>
     </UDashboardPanel>
 </template>

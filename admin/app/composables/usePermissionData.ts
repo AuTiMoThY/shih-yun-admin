@@ -229,6 +229,7 @@ export const usePermissionData = () => {
                 }
             });
             if (res.success) {
+                console.group("res", res);
                 resetForm();
                 if (targetModal) targetModal.value = false;
                 options?.onSuccess?.();
@@ -260,10 +261,14 @@ export const usePermissionData = () => {
                     errors[key] = msg;
                 });
             }
+            console.group("editPermission error", error);
+            console.log("data", data);
+            console.log("error", data.model_errors);
+            console.groupEnd();
+
             const msg =
-                (typeof data?.message === "string" && data.message) ||
-                (typeof data === "string" ? data : null) ||
-                error?.message ||
+                data?.model_errors?.name ||
+                data?.message ||
                 "更新權限失敗，請稍後再試";
             submitError.value = msg;
             toast.add({ title: msg, color: "error" });

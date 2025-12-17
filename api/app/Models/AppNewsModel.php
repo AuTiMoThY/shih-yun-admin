@@ -3,13 +3,16 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class AppAboutModel extends Model
+class AppNewsModel extends Model
 {
-    protected $table         = 'app_about';
+    protected $table         = 'app_news';
     protected $primaryKey    = 'id';
     protected $allowedFields = [
         'title',
-        'sections_json',
+        'cover',
+        'slide',
+        'content',
+        'show_date',
         'status',
     ];
     protected $useTimestamps = true;

@@ -3,30 +3,29 @@ definePageMeta({
     middleware: "auth"
 });
 
-const adminFormRef = ref<{
+const newsFormRef = ref<{
     loading: boolean;
     submit: () => void;
 } | null>(null);
 
-const loading = computed(() => adminFormRef.value?.loading ?? false);
+const loading = computed(() => newsFormRef.value?.loading ?? false);
 
 const handleSubmit = () => {
-    adminFormRef.value?.submit();
+    newsFormRef.value?.submit();
 };
 </script>
-
 <template>
-    <UDashboardPanel id="admins-add">
+    <UDashboardPanel>
         <template #header>
             <UDashboardNavbar
-                title="新增管理員"
+                title="新增最新消息"
                 :ui="{ right: 'gap-3', title: 'text-primary' }">
                 <template #leading>
                     <UDashboardSidebarCollapse color="primary" />
                 </template>
                 <template #right>
                     <UButton
-                        label="新增管理員"
+                        label="新增最新消息"
                         type="button"
                         color="primary"
                         icon="lucide:plus"
@@ -42,12 +41,12 @@ const handleSubmit = () => {
                         color="neutral"
                         variant="ghost"
                         icon="i-lucide-arrow-left"
-                        to="/system/admins" />
+                        to="/news" />
                 </template>
             </UDashboardToolbar>
         </template>
         <template #body>
-            <AdminsAdminForm ref="adminFormRef" mode="add" />
+            <AppNewsFormPage ref="newsFormRef" mode="add" />
         </template>
         <template #footer>
             <PageFooter />

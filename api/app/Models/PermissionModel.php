@@ -28,8 +28,8 @@ class PermissionModel extends Model
 
     protected $validationMessages = [
         'name' => [
-            'required' => '權限名稱不能為空',
-            'is_unique' => '權限名稱已存在',
+            'required' => '權限代碼不能為空',
+            'is_unique' => '權限代碼已存在',
         ],
         'label' => [
             'required' => '權限顯示名稱不能為空',

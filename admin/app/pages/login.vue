@@ -53,7 +53,7 @@ const handleLogin = async () => {
                 </div>
             </template>
 
-            <UForm :state="form" @submit="handleLogin" class="space-y-4">
+            <UForm :state="form" @submit="handleLogin" class="">
                 <UFormField label="帳號" name="username" required>
                     <UInput
                         v-model="form.username"

@@ -61,37 +61,27 @@ onMounted(() => {
 <template>
     <UDashboardPanel>
         <template #header>
-            <UDashboardNavbar title="模組設定" :ui="{ right: 'gap-3' }">
+            <UDashboardNavbar title="模組設定" :ui="{ right: 'gap-3', title: 'text-primary' }">
                 <template #leading>
-                    <UDashboardSidebarCollapse />
+                    <UDashboardSidebarCollapse color="primary" />
                 </template>
-            </UDashboardNavbar>
-            <UDashboardToolbar>
                 <template #right>
                     <UButton
-                        color="primary"
-                        variant="outline"
-                        icon="lucide:plus"
                         label="新增模組"
+                        color="primary"
+                        icon="lucide:plus"
                         @click="addModule" />
                 </template>
-            </UDashboardToolbar>
+            </UDashboardNavbar>
         </template>
         <template #body>
-            <UTable
-                ref="table"
-                class="shrink-0"
+            <DataTable
                 :data="data"
                 :columns="columns"
-                :loading="loading"
-                :ui="{
-                    base: 'table-fixed border-separate border-spacing-0',
-                    thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-                    tbody: '[&>tr]:last:[&>td]:border-b-0',
-                    th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-                    td: 'border-b border-default',
-                    separator: 'h-0'
-                }" />
+                :loading="loading" />
+        </template>
+        <template #footer>
+            <PageFooter />
         </template>
     </UDashboardPanel>
     <ModuleFrmModal
