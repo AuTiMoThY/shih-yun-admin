@@ -35,13 +35,19 @@ const {
 } = useStructure();
 
 const { data: modulesData, fetchData: fetchModules } = useModule();
-// 下拉顯示用，不改動原始 modulesData，避免影響其他處（如 moduleName 顯示）
+
+// 下拉顯示用，不改動原始 modulesData 值，避免影響其他處（如 moduleName 顯示）
 const selectModule = computed(() => {
-    return (modulesData.value || []).map((module: any) => ({
+    const modules = modulesData.value || [];
+    const emptyOption = { label: "無", value: null };
+
+    const mappedModules = modules.map((module: any) => ({
         ...module,
         label: `${module.label} (${module.name})`,
         value: module.id ?? module.value ?? module.name ?? ""
     }));
+
+    return [emptyOption, ...mappedModules];
 });
 
 const checkboxUI = {
@@ -68,9 +74,7 @@ const modalTitle = computed(() => {
 
 // 已有子層級時鎖定模組選擇
 const isModuleSelectionLocked = computed(() => {
-    return (
-        props.mode === "edit" && (props.level?.children?.length ?? 0) > 0
-    );
+    return props.mode === "edit" && (props.level?.children?.length ?? 0) > 0;
 });
 
 // 按鈕文字

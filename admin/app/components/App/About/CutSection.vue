@@ -207,8 +207,8 @@ watch(
         <template #content>
             <div class="p-4">
                 <!-- 欄位列表 -->
-                <div v-if="sectionData.fields.length > 0" class="">
-                    <AboutFieldItem
+                <div v-if="sectionData.fields.length > 0" class="space-y-4">
+                    <AppAboutFieldItem
                         v-for="(field, index) in sectionData.fields"
                         :key="field.id"
                         :field="field"
@@ -232,7 +232,7 @@ watch(
 
                 <!-- 欄位選擇器 -->
                 <div v-if="showFieldSelector" class="mt-4">
-                    <AboutFieldSelector @select="addField" />
+                    <AppAboutFieldSelector @select="addField" />
                 </div>
             </div>
         </template>

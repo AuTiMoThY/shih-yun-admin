@@ -57,12 +57,12 @@ const emit = defineEmits<{
 const statusBoolean = computed({
     get: () => {
         const value = props.modelValue;
-        
+
         // 如果提供了自定義轉換函數，使用它
         if (props.transformFrom) {
             return props.transformFrom(value);
         }
-        
+
         // 默認轉換邏輯
         if (typeof value === "boolean") {
             return value;
@@ -81,7 +81,7 @@ const statusBoolean = computed({
             emit("update:modelValue", props.transformTo(value));
             return;
         }
-        
+
         // 默認轉換邏輯：根據原始類型決定如何設置
         const currentValue = props.modelValue;
         if (typeof currentValue === "number") {

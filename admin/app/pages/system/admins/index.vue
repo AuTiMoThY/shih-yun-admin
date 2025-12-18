@@ -9,9 +9,14 @@ import { PERMISSION_LABEL_MAP } from "~/constants/permissions";
 import { STATUS_LABEL_MAP } from "~/constants/system/status";
 import { STATUS_ICON_MAP } from "~/constants/system/status_icon";
 
+const UButton = resolveComponent("UButton");
+const UIcon = resolveComponent("UIcon");
+
 const router = useRouter();
 const { data, loading, fetchData, deleteAdmin } = useUsers();
 
+const deleteConfirmModalOpen = ref(false);
+const deleteTarget = ref<{ id: string; name: string } | null>(null);
 const columns: TableColumn<any>[] = [
     { accessorKey: "username", header: "帳號" },
     { accessorKey: "name", header: "姓名" },
@@ -53,7 +58,6 @@ const columns: TableColumn<any>[] = [
             const status = String(row.original.status);
             const label = STATUS_LABEL_MAP[status] ?? status;
             const icon = STATUS_ICON_MAP[status] ?? "i-lucide-help-circle";
-            const UIcon = resolveComponent("UIcon");
 
             return h("div", { class: "flex items-center gap-2" }, [
                 h(UIcon, {
@@ -67,7 +71,6 @@ const columns: TableColumn<any>[] = [
     {
         header: "操作",
         cell: ({ row }) => {
-            const UButton = resolveComponent("UButton");
             return h("div", { class: "flex items-center gap-2" }, [
                 h(UButton, {
                     icon: "i-lucide-edit",
@@ -82,7 +85,7 @@ const columns: TableColumn<any>[] = [
                     color: "error",
                     variant: "ghost",
                     size: "xs",
-                    onClick: () => deleteAdmin(row.original)
+                    onClick: () => handleDelete(row.original)
                 })
             ]);
         }
@@ -92,6 +95,20 @@ const columns: TableColumn<any>[] = [
 const editAdmin = (admin: any) => {
     router.push(`/system/admins/edit/${admin.id}`);
 };
+
+const confirmDeleteAdmin = async () => {
+    await deleteAdmin({
+        id: deleteTarget.value?.id,
+        onSuccess: () => fetchData()
+    });
+    deleteConfirmModalOpen.value = false;
+    deleteTarget.value = null;
+}
+
+const handleDelete = async (data: any) => {
+    deleteTarget.value = { id: data.id, name: data.name };
+    deleteConfirmModalOpen.value = true;
+}
 
 onMounted(() => {
     fetchData();
@@ -105,7 +122,7 @@ onMounted(() => {
                 title="管理員設定"
                 :ui="{ right: 'gap-3', title: 'text-primary' }">
                 <template #leading>
-                    <UDashboardSidebarCollapse color="primary" />
+                    <UDashboardSidebarCollapse />
                 </template>
                 <template #right>
                     <UButton
@@ -126,4 +143,13 @@ onMounted(() => {
             <PageFooter />
         </template>
     </UDashboardPanel>
+    <DeleteConfirmModal
+        v-model:open="deleteConfirmModalOpen"
+        title="確認刪除"
+        :description="
+            deleteTarget
+                ? `確定要刪除「${deleteTarget.name}」嗎？此操作無法復原，「${deleteTarget.name}」將會被永久刪除。`
+                : ''
+        "
+        :on-confirm="confirmDeleteAdmin" />
 </template>

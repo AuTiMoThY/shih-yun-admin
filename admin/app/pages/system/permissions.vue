@@ -6,13 +6,16 @@ import type { TableColumn } from "@nuxt/ui";
 import { STATUS_LABEL_MAP } from "~/constants/system/status";
 import { STATUS_ICON_MAP } from "~/constants/system/status_icon";
 
+const UButton = resolveComponent("UButton");
+const UIcon = resolveComponent("UIcon");
 const { data, loading, fetchData, deletePermission } = usePermissionData();
 const { data: moduleData, fetchData: fetchModules } = useModule();
 const addPermissionModalOpen = ref(false);
 const editPermissionModalOpen = ref(false);
 const editData = ref<any>(null);
 const selectedModuleId = ref<number | null>(null);
-
+const deleteConfirmModalOpen = ref(false);
+const deleteTarget = ref<{ id: number | string; label: string } | null>(null);
 const columns: TableColumn<any>[] = [
     { accessorKey: "label", header: "權限名稱" },
     { accessorKey: "name", header: "權限代碼" },
@@ -33,7 +36,6 @@ const columns: TableColumn<any>[] = [
             const status = String(row.original.status);
             const label = STATUS_LABEL_MAP[status] ?? status;
             const icon = STATUS_ICON_MAP[status] ?? "i-lucide-help-circle";
-            const UIcon = resolveComponent("UIcon");
 
             return h("div", { class: "flex items-center gap-2" }, [
                 h(UIcon, {
@@ -47,7 +49,6 @@ const columns: TableColumn<any>[] = [
     {
         header: "操作",
         cell: ({ row }) => {
-            const UButton = resolveComponent("UButton");
             return h("div", { class: "flex items-center gap-2" }, [
                 h(UButton, {
                     icon: "i-lucide-edit",
@@ -82,13 +83,16 @@ const editPermission = async (data: any) => {
 };
 
 const handleDelete = async (data: any) => {
-    await deletePermission({
-        id: data.id,
-        onSuccess: () => {
-            const moduleId = selectedModuleId.value;
-            fetchData(moduleId ?? undefined);
-        }
+    deleteTarget.value = { id: Number(data.id), label: data.label };
+    deleteConfirmModalOpen.value = true;
+};
+
+const confirmDelete = async () => {
+    await deletePermission(deleteTarget.value?.id as number, {
+        onSuccess: () => fetchData()
     });
+    deleteConfirmModalOpen.value = false;
+    deleteTarget.value = null;
 };
 
 const handleModuleFilter = () => {
@@ -108,7 +112,7 @@ onMounted(async () => {
                 title="權限設定"
                 :ui="{ right: 'gap-3', title: 'text-primary' }">
                 <template #leading>
-                    <UDashboardSidebarCollapse color="primary" />
+                    <UDashboardSidebarCollapse />
                 </template>
                 <template #right>
                     <UButton
@@ -133,10 +137,7 @@ onMounted(async () => {
             </UDashboardToolbar>
         </template>
         <template #body>
-            <DataTable
-                :data="data"
-                :columns="columns"
-                :loading="loading" />
+            <DataTable :data="data" :columns="columns" :loading="loading" />
         </template>
         <template #footer>
             <PageFooter />
@@ -161,4 +162,13 @@ onMounted(async () => {
                 fetchData(moduleId ?? undefined);
             }
         " />
+    <DeleteConfirmModal
+        v-model:open="deleteConfirmModalOpen"
+        title="確認刪除"
+        :description="
+            deleteTarget
+                ? `確定要刪除「${deleteTarget.label}」嗎？此操作無法復原，「${deleteTarget.label}」將會被永久刪除。`
+                : ''
+        "
+        :on-confirm="confirmDelete" />
 </template>

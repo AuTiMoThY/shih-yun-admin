@@ -24,10 +24,7 @@ const props = defineProps<{
                         name="i-lucide-alert-triangle"
                         class="w-6 h-6 text-red-500 shrink-0 mt-0.5" />
                     <div>
-                        <p class="text-base font-medium text-gray-900">
-                            {{ props.title || "確認刪除" }}
-                        </p>
-                        <p class="text-sm text-gray-500 mt-1">
+                        <p class="text-base text-gray-500 mt-1">
                             {{
                                 props.description ||
                                 "此操作無法復原，資料將會被永久刪除。"

@@ -11,7 +11,7 @@ definePageMeta({
                 title="Home"
                 :ui="{ right: 'gap-3', title: 'text-primary' }">
                 <template #leading>
-                    <UDashboardSidebarCollapse color="primary" />
+                    <UDashboardSidebarCollapse />
                 </template>
 
                 <template #right> </template>

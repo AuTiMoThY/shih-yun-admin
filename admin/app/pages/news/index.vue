@@ -8,18 +8,24 @@ definePageMeta({
     middleware: "auth"
 });
 
-const { data, loading, fetchData } = useAppNews();
+const UButton = resolveComponent("UButton");
+const UIcon = resolveComponent("UIcon");
+const NuxtImg = resolveComponent("NuxtImg");
+const { data, loading, fetchData, deleteNews } = useAppNews();
 
+const deleteConfirmModalOpen = ref(false);
+const deleteTarget = ref<{ id: string; title: string } | null>(null);
 const columns: TableColumn<any>[] = [
     {
         accessorKey: "cover",
         header: "封面圖",
         cell: ({ row }) => {
             const cover = row.original.cover;
-            return h("NuxtImg", {
+            // console.log("cover", cover);
+            return h(NuxtImg, {
                 src: cover,
                 alt: "封面圖",
-                class: "w-10 h-10 object-cover"
+                class: "w-25 aspect-square object-cover"
             });
         }
     },
@@ -33,7 +39,10 @@ const columns: TableColumn<any>[] = [
             const label = STATUS_LABEL_MAP[status] ?? status;
             const icon = STATUS_ICON_MAP[status] ?? "i-lucide-help-circle";
             return h("div", { class: "flex items-center gap-2" }, [
-                h(resolveComponent("UIcon"), { name: icon }),
+                h(UIcon, {
+                    name: icon,
+                    class: status === "1" ? "text-emerald-500" : "text-rose-500"
+                }),
                 h("span", label)
             ]);
         }
@@ -42,27 +51,44 @@ const columns: TableColumn<any>[] = [
         accessorKey: "action",
         header: "操作",
         cell: ({ row }) => {
-            const UButton = resolveComponent("UButton");
             return h("div", { class: "flex items-center gap-2" }, [
                 h(UButton, {
                     icon: "i-lucide-edit",
                     label: "編輯",
                     color: "primary",
-                    size: "xs"
-                    // onClick: () => editNews(row.original)
+                    size: "xs",
+                    to: `/news/edit/${row.original.id}`
                 }),
                 h(UButton, {
                     icon: "i-lucide-trash",
                     label: "刪除",
                     color: "error",
                     variant: "ghost",
-                    size: "xs"
-                    // onClick: () => deleteNews(row.original)
+                    size: "xs",
+                    onClick: () => handleDelete(row.original)
                 })
             ]);
         }
     }
 ];
+
+const handleDelete = async (data: any) => {
+    deleteTarget.value = { id: data.id, title: data.title };
+    deleteConfirmModalOpen.value = true;
+}
+
+const confirmDeleteNews = async () => {
+    await deleteNews({
+        id: deleteTarget.value?.id,
+        onSuccess: () => fetchData()
+    });
+    deleteConfirmModalOpen.value = false;
+    deleteTarget.value = null;
+}
+
+onMounted(() => {
+    fetchData();
+});
 </script>
 <template>
     <UDashboardPanel>
@@ -71,7 +97,7 @@ const columns: TableColumn<any>[] = [
                 title="最新消息"
                 :ui="{ right: 'gap-3', title: 'text-primary' }">
                 <template #leading>
-                    <UDashboardSidebarCollapse color="primary" />
+                    <UDashboardSidebarCollapse />
                 </template>
                 <template #right>
                     <UButton
@@ -89,4 +115,13 @@ const columns: TableColumn<any>[] = [
             <PageFooter />
         </template>
     </UDashboardPanel>
+    <DeleteConfirmModal
+        v-model:open="deleteConfirmModalOpen"
+        title="確認刪除"
+        :description="
+            deleteTarget
+                ? `確定要刪除「${deleteTarget.title}」嗎？此操作無法復原，「${deleteTarget.title}」將會被永久刪除。`
+                : ''
+        "
+        :on-confirm="confirmDeleteNews" />
 </template>

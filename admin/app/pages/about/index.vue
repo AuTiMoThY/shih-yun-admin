@@ -120,7 +120,7 @@ onMounted(async () => {
         <template #header>
             <UDashboardNavbar title="關於我們" :ui="{ right: 'gap-3', title: 'text-primary' }">
                 <template #leading>
-                    <UDashboardSidebarCollapse color="primary" />
+                    <UDashboardSidebarCollapse />
                 </template>
                 <template #right>
                     <PermissionGuard permission="about.section.create">
@@ -147,13 +147,13 @@ onMounted(async () => {
             </div>
             <template v-else>
                 <template v-if="cutSections.length == 0">
-                    <AboutCutSection
+                    <AppAboutCutSection
                         index="1"
                         @update="updateSection"
                         @delete="deleteSection" />
                 </template>
                 <template v-else>
-                    <AboutCutSection
+                    <AppAboutCutSection
                         v-for="section in cutSections"
                         :key="section.id"
                         :index="section.index"
@@ -195,7 +195,7 @@ onMounted(async () => {
             <PageFooter />
         </template>
     </UDashboardPanel>
-    <AboutDeleteConfirmModal
+    <DeleteConfirmModal
         v-model:open="deleteConfirmModalOpen"
         title="確認刪除區塊"
         :description="

@@ -69,7 +69,7 @@ onMounted(async () => {
         <template #header>
             <UDashboardNavbar title="公司資本資料設定" :ui="{ right: 'gap-3', title: 'text-primary' }">
                 <template #leading>
-                    <UDashboardSidebarCollapse color="primary" />
+                    <UDashboardSidebarCollapse />
                 </template>
                 <template #right>
                     <UButton

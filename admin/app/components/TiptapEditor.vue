@@ -1,5 +1,72 @@
 <script setup lang="ts">
-import { TextStyle, Color } from "@tiptap/extension-text-style";
+import {
+    TextStyle,
+    Color,
+    BackgroundColor
+} from "@tiptap/extension-text-style";
+import { Extension } from "@tiptap/core";
+import { Link } from "@tiptap/extension-link";
+
+// 自定義 FontSize 擴充
+const FontSize = Extension.create({
+    name: "fontSize",
+    addOptions() {
+        return {
+            types: ["textStyle"]
+        };
+    },
+    addGlobalAttributes() {
+        return [
+            {
+                types: this.options.types,
+                attributes: {
+                    fontSize: {
+                        default: null,
+                        parseHTML: (element) => {
+                            const fontSize = element.style.fontSize;
+                            if (!fontSize) return null;
+                            // 移除 "px" 單位，只保留數字
+                            return fontSize.replace("px", "");
+                        },
+                        renderHTML: (attributes) => {
+                            if (!attributes.fontSize) {
+                                return {};
+                            }
+                            // 確保有 "px" 單位
+                            const sizeValue = String(
+                                attributes.fontSize
+                            ).replace("px", "");
+                            return {
+                                style: `font-size: ${sizeValue}px`
+                            };
+                        }
+                    }
+                }
+            }
+        ];
+    },
+    addCommands() {
+        return {
+            setFontSize:
+                (fontSize: string) =>
+                ({ chain }) => {
+                    // 移除 "px" 單位以便統一存儲
+                    const sizeValue = fontSize.replace("px", "");
+                    return chain()
+                        .setMark("textStyle", { fontSize: sizeValue })
+                        .run();
+                },
+            unsetFontSize:
+                () =>
+                ({ chain }) => {
+                    return chain()
+                        .setMark("textStyle", { fontSize: null })
+                        .removeEmptyTextStyle()
+                        .run();
+                }
+        };
+    }
+});
 const props = defineProps({
     modelValue: {
         type: String,
@@ -23,7 +90,13 @@ const editor = useEditor({
             allowBase64: false
         }),
         TextStyle,
-        Color
+        Color,
+        BackgroundColor,
+        FontSize,
+        Link.configure({
+            openOnClick: false,
+            defaultProtocol: "https"
+        })
     ],
     onUpdate: ({ editor }) => {
         emit("update:modelValue", editor.getHTML());
@@ -85,6 +158,10 @@ const triggerImageUpload = () => {
 
 // 文字顏色選擇器
 const textColor = ref<string>("#000000");
+const backgroundColor = ref<string>("#ffffff");
+// 字體大小選項
+const fontSizeOptions = [16, 18, 20, 22, 24, 36, 48, 72];
+const fontSize = ref<string>("");
 // 更新顏色選擇器顯示的顏色（從編輯器同步）
 const updateColorFromEditor = () => {
     if (!editor.value) return;
@@ -97,6 +174,52 @@ const updateColorFromEditor = () => {
         // 如果沒有顏色，使用預設黑色
         textColor.value = "#000000";
     }
+    const currentBackgroundColor =
+        editor.value.getAttributes("backgroundColor").color;
+    if (
+        currentBackgroundColor &&
+        currentBackgroundColor !== backgroundColor.value
+    ) {
+        backgroundColor.value = currentBackgroundColor;
+    } else if (!currentBackgroundColor && backgroundColor.value !== "#ffffff") {
+        backgroundColor.value = "#ffffff";
+    }
+    // 同步字體大小
+    const currentFontSize = editor.value.getAttributes("textStyle").fontSize;
+    if (currentFontSize) {
+        // 移除 "px" 單位，只保留數字
+        const sizeValue = String(currentFontSize).replace("px", "");
+        if (sizeValue !== fontSize.value) {
+            fontSize.value = sizeValue;
+        }
+    } else if (fontSize.value !== "") {
+        fontSize.value = "";
+    }
+};
+
+const setLink = () => {
+    const previousUrl = editor.value?.getAttributes("link").href;
+    const url = window.prompt("URL", previousUrl);
+
+    // cancelled
+    if (url === null) {
+        return;
+    }
+
+    // empty
+    if (url === "") {
+        editor.value?.chain().focus().extendMarkRange("link").unsetLink().run();
+
+        return;
+    }
+
+    // update link
+    editor.value
+        ?.chain()
+        .focus()
+        .extendMarkRange("link")
+        .setLink({ href: url })
+        .run();
 };
 
 // 監聽外部 modelValue 變更
@@ -132,10 +255,47 @@ watch(textColor, (newColor) => {
         // 檢查當前選中的文字顏色是否已經是這個顏色，避免重複設置
         const currentColor = editor.value.getAttributes("textStyle").color;
         if (currentColor !== newColor) {
-            editor.value.chain().focus().setColor(newColor).run();
+            // 移除 .focus() 避免觸發 Popover 關閉，直接設置顏色
+            editor.value.chain().setColor(newColor).run();
         }
     }
 });
+
+// 監聽背景顏色選擇器變化，應用到編輯器
+watch(backgroundColor, (newColor) => {
+    if (editor.value && newColor) {
+        // 檢查當前選中的背景顏色是否已經是這個顏色，避免重複設置
+        const currentBackgroundColor =
+            editor.value.getAttributes("backgroundColor").color;
+        if (currentBackgroundColor !== newColor) {
+            // 移除 .focus() 避免觸發 Popover 關閉，直接設置顏色
+            editor.value.chain().setBackgroundColor(newColor).run();
+        }
+    }
+});
+
+// 設置字體大小
+const setFontSize = (size: number | null) => {
+    if (!editor.value) return;
+    if (size === null) {
+        // 清除字體大小
+        editor.value
+            .chain()
+            .focus()
+            .extendMarkRange("textStyle")
+            .unsetFontSize()
+            .run();
+        fontSize.value = "";
+    } else {
+        editor.value
+            .chain()
+            .focus()
+            .extendMarkRange("textStyle")
+            .setFontSize(`${size}px`)
+            .run();
+        fontSize.value = size.toString();
+    }
+};
 
 onBeforeUnmount(() => {
     if (editor.value) {
@@ -151,11 +311,10 @@ onBeforeUnmount(() => {
             v-if="editor"
             class="toolbar border-b border-gray-200 p-2 flex flex-wrap gap-1">
             <!-- 文字顏色選擇器 -->
-            <UPopover :dismissible="false">
+            <UPopover>
                 <UTooltip text="文字顏色">
                     <UButton
-                    :icon="'i-lucide-palette'"
-
+                        :icon="'i-lucide-palette'"
                         variant="ghost"
                         size="xs"
                         color="neutral"
@@ -176,6 +335,81 @@ onBeforeUnmount(() => {
                             v-model="textColor"
                             format="hex"
                             class="p-4 pt-10" />
+                    </div>
+                </template>
+            </UPopover>
+
+            <!-- 背景顏色選擇器 -->
+            <UPopover>
+                <UTooltip text="背景顏色">
+                    <UButton
+                        :icon="'i-lucide-square-dashed'"
+                        variant="ghost"
+                        size="xs"
+                        color="neutral"
+                        :style="{ backgroundColor: backgroundColor }">
+                    </UButton>
+                </UTooltip>
+
+                <template #content="{ close }">
+                    <div class="relative">
+                        <UButton
+                            color="neutral"
+                            variant="ghost"
+                            icon="i-lucide-x"
+                            size="xs"
+                            class="absolute top-2 right-2 z-10"
+                            @click="close" />
+                        <UColorPicker
+                            v-model="backgroundColor"
+                            format="hex"
+                            class="p-4 pt-10" />
+                    </div>
+                </template>
+            </UPopover>
+
+            <!-- 字體大小選擇器 -->
+            <UPopover
+                :ui="{
+                    content: 'max-w-[150px] max-h-[200px] overflow-y-auto'
+                }">
+                <UTooltip text="字體大小">
+                    <UButton
+                        :label="fontSize || '大小'"
+                        variant="ghost"
+                        size="xs"
+                        color="neutral"
+                        :class="{ 'font-bold': fontSize }" />
+                </UTooltip>
+
+                <template #content>
+                    <div class="p-2">
+                        <div class="space-y-1">
+                            <UButton
+                                v-for="size in fontSizeOptions"
+                                :key="size"
+                                :label="size.toString()"
+                                variant="ghost"
+                                size="xs"
+                                color="neutral"
+                                :class="{
+                                    'bg-primary/10 text-primary font-semibold':
+                                        fontSize === size.toString()
+                                }"
+                                class="w-full justify-start"
+                                :style="{
+                                    fontSize: `${size}px`
+                                }"
+                                @click="setFontSize(size)" />
+                            <div class="h-px w-full bg-gray-200 my-1" />
+                            <UButton
+                                label="預設"
+                                variant="ghost"
+                                size="xs"
+                                color="neutral"
+                                class="w-full justify-start text-gray-500"
+                                @click="setFontSize(null)" />
+                        </div>
                     </div>
                 </template>
             </UPopover>
@@ -212,15 +446,6 @@ onBeforeUnmount(() => {
                         !editor.can().chain().focus().toggleStrike().run()
                     "
                     @click="editor.chain().focus().toggleStrike().run()" />
-            </UTooltip>
-            <UTooltip text="行內程式碼">
-                <UButton
-                    :icon="'i-lucide-code'"
-                    variant="ghost"
-                    size="xs"
-                    :color="editor.isActive('code') ? 'primary' : 'neutral'"
-                    :disabled="!editor.can().chain().focus().toggleCode().run()"
-                    @click="editor.chain().focus().toggleCode().run()" />
             </UTooltip>
 
             <div class="w-px h-6 bg-gray-300 mx-1" />
@@ -329,15 +554,22 @@ onBeforeUnmount(() => {
             <div class="w-px h-6 bg-gray-300 mx-1" />
 
             <!-- 其他格式 -->
-            <UTooltip text="程式碼區塊">
+            <UTooltip text="加入連結">
                 <UButton
-                    :icon="'i-lucide-code-2'"
+                    :icon="'i-lucide-link'"
                     variant="ghost"
                     size="xs"
-                    :color="
-                        editor.isActive('codeBlock') ? 'primary' : 'neutral'
-                    "
-                    @click="editor.chain().focus().toggleCodeBlock().run()" />
+                    :color="editor.isActive('link') ? 'primary' : 'neutral'"
+                    @click="setLink" />
+            </UTooltip>
+            <UTooltip text="移除連結">
+                <UButton
+                    :icon="'i-lucide-unlink'"
+                    variant="ghost"
+                    size="xs"
+                    :color="editor.isActive('link') ? 'primary' : 'neutral'"
+                    @click="editor.chain().focus().unsetLink().run()"
+                    :disabled="!editor.isActive('link')" />
             </UTooltip>
             <UTooltip text="引用">
                 <UButton

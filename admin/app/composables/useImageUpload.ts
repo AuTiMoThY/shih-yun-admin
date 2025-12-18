@@ -40,6 +40,11 @@ export const useImageUpload = () => {
             );
 
             if (response.success && response.url) {
+                toast.add({
+                    title: "上傳成功",
+                    description: response.message || "圖片上傳成功",
+                    color: "success"
+                });
                 return response.url;
             } else {
                 toast.add({

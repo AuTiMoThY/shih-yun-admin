@@ -104,11 +104,20 @@ const systemMenu = computed(() => system(isSystemActive));
 const links = computed(() => {
     const structureMenuItems = buildStructureMenu(open);
     const menuItems: NavigationMenuItem[] = [
+        ...[
+            {
+                label: "預約賞屋test",
+                icon: "i-lucide-form-input",
+                to: "/contact/msg-frontend",
+                onSelect: () => {
+                    open.value = false;
+                }
+            }
+        ],
         website(open),
         ...structureMenuItems,
         company(open)
     ];
-
     // 只有當系統選單有子項目時才加入
     const systemMenuItem = systemMenu.value;
     if (systemMenuItem.children && systemMenuItem.children.length > 0) {

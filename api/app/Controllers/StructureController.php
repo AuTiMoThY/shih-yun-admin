@@ -180,8 +180,9 @@ class StructureController extends BaseController
             if (isset($data['label'])) {
                 $updateData['label'] = $data['label'];
             }
-            if (isset($data['module_id'])) {
-                $updateData['module_id'] = $data['module_id'];
+            // 使用 array_key_exists 以支援 null 值
+            if (array_key_exists('module_id', $data)) {
+                $updateData['module_id'] = $data['module_id'] === '' ? null : $data['module_id'];
             }
             if (isset($data['status'])) {
                 $updateData['status'] = (int) $data['status'];

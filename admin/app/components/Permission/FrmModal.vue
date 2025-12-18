@@ -106,7 +106,7 @@ watch(
                     required>
                     <UInput
                         v-model="form.name"
-                        placeholder="例如：module.view 或 module.tw.create"
+                        placeholder="about.view 或 about.section.create"
                         size="lg"
                         :disabled="loading"
                         class="w-full"
@@ -141,7 +141,7 @@ watch(
                 <UFormField label="分類" name="category">
                     <UInput
                         v-model="form.category"
-                        placeholder="例如：tw, sg, mm（選填）"
+                        placeholder="例如：section, field（選填）"
                         size="lg"
                         :disabled="loading"
                         class="w-full" />

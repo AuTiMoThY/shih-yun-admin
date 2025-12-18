@@ -6,6 +6,10 @@ import type { TableColumn } from "@nuxt/ui";
 import { STATUS_LABEL_MAP } from "~/constants/system/status";
 import { STATUS_ICON_MAP } from "~/constants/system/status_icon";
 
+const UButton = resolveComponent("UButton");
+const UIcon = resolveComponent("UIcon");
+const deleteConfirmModalOpen = ref(false);
+const deleteTarget = ref<{ id: number | string; label: string } | null>(null);
 const { data, loading, fetchData, deleteRole } = useRole();
 const { data: permissionData, fetchData: fetchPermissions } =
     usePermissionData();
@@ -23,7 +27,6 @@ const columns: TableColumn<any>[] = [
             const status = String(row.original.status);
             const label = STATUS_LABEL_MAP[status] ?? status;
             const icon = STATUS_ICON_MAP[status] ?? "i-lucide-help-circle";
-            const UIcon = resolveComponent("UIcon");
 
             return h("div", { class: "flex items-center gap-2" }, [
                 h(UIcon, {
@@ -37,7 +40,6 @@ const columns: TableColumn<any>[] = [
     {
         header: "操作",
         cell: ({ row }) => {
-            const UButton = resolveComponent("UButton");
             return h("div", { class: "flex items-center gap-2" }, [
                 h(UButton, {
                     icon: "i-lucide-edit",
@@ -73,10 +75,15 @@ const editRole = async (data: any) => {
 };
 
 const handleDelete = async (data: any) => {
-    await deleteRole({
-        id: data.id,
+    deleteTarget.value = { id: Number(data.id), label: data.label };
+    deleteConfirmModalOpen.value = true;
+};
+const confirmDelete = async () => {
+    await deleteRole(deleteTarget.value?.id as number, {
         onSuccess: () => fetchData()
     });
+    deleteConfirmModalOpen.value = false;
+    deleteTarget.value = null;
 };
 
 onMounted(async () => {
@@ -93,7 +100,7 @@ onMounted(async () => {
                 title="角色設定"
                 :ui="{ right: 'gap-3', title: 'text-primary' }">
                 <template #leading>
-                    <UDashboardSidebarCollapse color="primary" />
+                    <UDashboardSidebarCollapse />
                 </template>
             </UDashboardNavbar>
             <UDashboardToolbar>
@@ -107,10 +114,7 @@ onMounted(async () => {
             </UDashboardToolbar>
         </template>
         <template #body>
-            <DataTable
-                :data="data"
-                :columns="columns"
-                :loading="loading" />
+            <DataTable :data="data" :columns="columns" :loading="loading" />
         </template>
         <template #footer>
             <PageFooter />
@@ -125,4 +129,13 @@ onMounted(async () => {
         mode="edit"
         :data="editData"
         @updated="fetchData" />
+    <DeleteConfirmModal
+        v-model:open="deleteConfirmModalOpen"
+        title="確認刪除"
+        :description="
+            deleteTarget
+                ? `確定要刪除「${deleteTarget.label}」嗎？此操作無法復原，「${deleteTarget.label}」將會被永久刪除。`
+                : ''
+        "
+        :on-confirm="confirmDelete" />
 </template>

@@ -83,9 +83,9 @@ export const useModule = () => {
         }
 
         if (form.name && form.name.trim() !== "") {
-            const namePattern = /^[a-zA-Z0-9_-]+$/;
+            const namePattern = /^[a-zA-Z0-9_\/-]+$/;
             if (!namePattern.test(form.name.trim())) {
-                errors.name = "模組代碼只能包含英文字母、數字、底線和連字號";
+                errors.name = "模組代碼只能包含英文字母、數字、底線、斜線和連字號";
                 isValid = false;
             }
         }
@@ -233,11 +233,13 @@ export const useModule = () => {
             loading.value = false;
         }
     };
-    const deleteModule = async (options?: {
-        id?: number | string;
-        onSuccess?: () => void;
-    }) => {
-        if (!options?.id) return false;
+    const deleteModule = async (
+        id: number | string,
+        options?: {
+            onSuccess?: () => void;
+        }
+    ) => {
+        if (!id) return false;
         loading.value = true;
         try {
             const res = await $fetch<{
@@ -245,7 +247,7 @@ export const useModule = () => {
                 message: string;
             }>(`${apiBase}/module/delete`, {
                 method: "POST",
-                body: { id: options.id }
+                body: { id }
             });
             if (res.success) {
                 toast.add({

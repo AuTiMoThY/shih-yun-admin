@@ -279,11 +279,13 @@ export const usePermissionData = () => {
         }
     };
 
-    const deletePermission = async (options?: {
-        id?: number | string;
-        onSuccess?: () => void;
-    }) => {
-        if (!options?.id) return false;
+    const deletePermission = async (
+        id: number | string,
+        options?: {
+            onSuccess?: () => void;
+        }
+    ) => {
+        if (!id) return false;
         loading.value = true;
         try {
             const res = await $fetch<{
@@ -291,7 +293,7 @@ export const usePermissionData = () => {
                 message: string;
             }>(`${apiBase}/permission/delete`, {
                 method: "POST",
-                body: { id: options.id }
+                body: { id }
             });
             if (res.success) {
                 toast.add({

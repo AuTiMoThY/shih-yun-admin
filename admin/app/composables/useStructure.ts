@@ -72,8 +72,6 @@ export const useStructure = () => {
         }
     };
 
-
-
     const resetForm = (parentId: LevelForm["parent_id"] = null) => {
         form.label = "";
         form.module_id = null;
@@ -117,7 +115,8 @@ export const useStructure = () => {
         if (!level) return;
         form.label = level.label || "";
         form.module_id = level.module_id ?? null;
-        form.status = level.status === "1" || level.status === 1 || level.status === true;
+        form.status =
+            level.status === "1" || level.status === 1 || level.status === true;
         form.parent_id = level.parent_id ?? null;
     };
 

@@ -45,7 +45,7 @@ class ModuleController extends BaseController
 
         $rules = [
             'label' => 'required|min_length[1]|max_length[100]',
-            'name' => 'required|min_length[1]|max_length[100]|regex_match[/^[a-zA-Z0-9_-]+$/]',
+            'name' => 'required|min_length[1]|max_length[100]|regex_match[/^[a-zA-Z0-9_\/-]+$/]',
         ];
 
         if (!$this->validateData($data, $rules)) {
@@ -127,7 +127,7 @@ class ModuleController extends BaseController
 
         $rules = [
             'label' => 'permit_empty|min_length[1]|max_length[100]',
-            'name' => 'permit_empty|min_length[1]|max_length[100]|regex_match[/^[a-zA-Z0-9_-]+$/]',
+            'name' => 'permit_empty|min_length[1]|max_length[100]|regex_match[/^[a-zA-Z0-9_\/-]+$/]',
         ];
 
         if (!$this->validateData($data, $rules)) {

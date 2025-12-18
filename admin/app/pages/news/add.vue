@@ -21,7 +21,7 @@ const handleSubmit = () => {
                 title="新增最新消息"
                 :ui="{ right: 'gap-3', title: 'text-primary' }">
                 <template #leading>
-                    <UDashboardSidebarCollapse color="primary" />
+                    <UDashboardSidebarCollapse />
                 </template>
                 <template #right>
                     <UButton

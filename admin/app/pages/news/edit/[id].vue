@@ -4,44 +4,46 @@ definePageMeta({
 });
 
 const route = useRoute();
-const router = useRouter();
 
-const adminId = computed(() => {
+const newsId = computed(() => {
     const id = route.params.id as string;
     return parseInt(id, 10);
 });
 
-const { loadAdminData } = useUsers();
-const adminData = ref<any>(null);
+const { loadNewsData } = useAppNews();
+const newsData = ref<any>(null);
 const loadingData = ref(true);
 
-const adminFormRef = ref<{
+const newsFormRef = ref<{
     loading: boolean;
     submit: () => void;
 } | null>(null);
 
 const loading = computed(
-    () => (adminFormRef.value?.loading ?? false) || loadingData.value
+    () => (newsFormRef.value?.loading ?? false) || loadingData.value
 );
 
 const handleSubmit = () => {
-    adminFormRef.value?.submit();
+    newsFormRef.value?.submit();
 };
 
-// 載入管理員資料
+// 載入最新消息資料
 onMounted(async () => {
     loadingData.value = true;
     try {
-        const data = await loadAdminData(adminId.value);
+        const data = await loadNewsData(newsId.value);
+        // console.log("data", data);
         if (data) {
-            adminData.value = data;
+            newsData.value = data;
         }
-        // loadAdminData 內部已經處理了錯誤和導航，如果返回 null 表示失敗
+        // loadFormData 內部已經處理了錯誤和導航，如果返回 null 表示失敗
     } catch (error) {
-        console.error("載入管理員資料失敗", error);
+        console.error("載入最新消息資料失敗", error);
     } finally {
         loadingData.value = false;
     }
+
+    // console.log("newsData", newsData.value);
 });
 </script>
 
@@ -49,14 +51,14 @@ onMounted(async () => {
     <UDashboardPanel>
         <template #header>
             <UDashboardNavbar
-                title="編輯管理員"
+                title="編輯最新消息"
                 :ui="{ right: 'gap-3', title: 'text-primary' }">
                 <template #leading>
                     <UDashboardSidebarCollapse />
                 </template>
                 <template #right>
                     <UButton
-                        label="更新管理員"
+                        label="更新最新消息"
                         type="button"
                         color="success"
                         icon="lucide:save"
@@ -72,17 +74,17 @@ onMounted(async () => {
                         color="neutral"
                         variant="ghost"
                         icon="i-lucide-arrow-left"
-                        to="/system/admins" />
+                        to="/news" />
                 </template>
             </UDashboardToolbar>
         </template>
         <template #body>
             <PageLoading v-if="loadingData" />
-            <AdminsAdminForm
+            <AppNewsFormPage
                 v-else
-                ref="adminFormRef"
+                ref="newsFormRef"
                 mode="edit"
-                :initial-data="adminData" />
+                :initial-data="newsData" />
         </template>
         <template #footer>
             <PageFooter />

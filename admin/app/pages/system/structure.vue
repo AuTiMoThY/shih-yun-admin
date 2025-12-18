@@ -23,7 +23,8 @@ let sortableStop: (() => void) | null = null;
 const addRootModalOpen = ref(false);
 const addSubLevelModalOpen = ref(false);
 const editModalOpen = ref(false);
-
+const deleteConfirmModalOpen = ref(false);
+const deleteTarget = ref<{ id: string; label: string } | null>(null);
 // 當前操作的層級資料
 const currentParentLevel = ref<any>(null);
 const currentEditLevel = ref<any>(null);
@@ -36,15 +37,25 @@ const handleModalSuccess = async () => {
 
 const rootLevels = computed(() => (data.value || []).filter(Boolean));
 
-const handleDelete = async (level: any) => {
-    await deleteLevel(level, {
+const handleDelete = (level: any) => {
+    console.log("handleDelete", level);
+    
+    deleteTarget.value = { id: level.id, label: level.label };
+    deleteConfirmModalOpen.value = true;
+};
+
+const confirmDelete = async () => {
+    console.log("confirmDelete", deleteTarget.value);
+    await deleteLevel(deleteTarget.value, {
         onSuccess: async () => {
             await fetchData();
             await nextTick();
             setupRootSortable();
         }
     });
-};
+    deleteConfirmModalOpen.value = false;
+    deleteTarget.value = null;
+}
 
 const handleEdit = (level: any) => {
     console.log("handleEdit", level);
@@ -146,9 +157,11 @@ onMounted(async () => {
 <template>
     <UDashboardPanel>
         <template #header>
-            <UDashboardNavbar title="管理系統架構" :ui="{ right: 'gap-3', title: 'text-primary' }">
+            <UDashboardNavbar
+                title="管理系統架構"
+                :ui="{ right: 'gap-3', title: 'text-primary' }">
                 <template #leading>
-                    <UDashboardSidebarCollapse color="primary" />
+                    <UDashboardSidebarCollapse />
                 </template>
                 <template #right>
                     <UButton
@@ -260,4 +273,14 @@ onMounted(async () => {
         mode="edit"
         :level="currentEditLevel"
         @updated="handleModalSuccess" />
+
+    <DeleteConfirmModal
+        v-model:open="deleteConfirmModalOpen"
+        title="確認刪除"
+        :description="
+            deleteTarget
+                ? `確定要刪除「${deleteTarget.label}」嗎？此操作無法復原，「${deleteTarget.label}」將會被永久刪除。`
+                : ''
+        "
+        :on-confirm="confirmDelete" />
 </template>

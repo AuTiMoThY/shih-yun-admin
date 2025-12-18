@@ -17,11 +17,11 @@ const apiBase =
 console.log("========== apiBase ==========", apiBase);
 export default defineNuxtConfig({
     modules: [
-        "@nuxt/eslint",
-        "@nuxt/ui",
-        "@nuxt/image",
-        "@vueuse/nuxt",
-        "nuxt-tiptap-editor"
+      "@nuxt/eslint",
+      "@nuxt/ui",
+      "@nuxt/image",
+      "@vueuse/nuxt",
+      "nuxt-tiptap-editor",
     ],
 
     ssr: false, // 禁用 SSR，只使用客戶端渲染
