@@ -2,4 +2,4 @@ export type { Permission, Role, RermissionForm, RermissionFormErrors, RoleForm, 
 export type { ModuleForm, ModuleFormErrors } from './module';
 export type { AdminForm, AdminFormErrors } from './admin';
 export type { NewsForm, NewsFormErrors } from './NewsForm';
-export type { ContactForm } from './ContactForm';
+export type { ContactForm, ContactFormErrors } from './ContactForm';

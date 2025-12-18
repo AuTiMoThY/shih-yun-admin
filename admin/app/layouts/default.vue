@@ -106,9 +106,9 @@ const links = computed(() => {
     const menuItems: NavigationMenuItem[] = [
         ...[
             {
-                label: "預約賞屋test",
+                label: "模擬前台聯絡表單",
                 icon: "i-lucide-form-input",
-                to: "/contact/msg-frontend",
+                to: "/contact/contact-frontend",
                 onSelect: () => {
                     open.value = false;
                 }
