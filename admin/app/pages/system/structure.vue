@@ -2,14 +2,7 @@
 definePageMeta({
     middleware: "auth"
 });
-import {
-    computed,
-    nextTick,
-    onMounted,
-    onUnmounted,
-    ref,
-    shallowRef
-} from "vue";
+
 import { useSortable } from "@vueuse/integrations/useSortable";
 import StructureLevelModal from "~/components/Structure/LevelModal.vue";
 import StructureTreeTableRow from "~/components/Structure/TreeTableRow.vue";
@@ -39,7 +32,7 @@ const rootLevels = computed(() => (data.value || []).filter(Boolean));
 
 const handleDelete = (level: any) => {
     console.log("handleDelete", level);
-    
+
     deleteTarget.value = { id: level.id, label: level.label };
     deleteConfirmModalOpen.value = true;
 };
@@ -55,7 +48,7 @@ const confirmDelete = async () => {
     });
     deleteConfirmModalOpen.value = false;
     deleteTarget.value = null;
-}
+};
 
 const handleEdit = (level: any) => {
     console.log("handleEdit", level);
@@ -209,7 +202,11 @@ onMounted(async () => {
                                     名稱
                                 </th>
                                 <th
-                                    class="py-2 px-4 text-left first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r">
+                                    class="w-[120px] py-2 px-4 text-left first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r">
+                                    URL
+                                </th>
+                                <th
+                                    class="w-[180px] py-2 px-4 text-left first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r">
                                     模組名稱
                                 </th>
                                 <th

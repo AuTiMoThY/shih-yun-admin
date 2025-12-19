@@ -8,6 +8,7 @@ class AppContactModel extends Model
     protected $table         = 'app_contact';
     protected $primaryKey    = 'id';
     protected $allowedFields = [
+        'structure_id',
         'name',
         'phone',
         'email',

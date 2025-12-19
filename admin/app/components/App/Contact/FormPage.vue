@@ -23,7 +23,7 @@ const {
     loading: formLoading,
     updateReply,
     updateStatus
-} = useContact();
+} = useAppContact();
 
 // HTML 原始碼預覽開關
 const showHtmlCode = ref(false);

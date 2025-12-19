@@ -13,9 +13,13 @@ const props = withDefaults(
         mode: "add" | "edit";
         initialData?: any;
         loading?: boolean;
+        structureId?: number | null;
+        structureInfo?: any;
     }>(),
     {
-        loading: false
+        loading: false,
+        structureId: null,
+        structureInfo: null
     }
 );
 
@@ -34,6 +38,21 @@ const {
     addNews,
     editNews
 } = useAppNews();
+
+
+const { resolvePath } = useStructureResolver();
+// 解析路徑：移除 /add 或 /edit/[id] 後綴，取得基礎路徑
+const getBasePath = (path: string): string => {
+    // 移除 /edit/[id] 部分
+    const editMatch = path.match(/^(.+)\/edit\/\d+$/);
+    if (editMatch && editMatch[1]) {
+        return editMatch[1];
+    }
+    // 移除 /add 部分
+    return path.replace('/add', '');
+};
+const pathInfo = resolvePath(getBasePath(router.currentRoute.value.path));
+console.log("pathInfo", pathInfo);
 
 // 日期選擇器格式
 const df = new DateFormatter("zh-TW", {
@@ -98,7 +117,6 @@ const handleDateUpdate = (
     }
 };
 
-
 // 表單提交
 const handleSubmit = async (event?: Event) => {
     console.log(form);
@@ -157,10 +175,21 @@ const handleSubmit = async (event?: Event) => {
         }
         success = await editNews(newsId);
     } else {
-        success = await addNews();
-        setTimeout(() => {
-            router.push("/news");
-        }, 1000);
+        success = await addNews(props.structureId ?? null);
+        if (success) {
+            // 根據是否有 structureId 決定導向的路徑
+            if (props.structureId) {
+                // 如果有 structureId，需要找到對應的路徑
+                const targetPath = pathInfo.structure?.url || `/news`;
+                setTimeout(() => {
+                    router.push(targetPath);
+                }, 1000);
+            } else {
+                setTimeout(() => {
+                    router.push("/news");
+                }, 1000);
+            }
+        }
     }
 
     if (success) {
@@ -539,7 +568,7 @@ defineExpose({
                         color="neutral"
                         variant="ghost"
                         :disabled="formLoading"
-                        to="/news"
+                        :to="`/${pathInfo.structure?.url}`"
                         label="取消" />
                     <UButton
                         type="button"
@@ -549,7 +578,7 @@ defineExpose({
                         :disabled="formLoading"
                         @click="handleSubmit()"
                         :label="
-                            mode === 'add' ? '新增最新消息' : '更新最新消息'
+                            mode === 'add' ? '新增' : '更新'
                         " />
                 </div>
             </section>

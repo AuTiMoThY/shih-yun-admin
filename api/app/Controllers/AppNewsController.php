@@ -20,7 +20,13 @@ class AppNewsController extends BaseController
     {
         try {
             $status = $this->request->getGet('status');
+            $structureId = $this->request->getGet('structure_id');
             $query = $this->appNewsModel->orderBy('show_date', 'DESC')->orderBy('id', 'DESC');
+            
+            // 如果提供了 structure_id，則過濾該單元的資料
+            if ($structureId !== null) {
+                $query->where('structure_id', (int)$structureId);
+            }
             
             if ($status !== null) {
                 $query->where('status', (int)$status);
@@ -124,6 +130,7 @@ class AppNewsController extends BaseController
 
         try {
             $insertData = [
+                'structure_id' => isset($data['structure_id']) ? (int)$data['structure_id'] : null,
                 'title' => trim($data['title']),
                 'content' => $data['content'] ?? null,
                 'cover' => $data['cover'] ?? null,

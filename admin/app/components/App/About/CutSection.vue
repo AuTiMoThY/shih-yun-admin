@@ -5,9 +5,10 @@ import type {
     CutSectionData
 } from "~/types/CutSectionField";
 
-const { buildId } = useAbout();
+const { buildId } = useAppAbout();
 const { hasPermission, isSuperAdmin } = usePermission();
-
+const deleteConfirmModalOpen = ref(false);
+const deleteTarget = ref<{ id: string; label: string } | null>(null);
 // 權限檢查
 // const canCreateField = computed(() => isSuperAdmin() || hasPermission('about.field.create'));
 // const canDeleteSection = computed(() => isSuperAdmin() || hasPermission('about.section.delete'));
@@ -114,15 +115,22 @@ const updateField = (updatedField: FieldConfig) => {
     }
 };
 
-// 刪除欄位
+// 刪除欄位（請求確認）
 const deleteField = (fieldId: string) => {
-    const ok = window.confirm("確定要刪除此欄位嗎？此操作無法復原。");
-    if (!ok) return;
-    sectionData.value.fields = sectionData.value.fields.filter(
-        (f) => f.id !== fieldId
+    const index = sectionData.value.fields.findIndex(
+        (f) => f.id === fieldId
     );
-    emitUpdate();
+    if (index === -1) return;
+    deleteConfirmModalOpen.value = true;
+    deleteTarget.value = { id: fieldId, label: `第${index + 1}欄位` };
 };
+
+// const ok = window.confirm("確定要刪除此欄位嗎？此操作無法復原。");
+//     if (!ok) return;
+//     sectionData.value.fields = sectionData.value.fields.filter(
+//         (f) => f.id !== fieldId
+//     );
+//     emitUpdate();
 
 // 移動欄位
 const moveField = (currentIndex: number, direction: "up" | "down") => {
@@ -138,7 +146,19 @@ const moveField = (currentIndex: number, direction: "up" | "down") => {
     }
 };
 
-// 確認刪除
+// 確認刪除欄位
+const confirmDeleteField = () => {
+    if (deleteTarget.value) {
+        const fieldId = deleteTarget.value.id;
+        sectionData.value.fields = sectionData.value.fields.filter(
+            (f) => f.id !== fieldId
+        );
+        emitUpdate();
+    }
+    deleteConfirmModalOpen.value = false;
+    deleteTarget.value = null;
+};
+
 // 監聽外部資料變更
 watch(
     () => props.data,
@@ -237,4 +257,13 @@ watch(
             </div>
         </template>
     </UCollapsible>
+    <DeleteConfirmModal
+        v-model:open="deleteConfirmModalOpen"
+        title="確認刪除欄位"
+        :description="
+            deleteTarget
+                ? `確定要刪除「${deleteTarget.label}」嗎？此操作無法復原，欄位資料將會被永久刪除。`
+                : ''
+        "
+        :on-confirm="confirmDeleteField" />
 </template>

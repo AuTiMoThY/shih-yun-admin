@@ -29,12 +29,21 @@ const hasActiveRoute = (item: any, currentPath: string): boolean => {
     return false;
 };
 
-const resolveModulePath = (moduleId: any): string | undefined => {
-    if (!moduleId) return undefined;
-    const found = modulesData.value?.find(
-        (m: any) => String(m.id) === String(moduleId)
-    );
-    return found?.name ? `/${found.name}` : undefined;
+const resolveModulePath = (item: any): string | undefined => {
+    // 優先使用自訂 URL
+    if (item?.url) {
+        return item.url.startsWith('/') ? item.url : `/${item.url}`;
+    }
+    
+    // 如果沒有自訂 URL，使用模組的 name
+    if (item?.module_id) {
+        const found = modulesData.value?.find(
+            (m: any) => String(m.id) === String(item.module_id)
+        );
+        return found?.name ? `/${found.name}` : undefined;
+    }
+    
+    return undefined;
 };
 
 const mapStructureToMenu = (
@@ -64,7 +73,7 @@ const mapStructureToMenu = (
         return {
             ...baseMenu,
             to:
-                resolveModulePath(item?.module_id) ||
+                resolveModulePath(item) ||
                 item?.to ||
                 item?.path ||
                 (item?.name ? `/${item.name}` : undefined),

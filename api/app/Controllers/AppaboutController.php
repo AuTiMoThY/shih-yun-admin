@@ -32,9 +32,15 @@ class AppAboutController extends BaseController
         try {
             log_message('debug', 'AppAboutController::get: Starting to fetch data');
 
-            $existing = $this->appAboutModel
-                ->orderBy('id', 'DESC')
-                ->first();
+            $structureId = $this->request->getGet('structure_id');
+            $query = $this->appAboutModel->orderBy('id', 'DESC');
+            
+            // 如果提供了 structure_id，則過濾該單元的資料
+            if ($structureId !== null) {
+                $query->where('structure_id', (int)$structureId);
+            }
+
+            $existing = $query->first();
 
             log_message('debug', 'AppAboutController::get: Query executed', [
                 'existing' => $existing ? 'found' : 'not found'
@@ -136,6 +142,7 @@ class AppAboutController extends BaseController
 
             $title = $payload['title'] ?? null;
             $sections = $payload['sections'] ?? null;
+            $structureId = $payload['structure_id'] ?? null;
 
             if ($sections === null) {
                 log_message('error', 'AppAboutController::save: Missing sections data');
@@ -146,9 +153,14 @@ class AppAboutController extends BaseController
                     ]);
             }
 
-            $existing = $this->appAboutModel
-                ->orderBy('id', 'DESC')
-                ->first();
+            $query = $this->appAboutModel->orderBy('id', 'DESC');
+            
+            // 如果提供了 structure_id，則查詢該單元的資料
+            if ($structureId !== null) {
+                $query->where('structure_id', (int)$structureId);
+            }
+
+            $existing = $query->first();
 
             log_message('debug', 'AppAboutController::save: Existing record check', [
                 'existing' => $existing ? 'found' : 'not found',
@@ -168,6 +180,7 @@ class AppAboutController extends BaseController
             }
 
             $data = [
+                'structure_id' => $structureId !== null ? (int)$structureId : null,
                 'title' => $title,
                 'sections_json' => $sectionsJson,
                 'status' => 1

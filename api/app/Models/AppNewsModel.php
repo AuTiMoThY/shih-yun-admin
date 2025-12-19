@@ -8,6 +8,7 @@ class AppNewsModel extends Model
     protected $table         = 'app_news';
     protected $primaryKey    = 'id';
     protected $allowedFields = [
+        'structure_id',
         'title',
         'cover',
         'slide',

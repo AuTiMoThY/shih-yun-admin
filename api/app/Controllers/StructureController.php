@@ -37,6 +37,7 @@ class StructureController extends BaseController
             'status' => 'required|in_list[0,1]',
             'parent_id' => 'permit_empty|is_natural',
             'sort_order' => 'permit_empty|integer',
+            'url' => 'permit_empty|max_length[255]',
         ];
 
         if (!$this->validateData($data, $rules)) {
@@ -51,6 +52,7 @@ class StructureController extends BaseController
             $insertData = [
                 'label' => $data['label'],
                 'module_id' => $data['module_id'],
+                'url' => isset($data['url']) && !empty(trim($data['url'])) ? trim($data['url']) : null,
                 'status' => (int) $data['status'],
                 'sort_order' => isset($data['sort_order']) ? (int) $data['sort_order'] : 0,
             ];
@@ -164,6 +166,7 @@ class StructureController extends BaseController
             'status' => 'permit_empty|in_list[0,1]',
             'parent_id' => 'permit_empty|is_natural',
             'sort_order' => 'permit_empty|integer',
+            'url' => 'permit_empty|max_length[255]',
         ];
 
         if (!$this->validateData($data, $rules)) {
@@ -183,6 +186,9 @@ class StructureController extends BaseController
             // 使用 array_key_exists 以支援 null 值
             if (array_key_exists('module_id', $data)) {
                 $updateData['module_id'] = $data['module_id'] === '' ? null : $data['module_id'];
+            }
+            if (array_key_exists('url', $data)) {
+                $updateData['url'] = $data['url'] === '' ? null : (isset($data['url']) && !empty(trim($data['url'])) ? trim($data['url']) : null);
             }
             if (isset($data['status'])) {
                 $updateData['status'] = (int) $data['status'];

@@ -2,7 +2,7 @@ import type { CutSectionData } from "~/types/CutSectionField";
 import { useDateFormat, useNow } from "@vueuse/core";
 
 
-export const useAbout = () => {
+export const useAppAbout = () => {
     const { public: runtimePublic } = useRuntimeConfig();
     const apiBase = runtimePublic.apiBase;
     const toast = useToast();
@@ -14,13 +14,21 @@ export const useAbout = () => {
     const submitError = ref<string>("");
 
 
-    const fetchData = async () => {
+    const fetchData = async (structureId?: number | null) => {
         loading.value = true;
         submitError.value = "";
         try {
+            const queryParams = new URLSearchParams();
+            if (structureId !== undefined && structureId !== null) {
+                queryParams.append("structure_id", String(structureId));
+            }
+            const queryString = queryParams.toString();
+            const url = `${apiBase}/app-about/get${queryString ? `?${queryString}` : ""}`;
+            
             console.log("[useAbout] fetchData: 開始載入資料", {
                 apiBase,
-                url: `${apiBase}/app-about/get`
+                url,
+                structureId
             });
 
             const res = await $fetch<{
@@ -29,7 +37,7 @@ export const useAbout = () => {
                 message?: string;
                 error?: string;
                 debug?: any;
-            }>(`${apiBase}/app-about/get`);
+            }>(url);
 
             console.log("[useAbout] fetchData: API 回應", {
                 success: res?.success,
@@ -84,13 +92,14 @@ export const useAbout = () => {
         }
     };
 
-    const saveAbout = async () => {
+    const saveAbout = async (structureId?: number | null) => {
         loading.value = true;
         submitError.value = "";
         try {
             const payload = {
                 title: title.value,
-                sections: sections.value
+                sections: sections.value,
+                ...(structureId !== undefined && structureId !== null ? { structure_id: structureId } : {})
             };
 
             console.log("[useAbout] saveAbout: 開始儲存資料", {

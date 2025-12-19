@@ -206,7 +206,7 @@ onUnmounted(() => {
                 </button>
                 <span v-else class="w-5 shrink-0"></span>
                 <span class="font-medium text-base flex-1">
-                    {{ level.label }}
+                    {{ level.label }} ( {{ level.url }} )
                 </span>
             </div>
 
@@ -285,6 +285,9 @@ onUnmounted(() => {
                 <span v-else class="w-5"></span>
                 <span class="font-medium">{{ level.label }}</span>
             </div>
+        </td>
+        <td class="py-2 px-4 border-b border-default">
+            <span class="font-medium">{{ level.url }}</span>
         </td>
         <td class="py-2 px-4 border-b border-default">
             <span class="font-medium">{{ moduleName }}</span>

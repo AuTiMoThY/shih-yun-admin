@@ -191,6 +191,18 @@ onMounted(async () => {
                         已有子層級，無法變更模組
                     </p>
                 </UFormField>
+                <UFormField
+                    label="自訂 URL（可選）"
+                    name="url"
+                    description="如果設定，將使用此 URL 而非模組代碼。例如：custom-contact">
+                    <UInput
+                        v-model="form.url"
+                        placeholder="例如：custom-contact（不需要前綴斜線）"
+                        size="lg"
+                        :disabled="loading"
+                        class="w-full"
+                        @input="clearError('url')" />
+                </UFormField>
                 <UCheckbox
                     v-model="form.status"
                     indicator="end"

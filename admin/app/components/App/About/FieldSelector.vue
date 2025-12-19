@@ -19,6 +19,12 @@ const fieldTypes: FieldTypeOption[] = [
         description: "次要標題文字"
     },
     {
+        type: "content",
+        label: "內文",
+        icon: "i-lucide-file-text",
+        description: "文字內容區塊"
+    },
+    {
         type: "desktop_image",
         label: "電腦版圖片",
         icon: "i-lucide-monitor",
@@ -31,10 +37,10 @@ const fieldTypes: FieldTypeOption[] = [
         description: "手機版顯示的圖片"
     },
     {
-        type: "content",
-        label: "內文",
-        icon: "i-lucide-file-text",
-        description: "文字內容區塊"
+        type: "video",
+        label: "影片",
+        icon: "i-lucide-video",
+        description: "影片區塊"
     }
 ];
 

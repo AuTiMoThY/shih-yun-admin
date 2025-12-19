@@ -1,6 +1,6 @@
 import type { ContactForm, ContactFormErrors } from "~/types";
 
-export const useContact = () => {
+export const useAppContact = () => {
     const { public: runtimePublic } = useRuntimeConfig();
     const apiBase = runtimePublic.apiBase;
     const toast = useToast();
@@ -31,9 +31,13 @@ export const useContact = () => {
     /**
      * 前台提交聯絡表單
      */
-    const submitContact = async (formData: ContactForm) => {
+    const submitContact = async (formData: ContactForm, structureId?: number | null) => {
         loading.value = true;
         try {
+            const body = structureId !== undefined && structureId !== null
+                ? { ...formData, structure_id: structureId }
+                : formData;
+            
             const response = await $fetch<{
                 success: boolean;
                 message: string;
@@ -41,7 +45,7 @@ export const useContact = () => {
                 errors?: Record<string, string>;
             }>(`${apiBase}/app-contact/submit`, {
                 method: "POST",
-                body: formData,
+                body: body,
             });
 
             if (response.success) {
@@ -79,12 +83,15 @@ export const useContact = () => {
     /**
      * 後台取得聯絡表單列表
      */
-    const fetchData = async (options?: { status?: 0 | 1 | 2 }) => {
+    const fetchData = async (options?: { status?: 0 | 1 | 2; structure_id?: number | null }) => {
         loading.value = true;
         try {
             const queryParams = new URLSearchParams();
             if (options?.status !== undefined) {
                 queryParams.append("status", String(options.status));
+            }
+            if (options?.structure_id !== undefined && options?.structure_id !== null) {
+                queryParams.append("structure_id", String(options.structure_id));
             }
 
             const response = await $fetch<{
@@ -124,7 +131,7 @@ export const useContact = () => {
     /**
      * 後台更新處理狀態
      */
-    const updateStatus = async (id: number, status: 0 | 1 | 2) => {
+    const updateStatus = async (id: number | string, status: 0 | 1 | 2) => {
         loading.value = true;
         try {
             const response = await $fetch<{
@@ -175,7 +182,7 @@ export const useContact = () => {
     /**
      * 後台刪除聯絡表單
      */
-    const deleteContact = async (id: number, options?: { onSuccess?: () => void }) => {
+    const deleteContact = async (id: number | string, options?: { onSuccess?: () => void }) => {
         if (!id) return false;
         loading.value = true;
         try {
@@ -219,7 +226,7 @@ export const useContact = () => {
     /**
      * 後台載入聯絡表單資料
      */
-    const loadContactData = async (id: number) => {
+    const loadContactData = async (id: number | string) => {
         loading.value = true;
         try {
             const response = await $fetch<{
@@ -254,7 +261,7 @@ export const useContact = () => {
     /**
      * 後台更新回信內容
      */
-    const updateReply = async (id: number, reply: string) => {
+    const updateReply = async (id: number | string, reply: string) => {
         loading.value = true;
         try {
             const response = await $fetch<{

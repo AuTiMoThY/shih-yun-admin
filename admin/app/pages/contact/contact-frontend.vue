@@ -1,36 +1,43 @@
 <script setup lang="ts">
-import type { ContactForm, ContactFormErrors } from "~/types";
 definePageMeta({
     middleware: "auth"
 });
 
-const { submitContact, loading } = useContact();
+const { submitContact, loading } = useAppContact();
 const toast = useToast();
 
-const form = reactive<ContactForm>({
+const form = reactive<{
+    name: string;
+    phone: string;
+    email: string;
+    message?: string;
+}>({
     name: "",
     phone: "",
     email: "",
-    project: "",
-    message: "",
+    message: undefined,
 });
 
-const errors = reactive<ContactFormErrors>({
+const errors = reactive<{
+    name: string | false;
+    phone: string | false;
+    email: string | false;
+    message?: string | false;
+}>({
     name: false,
     phone: false,
     email: false,
-    project: false,
     message: false,
 });
 
-const clearError = (field: keyof ContactFormErrors) => {
-    errors[field] = false;
+const clearError = (field: keyof typeof errors) => {
+    errors[field as keyof typeof errors] = false;
 };
 
 const validateForm = (): boolean => {
     // 清除所有錯誤
     Object.keys(errors).forEach((key) => {
-        errors[key as keyof ContactFormErrors] = false;
+        errors[key as keyof typeof errors] = false;
     });
 
     let isValid = true;
@@ -77,25 +84,23 @@ const handleSubmit = async (event: Event) => {
         return;
     }
 
-    const submitData: ContactForm = {
+    const submitData: typeof form = {
         name: form.name.trim(),
         phone: form.phone.trim(),
         email: form.email.trim(),
-        project: form.project?.trim() || undefined,
         message: form.message?.trim() || undefined,
     };
 
-    const result = await submitContact(submitData);
+    const result = await submitContact({ status: 0, ...submitData });
 
     if (result.success) {
         // 重置表單
         form.name = "";
         form.phone = "";
         form.email = "";
-        form.project = "";
         form.message = "";
         Object.keys(errors).forEach((key) => {
-            errors[key as keyof ContactFormErrors] = false;
+            errors[key as keyof typeof errors] = false;
         });
     }
 };

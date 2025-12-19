@@ -8,6 +8,7 @@ class AppAboutModel extends Model
     protected $table         = 'app_about';
     protected $primaryKey    = 'id';
     protected $allowedFields = [
+        'structure_id',
         'title',
         'sections_json',
         'status',

@@ -1,94 +1,32 @@
 <script setup lang="ts">
-import type { TableColumn } from "@nuxt/ui";
-import { h, resolveComponent } from "vue";
-import { STATUS_LABEL_MAP } from "~/constants/system/status";
-import { STATUS_ICON_MAP } from "~/constants/system/status_icon";
-
 definePageMeta({
     middleware: "auth"
 });
 
-const UButton = resolveComponent("UButton");
-const UIcon = resolveComponent("UIcon");
-const NuxtImg = resolveComponent("NuxtImg");
-const { data, loading, fetchData, deleteNews } = useAppNews();
+const route = useRoute();
 
-const deleteConfirmModalOpen = ref(false);
-const deleteTarget = ref<{ id: string; title: string } | null>(null);
-const columns: TableColumn<any>[] = [
-    {
-        accessorKey: "cover",
-        header: "封面圖",
-        cell: ({ row }) => {
-            const cover = row.original.cover;
-            // console.log("cover", cover);
-            return h(NuxtImg, {
-                src: cover,
-                alt: "封面圖",
-                class: "w-25 aspect-square object-cover"
-            });
-        }
-    },
-    { accessorKey: "title", header: "標題" },
-    { accessorKey: "show_date", header: "日期" },
-    {
-        accessorKey: "status",
-        header: "狀態",
-        cell: ({ row }) => {
-            const status = String(row.original.status);
-            const label = STATUS_LABEL_MAP[status] ?? status;
-            const icon = STATUS_ICON_MAP[status] ?? "i-lucide-help-circle";
-            return h("div", { class: "flex items-center gap-2" }, [
-                h(UIcon, {
-                    name: icon,
-                    class: status === "1" ? "text-emerald-500" : "text-rose-500"
-                }),
-                h("span", label)
-            ]);
-        }
-    },
-    {
-        accessorKey: "action",
-        header: "操作",
-        cell: ({ row }) => {
-            return h("div", { class: "flex items-center gap-2" }, [
-                h(UButton, {
-                    icon: "i-lucide-edit",
-                    label: "編輯",
-                    color: "primary",
-                    size: "xs",
-                    to: `/news/edit/${row.original.id}`
-                }),
-                h(UButton, {
-                    icon: "i-lucide-trash",
-                    label: "刪除",
-                    color: "error",
-                    variant: "ghost",
-                    size: "xs",
-                    onClick: () => handleDelete(row.original)
-                })
-            ]);
-        }
+// 從 query 參數取得 structure_id，如果沒有則嘗試從 URL 解析
+const structureId = computed(() => {
+    // 優先使用 query 參數
+    if (route.query.structure_id) {
+        return Number(route.query.structure_id);
     }
-];
+    
+    // 如果沒有 query 參數，嘗試從 URL 解析
+    const { resolvePath } = useStructureResolver();
+    const pathInfo = resolvePath(route.path);
+    return pathInfo.structure_id;
+});
 
-const handleDelete = async (data: any) => {
-    deleteTarget.value = { id: data.id, title: data.title };
-    deleteConfirmModalOpen.value = true;
-}
-
-const confirmDelete = async () => {
-    await deleteNews(deleteTarget.value?.id as number, {
-        onSuccess: () => fetchData()
-    });
-    deleteConfirmModalOpen.value = false;
-    deleteTarget.value = null;
-}
-
-onMounted(() => {
-    fetchData();
+// 確保結構資料已載入
+onMounted(async () => {
+    const { data: structureData, fetchData: fetchStructure } = useStructure();
+    if (!structureData.value?.length) {
+        await fetchStructure();
+    }
 });
 </script>
+
 <template>
     <UDashboardPanel>
         <template #header>
@@ -108,19 +46,11 @@ onMounted(() => {
             </UDashboardNavbar>
         </template>
         <template #body>
-            <DataTable :data="data" :columns="columns" :loading="loading" />
+            <!-- 使用組件 -->
+            <AppNews :structure-id="structureId" />
         </template>
         <template #footer>
             <PageFooter />
         </template>
     </UDashboardPanel>
-    <DeleteConfirmModal
-        v-model:open="deleteConfirmModalOpen"
-        title="確認刪除"
-        :description="
-            deleteTarget
-                ? `確定要刪除「${deleteTarget.title}」嗎？此操作無法復原，「${deleteTarget.title}」將會被永久刪除。`
-                : ''
-        "
-        :on-confirm="confirmDelete" />
 </template>

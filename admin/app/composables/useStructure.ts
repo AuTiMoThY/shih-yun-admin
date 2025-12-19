@@ -13,6 +13,7 @@ export const useStructure = () => {
     const form = reactive<LevelForm>({
         label: "",
         module_id: null,
+        url: null,
         status: true,
         parent_id: null
     });
@@ -75,6 +76,7 @@ export const useStructure = () => {
     const resetForm = (parentId: LevelForm["parent_id"] = null) => {
         form.label = "";
         form.module_id = null;
+        form.url = null;
         form.status = true;
         form.parent_id = parentId ?? null;
 
@@ -115,6 +117,7 @@ export const useStructure = () => {
         if (!level) return;
         form.label = level.label || "";
         form.module_id = level.module_id ?? null;
+        form.url = level.url ?? null;
         form.status =
             level.status === "1" || level.status === 1 || level.status === true;
         form.parent_id = level.parent_id ?? null;

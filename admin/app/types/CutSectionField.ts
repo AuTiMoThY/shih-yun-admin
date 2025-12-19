@@ -1,5 +1,5 @@
 // 欄位類型
-export type FieldType = "title" | "subtitle" | "desktop_image" | "mobile_image" | "content";
+export type FieldType = "title" | "subtitle" | "content" | "desktop_image" | "mobile_image" | "video";
 
 // 欄位配置
 export interface FieldConfig {

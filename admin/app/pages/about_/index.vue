@@ -26,12 +26,11 @@ onMounted(async () => {
     }
 });
 </script>
-
 <template>
     <UDashboardPanel>
         <template #header>
             <UDashboardNavbar
-                title="聯絡表單"
+                title="關於我們"
                 :ui="{ right: 'gap-3', title: 'text-primary' }">
                 <template #leading>
                     <UDashboardSidebarCollapse />
@@ -40,7 +39,7 @@ onMounted(async () => {
         </template>
         <template #body>
             <!-- 使用組件 -->
-            <AppContact :structure-id="structureId" />
+            <AppAbout :structure-id="structureId" />
         </template>
         <template #footer>
             <PageFooter />

@@ -100,14 +100,20 @@ export const useAppNews = () => {
         form.status = data.status !== undefined ? Number(data.status) : 1;
     };
 
-    const fetchData = async () => {
+    const fetchData = async (structureId?: number | null) => {
         loading.value = true;
         try {
+            const queryParams = new URLSearchParams();
+            if (structureId !== undefined && structureId !== null) {
+                queryParams.append("structure_id", String(structureId));
+            }
+            const queryString = queryParams.toString();
+            
             const res = await $fetch<{
                 success: boolean;
                 data: any[];
                 message?: string;
-            }>(`${apiBase}/app-news/get`);
+            }>(`${apiBase}/app-news/get${queryString ? `?${queryString}` : ""}`);
             if (res.success) {
                 data.value = res.data || [];
             } else {
@@ -123,7 +129,7 @@ export const useAppNews = () => {
         }
     };
 
-    const addNews = async () => {
+    const addNews = async (structureId?: number | null) => {
         loading.value = true;
         submitError.value = "";
 
@@ -132,12 +138,16 @@ export const useAppNews = () => {
             return false;
         }
         try {
+            const body = structureId !== undefined && structureId !== null
+                ? { ...form, structure_id: structureId }
+                : form;
+            
             const res = await $fetch<{
                 success: boolean;
                 message: string;
             }>(`${apiBase}/app-news/add`, {
                 method: "POST",
-                body: form
+                body: body
             });
             if (res.success) {
                 toast.add({

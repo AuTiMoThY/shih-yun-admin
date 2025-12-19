@@ -11,7 +11,7 @@ const contactId = computed(() => {
     return parseInt(id, 10);
 });
 
-const { loadContactData } = useContact();
+const { loadContactData } = useAppContact();
 const contactData = ref<any>(null);
 const loadingData = ref(true);
 

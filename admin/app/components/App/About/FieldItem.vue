@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { FieldConfig, FieldType } from "~/types/CutSectionField";
 
-const toast = useToast();
 const { hasPermission, isSuperAdmin } = usePermission();
 
 // 權限檢查
@@ -25,13 +24,25 @@ const localField = ref<FieldConfig>({ ...props.field });
 
 // 控制標題區的即時編輯
 const isEditingLabel = ref(false);
-import { useDateFormat, useNow } from "@vueuse/core";
 
 // 監聽外部變更
 watch(
     () => props.field,
     (newField) => {
         localField.value = { ...newField };
+        // 如果是圖片欄位且值有變更，更新圖片預覽
+        if (
+            (newField.type === "desktop_image" ||
+                newField.type === "mobile_image") &&
+            newField.value !== imagePreview.value
+        ) {
+            loadInitialValue(newField.value || null);
+            if (newField.value) {
+                loadAspectFromSrc(newField.value);
+            } else {
+                imageAspectRatio.value = null;
+            }
+        }
     },
     { deep: true }
 );
@@ -53,87 +64,48 @@ const updateValue = (value: string) => {
 const fieldTypeNames: Record<FieldType, string> = {
     title: "標題",
     subtitle: "副標題",
+    content: "內文",
     desktop_image: "電腦版圖片",
     mobile_image: "手機版圖片",
-    content: "內文"
+    video: "影片"
 };
 
 // 圖片上傳
-const { uploadImage, getImagePreview, getImageDimensions } = useImageUpload();
-const imagePreview = ref<string | null>(null);
-const imageInputRef = ref<HTMLInputElement | null>(null);
-const isUploading = ref(false);
-const imageAspectRatio = ref<string | null>(null);
+const {
+    inputRef: imageInputRef,
+    preview: imagePreview,
+    isUploading,
+    handleFileSelect,
+    triggerFileSelect,
+    remove: removeImage,
+    upload,
+    loadInitialValue,
+    formValue
+} = useImageUploadSingle({
+    onPreviewChange: (previewUrl) => {
+        // 當預覽變更時，如果有上傳成功的 URL（不是 blob URL），更新欄位值
+        if (previewUrl && !previewUrl.startsWith('blob:')) {
+            updateValue(previewUrl);
+        }
+    }
+});
 
+// 處理圖片上傳（選擇後立即上傳）
 const handleImageUpload = async (event: Event) => {
-    const target = event.target as HTMLInputElement;
-    const file = target.files?.[0];
-    if (!file) return;
-
-    // 驗證檔案類型
-    if (!file.type.startsWith("image/")) {
-        toast.add({
-            title: "檔案格式錯誤",
-            description: "請選擇圖片檔案",
-            color: "error"
-        });
-        return;
-    }
-
-    // 驗證檔案大小（例如：5MB）
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
-        toast.add({
-            title: "檔案過大",
-            description: "圖片大小不能超過 5MB",
-            color: "error"
-        });
-        return;
-    }
-
-    isUploading.value = true;
-
-    try {
-        // 先顯示本地預覽與長寬比
-        const [preview, dims] = await Promise.all([
-            getImagePreview(file),
-            getImageDimensions(file)
-        ]);
-        imagePreview.value = preview;
-        imageAspectRatio.value = `${dims.width} / ${dims.height}`;
-
-        // 上傳到伺服器
-        const uploadedUrl = await uploadImage(file);
-        if (uploadedUrl) {
-            updateValue(uploadedUrl);
-            imagePreview.value = uploadedUrl;
-        } else {
-            // 上傳失敗，保留本地預覽但標記為未上傳
-            imagePreview.value = preview;
-        }
-    } catch (error) {
-        console.error("圖片處理錯誤:", error);
-    } finally {
-        isUploading.value = false;
-        // 清空 input 值，允許重新選擇相同檔案
-        if (imageInputRef.value) {
-            imageInputRef.value.value = "";
-        }
+    await handleFileSelect(event);
+    // 立即上傳
+    const success = await upload();
+    if (success && formValue.value) {
+        // 上傳成功後，確保欄位值已更新
+        updateValue(formValue.value);
     }
 };
 
 const triggerImageUpload = () => {
-    imageInputRef.value?.click();
+    triggerFileSelect();
 };
 
-const removeImage = () => {
-    imagePreview.value = null;
-    imageAspectRatio.value = null;
-    updateValue("");
-    if (imageInputRef.value) {
-        imageInputRef.value.value = "";
-    }
-};
+const imageAspectRatio = ref<string | null>(null);
 
 const loadAspectFromSrc = (src: string) => {
     const img = new Image();
@@ -143,13 +115,20 @@ const loadAspectFromSrc = (src: string) => {
     img.src = src;
 };
 
+const handleRemoveImage = () => {
+    removeImage();
+    updateValue("");
+    imageAspectRatio.value = null;
+};
+
 const fieldIcon = computed(() => {
     return {
         title: "i-lucide-heading",
         subtitle: "i-lucide-heading-2",
         desktop_image: "i-lucide-image",
         mobile_image: "i-lucide-image",
-        content: "i-lucide-file-text"
+        content: "i-lucide-file-text",
+        video: "i-lucide-video"
     }[props.field.type];
 });
 
@@ -160,7 +139,7 @@ onMounted(() => {
             props.field.type === "mobile_image") &&
         props.field.value
     ) {
-        imagePreview.value = props.field.value;
+        loadInitialValue(props.field.value);
         loadAspectFromSrc(props.field.value);
     }
 });
@@ -202,7 +181,7 @@ watch(isEditingLabel, async (editing) => {
                         </template>
                         <template v-else>
                             <span
-                                class="text-sm font-semibold text-gray-900 cursor-pointer hover:underline"
+                                class="text-sm font-semibold text-primary cursor-pointer hover:underline"
                                 @click="isEditingLabel = true">
                                 {{
                                     localField.label ||
@@ -264,6 +243,18 @@ watch(isEditingLabel, async (editing) => {
                         :ui="{ root: 'w-full' }" />
                 </UFormField>
             </template>
+            
+            <template v-else-if="field.type === 'content'">
+                <UFormField name="field-value">
+                    <UTextarea
+                        v-model="localField.value"
+                        placeholder="請輸入內文"
+                        :rows="3"
+                        @update:model-value="updateValue"
+                        autoresize
+                        :ui="{ root: 'w-full' }" />
+                </UFormField>
+            </template>
 
             <template
                 v-else-if="
@@ -298,7 +289,7 @@ watch(isEditingLabel, async (editing) => {
                                 color="error"
                                 variant="solid"
                                 class="absolute top-2 right-2"
-                                @click="removeImage" />
+                                @click="handleRemoveImage" />
                         </div>
                         <UButton
                             :label="
@@ -317,17 +308,16 @@ watch(isEditingLabel, async (editing) => {
                 </UFormField>
             </template>
 
-            <template v-else-if="field.type === 'content'">
+            <template v-else-if="field.type === 'video'">
                 <UFormField name="field-value">
-                    <UTextarea
+                    <UInput
                         v-model="localField.value"
-                        placeholder="請輸入內文"
-                        :rows="3"
+                        placeholder="請輸入影片連結"
                         @update:model-value="updateValue"
-                        autoresize
                         :ui="{ root: 'w-full' }" />
                 </UFormField>
             </template>
+
         </div>
     </UCard>
 </template>
