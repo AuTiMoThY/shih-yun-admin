@@ -73,4 +73,5 @@ $routes->post('/app-contact/submit', 'AppContactController::submit'); // 前台�
 $routes->get('/app-contact/get', 'AppContactController::get'); // 後台取得列表
 $routes->get('/app-contact/get-by-id', 'AppContactController::getById'); // 後台取得單筆
 $routes->post('/app-contact/update-status', 'AppContactController::updateStatus'); // 後台更新狀態
+$routes->post('/app-contact/update-reply', 'AppContactController::updateReply'); // 後台更新回信
 $routes->post('/app-contact/delete', 'AppContactController::delete'); // 後台刪除

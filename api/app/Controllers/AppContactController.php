@@ -24,7 +24,6 @@ class AppContactController extends BaseController
             'name' => 'required|min_length[1]|max_length[255]',
             'phone' => 'required|min_length[1]|max_length[50]',
             'email' => 'required|valid_email|max_length[255]',
-            'project' => 'permit_empty|max_length[255]',
             'message' => 'permit_empty',
         ];
 
@@ -41,7 +40,6 @@ class AppContactController extends BaseController
                 'name' => trim($data['name']),
                 'phone' => trim($data['phone']),
                 'email' => trim($data['email']),
-                'project' => isset($data['project']) && !empty(trim($data['project'])) ? trim($data['project']) : null,
                 'message' => isset($data['message']) && !empty(trim($data['message'])) ? trim($data['message']) : null,
                 'status' => 0, // 預設為待處理
             ];
@@ -202,6 +200,71 @@ class AppContactController extends BaseController
             return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON([
                 'success' => false,
                 'message' => '更新狀態失敗，請稍後再試',
+                'error' => ENVIRONMENT !== 'production' ? $e->getMessage() : null,
+            ]);
+        }
+    }
+
+    /**
+     * 後台更新回信內容
+     */
+    public function updateReply()
+    {
+        $data = $this->request->getJSON(true) ?: $this->request->getPost();
+
+        $id = $data['id'] ?? null;
+        if (!$id) {
+            return $this->response->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST)->setJSON([
+                'success' => false,
+                'message' => '缺少聯絡表單 ID',
+            ]);
+        }
+
+        // 檢查聯絡表單是否存在
+        $contact = $this->appContactModel->find($id);
+        if (!$contact) {
+            return $this->response->setStatusCode(ResponseInterface::HTTP_NOT_FOUND)->setJSON([
+                'success' => false,
+                'message' => '聯絡表單不存在',
+            ]);
+        }
+
+        $rules = [
+            'reply' => 'permit_empty',
+        ];
+
+        if (!$this->validateData($data, $rules)) {
+            return $this->response->setStatusCode(ResponseInterface::HTTP_UNPROCESSABLE_ENTITY)->setJSON([
+                'success' => false,
+                'message' => '驗證失敗',
+                'errors' => $this->validator->getErrors(),
+            ]);
+        }
+
+        try {
+            $updateData = [
+                'reply' => isset($data['reply']) ? trim($data['reply']) : null,
+            ];
+
+            $updated = $this->appContactModel->skipValidation(true)->update($id, $updateData);
+
+            if (!$updated) {
+                return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON([
+                    'success' => false,
+                    'message' => '更新回信失敗，請稍後再試',
+                ]);
+            }
+
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => '更新回信成功',
+            ]);
+        } catch (\Throwable $e) {
+            log_message('error', 'updateContactReply failed: {message}', ['message' => $e->getMessage()]);
+
+            return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON([
+                'success' => false,
+                'message' => '更新回信失敗，請稍後再試',
                 'error' => ENVIRONMENT !== 'production' ? $e->getMessage() : null,
             ]);
         }

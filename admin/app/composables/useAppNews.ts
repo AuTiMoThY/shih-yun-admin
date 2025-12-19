@@ -274,11 +274,11 @@ export const useAppNews = () => {
         }
     };
 
-    const deleteNews = async (options?: {
+    const deleteNews = async (id: number | string, options?: {
         id?: number | string;
         onSuccess?: () => void;
     }) => {
-        if (!options?.id) return false;
+        if (!id) return false;
         loading.value = true;
         try {
             const res = await $fetch<{
@@ -286,7 +286,7 @@ export const useAppNews = () => {
                 message: string;
             }>(`${apiBase}/app-news/delete`, {
                 method: "POST",
-                body: { id: options.id }
+                body: { id: id }
             });
             if (res.success) {
                 toast.add({ title: res.message, color: "success" });

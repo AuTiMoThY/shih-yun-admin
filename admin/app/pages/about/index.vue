@@ -10,6 +10,7 @@ const {
     buildId,
     sections: cutSections,
     loading,
+    submitError,
     fetchData,
     saveAbout
 } = useAbout();
@@ -110,9 +111,17 @@ const saveAllSections = async () => {
 
 // 初始化資料
 onMounted(async () => {
-    await fetchData();
-    await nextTick();
-    console.log("cutSections:", cutSections.value);
+    console.log("[about/index] onMounted: 開始初始化");
+    try {
+        await fetchData();
+        await nextTick();
+        console.log("[about/index] onMounted: 初始化完成", {
+            sectionsCount: cutSections.value.length,
+            cutSections: cutSections.value
+        });
+    } catch (error) {
+        console.error("[about/index] onMounted: 初始化失敗", error);
+    }
 });
 </script>
 <template>
@@ -146,6 +155,14 @@ onMounted(async () => {
                 <UIcon name="i-lucide-loader-2" class="w-6 h-6 animate-spin" />
             </div>
             <template v-else>
+                <UAlert
+                    v-if="submitError"
+                    color="red"
+                    variant="soft"
+                    icon="i-lucide-alert-circle"
+                    title="錯誤"
+                    :description="submitError"
+                    class="mb-4" />
                 <template v-if="cutSections.length == 0">
                     <AppAboutCutSection
                         index="1"

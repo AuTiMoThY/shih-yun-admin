@@ -113,7 +113,7 @@ const handleSubmit = async (event: Event) => {
             </UDashboardNavbar>
         </template>
         <template #body>
-            <div class="max-w-2xl mx-auto p-6">
+            <div class="w-2xl mx-auto p-6">
                 <UCard>
                     <template #header>
                         <div class="text-xl font-semibold">聯絡表單</div>

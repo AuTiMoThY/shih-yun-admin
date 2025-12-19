@@ -5,26 +5,42 @@ definePageMeta({
 });
 const UCheckbox = resolveComponent("UCheckbox");
 const UButton = resolveComponent("UButton");
-
-const { data, loading, fetchData, updateStatus } = useContact();
+const deleteConfirmModalOpen = ref(false);
+const deleteTarget = ref<{ id: number | string; name: string } | null>(null);
+const { data, loading, fetchData, updateStatus, deleteContact } = useContact();
 const columns: TableColumn<any>[] = [
     { accessorKey: "name", header: "姓名" },
     { accessorKey: "email", header: "信箱" },
     { accessorKey: "phone", header: "電話" },
-    { accessorKey: "project", header: "建案" },
     {
         accessorKey: "status",
         header: "處理狀態",
         cell: ({ row }) => {
-            const status = computed(() => row.original.status);
-            const statusLabel = computed(() => status.value === 1 ? "已處理" : "未處理");
+            const status = computed(() => Number(row.original.status) === 1);
+            const statusLabel = computed(() =>
+                status.value ? "已處理" : "未處理"
+            );
+
             return h(UCheckbox, {
                 label: statusLabel.value,
-                modelValue: status.value === 1,
-                onChange: async (value: boolean) => {
+                modelValue: status.value,
+                "onUpdate:modelValue": async (value: boolean) => {
+                    const oldStatus = row.original.status;
                     const newStatus = value ? 1 : 0;
-                    // 調用 API 更新後端狀態，成功後會自動更新本地數據
-                    await updateStatus(row.original.id, newStatus);
+
+                    // 樂觀更新：先更新本地狀態
+                    row.original.status = newStatus;
+
+                    // 調用 API 更新後端狀態
+                    const result = await updateStatus(
+                        row.original.id,
+                        newStatus
+                    );
+
+                    // 如果更新失敗，回滾狀態
+                    if (!result.success) {
+                        row.original.status = oldStatus;
+                    }
                 }
             });
         }
@@ -39,7 +55,7 @@ const columns: TableColumn<any>[] = [
                     label: "編輯",
                     color: "primary",
                     size: "xs",
-                    // to: `/contact/edit/${row.original.id}`
+                    to: `/contact/edit/${row.original.id}`
                 }),
                 h(UButton, {
                     icon: "i-lucide-trash",
@@ -47,7 +63,7 @@ const columns: TableColumn<any>[] = [
                     color: "error",
                     variant: "ghost",
                     size: "xs",
-                    // onClick: () => handleDelete(row.original)
+                    onClick: () => handleDelete(row.original)
                 })
             ]);
         }
@@ -55,16 +71,21 @@ const columns: TableColumn<any>[] = [
 ];
 
 const handleDelete = async (data: any) => {
-    // deleteTarget.value = { id: data.id, name: data.name };
-    // deleteConfirmModalOpen.value = true;
+    deleteTarget.value = { id: data.id, name: data.name };
+    deleteConfirmModalOpen.value = true;
 };
 
-const handleEdit = async (data: any) => {
-    console.log("handleEdit", data);
+const confirmDelete = async () => {
+    await deleteContact(deleteTarget.value?.id as number, {
+        onSuccess: () => fetchData()
+    });
+    deleteConfirmModalOpen.value = false;
+    deleteTarget.value = null;
 };
 
 onMounted(async () => {
     await fetchData();
+    console.log("data", data.value);
 });
 </script>
 <template>
@@ -85,4 +106,13 @@ onMounted(async () => {
             <PageFooter />
         </template>
     </UDashboardPanel>
+    <DeleteConfirmModal
+        v-model:open="deleteConfirmModalOpen"
+        title="確認刪除"
+        :description="
+            deleteTarget
+                ? `確定要刪除「${deleteTarget.name}」嗎？此操作無法復原，「${deleteTarget.name}」將會被永久刪除。`
+                : ''
+        "
+        :on-confirm="confirmDelete" />
 </template>

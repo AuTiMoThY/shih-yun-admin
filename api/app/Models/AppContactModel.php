@@ -13,6 +13,7 @@ class AppContactModel extends Model
         'email',
         'project',
         'message',
+        'reply',
         'status',
     ];
     protected $useTimestamps = true;

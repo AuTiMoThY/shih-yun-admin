@@ -77,9 +77,8 @@ const handleDelete = async (data: any) => {
     deleteConfirmModalOpen.value = true;
 }
 
-const confirmDeleteNews = async () => {
-    await deleteNews({
-        id: deleteTarget.value?.id,
+const confirmDelete = async () => {
+    await deleteNews(deleteTarget.value?.id as number, {
         onSuccess: () => fetchData()
     });
     deleteConfirmModalOpen.value = false;
@@ -123,5 +122,5 @@ onMounted(() => {
                 ? `確定要刪除「${deleteTarget.title}」嗎？此操作無法復原，「${deleteTarget.title}」將會被永久刪除。`
                 : ''
         "
-        :on-confirm="confirmDeleteNews" />
+        :on-confirm="confirmDelete" />
 </template>

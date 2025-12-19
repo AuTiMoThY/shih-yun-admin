@@ -15,26 +15,72 @@ export const useAbout = () => {
 
 
     const fetchData = async () => {
-        // loading.value = true;
+        loading.value = true;
         submitError.value = "";
         try {
+            console.log("[useAbout] fetchData: 開始載入資料", {
+                apiBase,
+                url: `${apiBase}/app-about/get`
+            });
+
             const res = await $fetch<{
                 success: boolean;
                 data?: { title?: string | null; sections?: CutSectionData[] };
                 message?: string;
+                error?: string;
+                debug?: any;
             }>(`${apiBase}/app-about/get`);
+
+            console.log("[useAbout] fetchData: API 回應", {
+                success: res?.success,
+                hasData: !!res?.data,
+                sectionsCount: res?.data?.sections?.length ?? 0,
+                message: res?.message,
+                error: res?.error,
+                debug: res?.debug
+            });
 
             if (res?.success && res.data) {
                 title.value = res.data.title ?? null;
                 sections.value = res.data.sections ?? [];
+                console.log("[useAbout] fetchData: 資料載入成功", {
+                    title: title.value,
+                    sectionsCount: sections.value.length
+                });
             } else {
-                submitError.value = res?.message || "載入失敗";
+                const errorMsg = res?.message || res?.error || "載入失敗";
+                submitError.value = errorMsg;
+                console.error("[useAbout] fetchData: API 回應失敗", {
+                    res,
+                    errorMsg
+                });
+                
+                toast.add({
+                    title: "載入失敗",
+                    description: errorMsg,
+                    color: "error"
+                });
             }
         } catch (error: any) {
-            submitError.value = error?.message || "載入時發生錯誤";
-            console.error(error);
+            const errorMsg = error?.message || error?.data?.message || error?.data?.error || "載入時發生錯誤";
+            submitError.value = errorMsg;
+            
+            console.error("[useAbout] fetchData: 發生異常", {
+                error,
+                message: error?.message,
+                statusCode: error?.statusCode,
+                statusMessage: error?.statusMessage,
+                data: error?.data,
+                stack: error?.stack
+            });
+            
+            toast.add({
+                title: "載入失敗",
+                description: errorMsg + (error?.data?.debug ? ` (${error.data.debug.file}:${error.data.debug.line})` : ""),
+                color: "error"
+            });
         } finally {
-            // loading.value = false;
+            loading.value = false;
         }
     };
 
@@ -42,16 +88,42 @@ export const useAbout = () => {
         loading.value = true;
         submitError.value = "";
         try {
-            const res = await $fetch<{ success: boolean; message?: string }>(
+            const payload = {
+                title: title.value,
+                sections: sections.value
+            };
+
+            console.log("[useAbout] saveAbout: 開始儲存資料", {
+                apiBase,
+                url: `${apiBase}/app-about/save`,
+                payload: {
+                    title: payload.title,
+                    sectionsCount: payload.sections.length,
+                    sections: payload.sections
+                }
+            });
+
+            const res = await $fetch<{ 
+                success: boolean; 
+                message?: string;
+                error?: string;
+                debug?: any;
+                model_errors?: any;
+            }>(
                 `${apiBase}/app-about/save`,
                 {
                     method: "POST",
-                    body: {
-                        title: title.value,
-                        sections: sections.value
-                    }
+                    body: payload
                 }
             );
+
+            console.log("[useAbout] saveAbout: API 回應", {
+                success: res?.success,
+                message: res?.message,
+                error: res?.error,
+                debug: res?.debug,
+                model_errors: res?.model_errors
+            });
 
             if (res.success) {
                 toast.add({
@@ -59,25 +131,58 @@ export const useAbout = () => {
                     description: "關於我們內容已更新",
                     color: "success"
                 });
+                console.log("[useAbout] saveAbout: 儲存成功，重新載入資料");
                 await fetchData();
                 return true;
             } else {
-                const msg = res?.message || "儲存失敗";
+                const msg = res?.message || res?.error || "儲存失敗";
                 submitError.value = msg;
+                
+                let description = msg;
+                if (res?.model_errors) {
+                    description += ` (Model errors: ${JSON.stringify(res.model_errors)})`;
+                }
+                if (res?.debug) {
+                    description += ` (${res.debug.file}:${res.debug.line})`;
+                }
+                
+                console.error("[useAbout] saveAbout: API 回應失敗", {
+                    res,
+                    msg
+                });
+                
                 toast.add({
                     title: "儲存失敗",
-                    description: msg,
+                    description,
                     color: "error"
                 });
             }
         } catch (error: any) {
-            submitError.value = error?.message || "儲存時發生錯誤";
+            const errorMsg = error?.message || error?.data?.message || error?.data?.error || "儲存時發生錯誤";
+            submitError.value = errorMsg;
+            
+            console.error("[useAbout] saveAbout: 發生異常", {
+                error,
+                message: error?.message,
+                statusCode: error?.statusCode,
+                statusMessage: error?.statusMessage,
+                data: error?.data,
+                stack: error?.stack
+            });
+            
+            let description = errorMsg;
+            if (error?.data?.debug) {
+                description += ` (${error.data.debug.file}:${error.data.debug.line})`;
+            }
+            if (error?.data?.model_errors) {
+                description += ` (Model errors: ${JSON.stringify(error.data.model_errors)})`;
+            }
+            
             toast.add({
                 title: "儲存失敗",
-                description: submitError.value,
+                description,
                 color: "error"
             });
-            console.error(error);
         } finally {
             loading.value = false;
         }

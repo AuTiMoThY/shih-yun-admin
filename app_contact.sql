@@ -34,6 +34,7 @@ CREATE TABLE `app_contact` (
   `email` varchar(255) NOT NULL COMMENT '信箱',
   `project` varchar(255) DEFAULT NULL COMMENT '建案名稱（選填）',
   `message` text DEFAULT NULL COMMENT '留言（選填）',
+  `reply` longtext DEFAULT NULL COMMENT '管理員回信內容',
   `status` tinyint(1) NOT NULL DEFAULT 0 COMMENT '處理狀態（0=待處理, 1=處理中, 2=已完成）',
   `created_at` timestamp NULL DEFAULT current_timestamp() COMMENT '建立時間',
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT '更新時間'
