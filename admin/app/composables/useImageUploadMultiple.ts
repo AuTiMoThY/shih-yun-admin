@@ -10,6 +10,7 @@ export const useImageUploadMultiple = (options?: {
     acceptTypes?: string[]; // 接受的檔案類型，默認 ["image/*"]
     enableSortable?: boolean; // 是否啟用排序功能，默認 true
 }) => {
+    console.log("useImageUploadMultiple");
     const { uploadImage, getImagePreview } = useImageUpload();
     const toast = useToast();
 
@@ -295,10 +296,21 @@ export const useImageUploadMultiple = (options?: {
             formValueRef.value = [...value];
             // 清除待上傳映射（編輯模式下不應該有待上傳的文件）
             pendingFiles.value.clear();
-            // 設置排序功能
-            nextTick(() => {
-                setupSortable();
-            });
+            // 設置排序功能 - 等待 DOM 渲染完成
+            const trySetupSortable = (retries = 10) => {
+                nextTick(() => {
+                    if (sortableListRef.value && sortableData.value.length > 0) {
+                        // DOM 已準備好，設置排序功能
+                        setupSortable();
+                    } else if (retries > 0) {
+                        // DOM 還沒準備好，重試
+                        setTimeout(() => {
+                            trySetupSortable(retries - 1);
+                        }, 50);
+                    }
+                });
+            };
+            trySetupSortable();
         } else {
             previews.value = [];
             sortableData.value = [];

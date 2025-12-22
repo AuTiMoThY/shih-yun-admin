@@ -340,6 +340,23 @@ watch(
     { immediate: true, deep: true }
 );
 
+// 監聽輪播圖數據和 DOM 引用變化，確保在數據載入且 DOM 準備好後設置排序功能
+watch(
+    () => ({
+        length: slideUpload.sortableData.value.length,
+        listRef: slideUpload.sortableListRef.value
+    }),
+    ({ length, listRef }) => {
+        if (length > 0 && listRef) {
+            // 當有數據且 DOM 引用已設置時，等待 DOM 渲染完成後再設置排序功能
+            nextTick(() => {
+                slideUpload.setupSortable();
+            });
+        }
+    },
+    { immediate: true }
+);
+
 // 初始化時重置表單（僅在新增模式）
 onMounted(() => {
     console.log(form.show_date);
@@ -348,10 +365,6 @@ onMounted(() => {
         coverUpload.reset();
         slideUpload.reset();
     }
-    // 設置排序功能
-    nextTick(() => {
-        slideUpload.setupSortable();
-    });
 });
 
 // 暴露方法給父組件
