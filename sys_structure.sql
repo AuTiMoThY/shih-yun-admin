@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- 主機： 127.0.0.1
--- 產生時間： 2025-12-19 09:20:28
+-- 產生時間： 2025-12-22 07:05:30
 -- 伺服器版本： 10.4.32-MariaDB
 -- PHP 版本： 8.1.25
 
@@ -42,6 +42,19 @@ CREATE TABLE `sys_structure` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='系統架構層級表';
 
 --
+-- 傾印資料表的資料 `sys_structure`
+--
+
+INSERT INTO `sys_structure` (`id`, `parent_id`, `label`, `module_id`, `url`, `is_show_frontend`, `is_show_backend`, `status`, `sort_order`, `created_at`, `updated_at`) VALUES
+(22, NULL, '關於我們', NULL, NULL, 1, 1, 1, 1, '2025-12-18 23:57:24', '2025-12-21 19:32:19'),
+(23, 22, '經營理念', 1, 'about', 1, 1, 1, 0, '2025-12-19 00:09:58', '2025-12-19 00:09:58'),
+(24, 22, '影音專區', 1, 'media', 1, 1, 1, 0, '2025-12-19 00:10:38', '2025-12-19 00:10:38'),
+(25, NULL, '最新消息', NULL, NULL, 1, 1, 1, 2, '2025-12-19 01:30:36', '2025-12-21 19:32:19'),
+(26, 25, '建案進度', 2, 'project-updates', 1, 1, 1, 2, '2025-12-19 01:32:39', '2025-12-19 01:33:17'),
+(27, 25, '新案發布', 2, 'new-project', 1, 1, 1, 1, '2025-12-19 01:33:13', '2025-12-19 01:33:17'),
+(28, NULL, '聯絡我們', 3, NULL, 1, 1, 1, 3, '2025-12-21 19:32:13', '2025-12-21 19:32:19');
+
+--
 -- 已傾印資料表的索引
 --
 
@@ -62,7 +75,7 @@ ALTER TABLE `sys_structure`
 -- 使用資料表自動遞增(AUTO_INCREMENT) `sys_structure`
 --
 ALTER TABLE `sys_structure`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主鍵';
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主鍵', AUTO_INCREMENT=29;
 
 --
 -- 已傾印資料表的限制式

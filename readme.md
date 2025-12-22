@@ -21,3 +21,23 @@ test1 / test1
 - 聯絡我們
 - 公司資本資料設定
 
+
+# RBAC相關
+rbac.sql
+api\app\Models\RoleModel.php
+api\app\Models\PermissionModel.php
+api\app\Models\RolePermissionModel.php
+api\app\Models\UserRoleModel.php
+api\app\Models\UserPermissionModel.php
+api\app\Controllers\RoleController.php
+api\app\Controllers\PermissionController.php
+api\app\Controllers\AuthController.php
+admin\app\composables\useRole.ts
+admin\app\composables\usePermissionData.ts
+admin\app\types\permission.ts
+admin\app\types\index.ts
+admin\app\pages\system\roles.vue
+admin\app\pages\system\permissions.vue
+admin\app\components\Role\FrmModal.vue
+admin\app\components\Permission\FrmModal.vue
+admin\app\plugins\permission-directive.client.ts

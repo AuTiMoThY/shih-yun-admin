@@ -5,6 +5,19 @@ definePageMeta({
 
 const { submitContact, loading } = useAppContact();
 const toast = useToast();
+const route = useRoute();
+
+// 從 URL 查詢參數取得 structureId（適用於前台獨立應用）
+// const structureId = computed(() => {
+//     const id = route.query.structure_id || route.query.structureId;
+//     if (id) {
+//         const parsedId = typeof id === 'string' ? parseInt(id, 10) : Number(id);
+//         return isNaN(parsedId) ? null : parsedId;
+//     }
+//     return null;
+// });
+const structureId = ref(28);
+
 
 const form = reactive<{
     name: string;
@@ -91,7 +104,10 @@ const handleSubmit = async (event: Event) => {
         message: form.message?.trim() || undefined,
     };
 
-    const result = await submitContact({ status: 0, ...submitData });
+    // 從 URL 查詢參數取得 structureId
+    const currentStructureId = structureId.value;
+
+    const result = await submitContact({ status: 0, ...submitData }, currentStructureId);
 
     if (result.success) {
         // 重置表單
