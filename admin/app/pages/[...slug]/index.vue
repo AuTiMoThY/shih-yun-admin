@@ -40,6 +40,7 @@ const component = computed(() => {
     return getComponentByModule(moduleName);
 });
 
+
 // 組件實例的 ref（用於取得組件暴露的方法）
 const componentRef = ref<any>(null);
 
@@ -145,7 +146,16 @@ onMounted(async () => {
                     </template>
 
                     <!-- News 模組的按鈕 -->
-                    <template v-else-if="structureInfo.moduleName === 'news' && structureInfo.url">
+                    <template v-else-if="structureInfo.moduleName === 'news'">
+                        <UButton
+                            :label="`新增${structureInfo.label || ''}`"
+                            color="primary"
+                            icon="i-lucide-plus"
+                            :to="`/${structureInfo.url}/add`" />
+                    </template>
+
+                    <!-- Case 模組的按鈕 -->
+                    <template v-else-if="structureInfo.moduleName === 'case'">
                         <UButton
                             :label="`新增${structureInfo.label || ''}`"
                             color="primary"
@@ -163,7 +173,7 @@ onMounted(async () => {
                 <UIcon name="i-lucide-loader-2" class="w-6 h-6 animate-spin" />
             </div>
 
-            <!-- 找不到對應的模組或組件 -->
+            <!-- 找不到對應的模組 -->
             <div
                 v-else-if="!component"
                 class="flex flex-col items-center justify-center py-12">
@@ -175,7 +185,7 @@ onMounted(async () => {
                     頁面不存在
                 </h2>
                 <p class="text-gray-500 dark:text-gray-400">
-                    找不到對應的模組或組件
+                    找不到對應的模組
                 </p>
             </div>
             <!-- 動態載入組件 -->

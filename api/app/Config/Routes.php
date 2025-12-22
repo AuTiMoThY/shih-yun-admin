@@ -74,4 +74,12 @@ $routes->get('/app-contact/get', 'AppContactController::get'); // 後台取得�
 $routes->get('/app-contact/get-by-id', 'AppContactController::getById'); // 後台取得單筆
 $routes->post('/app-contact/update-status', 'AppContactController::updateStatus'); // 後台更新狀態
 $routes->post('/app-contact/update-reply', 'AppContactController::updateReply'); // 後台更新回信
+$routes->post('/app-contact/send-email', 'AppContactController::sendEmail'); // 後台發送郵件
 $routes->post('/app-contact/delete', 'AppContactController::delete'); // 後台刪除
+
+// 建案相關路由
+$routes->get('/app-case/get', 'AppCaseController::get');
+$routes->get('/app-case/get-by-id', 'AppCaseController::getById');
+$routes->post('/app-case/add', 'AppCaseController::add');
+$routes->post('/app-case/update', 'AppCaseController::update');
+$routes->post('/app-case/delete', 'AppCaseController::delete');

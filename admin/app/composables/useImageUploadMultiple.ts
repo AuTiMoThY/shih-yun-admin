@@ -102,7 +102,30 @@ export const useImageUploadMultiple = (options?: {
             fallbackOnBody: true,
             swapThreshold: 0.65,
             onUpdate: async () => {
-                // useSortable 已經自動更新了 sortableData.value 的順序
+                // 根據 DOM 順序重建資料（參考 TreeTableRow.vue 的做法）
+                const list = sortableData.value || [];
+                const items = (Array.from(
+                    sortableListRef.value?.querySelectorAll("[data-image-id]") ?? []
+                ) || []) as HTMLElement[];
+                const idsAfterDom = items
+                    .map((item) => item.dataset.imageId)
+                    .filter(Boolean);
+
+                // 根據 DOM 順序重建資料
+                const map = new Map(
+                    list
+                        .filter((x) => x !== undefined && x !== null && x !== "")
+                        .map((x) => [String(x), x])
+                );
+                const newSortableData = idsAfterDom
+                    .map((id) => map.get(String(id)))
+                    .filter((x) => x !== undefined);
+
+                if (!newSortableData.length || newSortableData.length !== map.size) {
+                    console.warn("[image-sort] 排序不匹配，保持原順序");
+                    return;
+                }
+
                 // 在更新前保存舊的 URL 到預覽的映射關係
                 const urlToPreviewMap = new Map<string, string>();
                 for (
@@ -116,9 +139,8 @@ export const useImageUploadMultiple = (options?: {
                     );
                 }
 
-                // 創建新的數組引用，確保 Vue 檢測到變化
-                const newSortableData = [...sortableData.value];
-                sortableData.value = newSortableData;
+                // 更新 sortableData 為新的順序
+                sortableData.value = [...newSortableData];
 
                 // 同步排序後的數據到 formValueRef
                 formValueRef.value = [...newSortableData];

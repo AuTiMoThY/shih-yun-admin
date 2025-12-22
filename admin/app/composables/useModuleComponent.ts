@@ -2,8 +2,10 @@
 import AppAbout from "~/components/App/About/AppAbout.vue";
 import AppNews from "~/components/App/News/AppNews.vue";
 import AppContact from "~/components/App/Contact/AppContact.vue";
+import AppCase from "~/components/App/Case/AppCase.vue";
 import AppNewsFormPage from "~/components/App/News/FormPage.vue";
 import AppContactFormPage from "~/components/App/Contact/FormPage.vue";
+import AppCaseFormPage from "~/components/App/Case/FormPage.vue";
 
 export const useModuleComponent = () => {
     /**
@@ -13,7 +15,8 @@ export const useModuleComponent = () => {
     const moduleComponentMap: Record<string, any> = {
         about: AppAbout,
         news: AppNews,
-        contact: AppContact
+        contact: AppContact,
+        case: AppCase
     };
 
     /**
@@ -22,7 +25,8 @@ export const useModuleComponent = () => {
      */
     const moduleFormComponentMap: Record<string, any> = {
         news: AppNewsFormPage,
-        contact: AppContactFormPage
+        contact: AppContactFormPage,
+        case: AppCaseFormPage
     };
 
     /**

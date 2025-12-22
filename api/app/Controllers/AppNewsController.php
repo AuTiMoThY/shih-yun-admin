@@ -237,6 +237,7 @@ class AppNewsController extends BaseController
                 $currentSlide = !empty($news['slide']) 
                     ? json_encode(json_decode($news['slide'], true), JSON_UNESCAPED_UNICODE) 
                     : null;
+                
                 if ($newSlide !== $currentSlide) {
                     $updateData['slide'] = $newSlide;
                 }

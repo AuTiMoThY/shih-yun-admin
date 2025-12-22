@@ -47,7 +47,10 @@ const moduleName = computed(() => {
     return target ? `${target.label} (${target.name})` : "";
 });
 
-const canAddSub = computed(() => !props.level?.module_id);
+const canAddSub = computed(
+    () => !props.level?.module_id && !props.level?.url
+);
+
 
 const hasChildren = computed(() => {
     return props.level.children && props.level.children.length > 0;
@@ -243,7 +246,7 @@ onUnmounted(() => {
                     variant="outline"
                     class="flex-1 min-w-[80px]"
                     :disabled="!canAddSub"
-                    :title="!canAddSub ? '已有模組，無法新增子層級' : ''"
+                    :title="!canAddSub ? '已有模組或 URL，無法新增子層級' : ''"
                     @click="onAddSub?.(level)" />
                 <UButton
                     icon="i-lucide-trash"
@@ -314,7 +317,7 @@ onUnmounted(() => {
                     color="primary"
                     size="xs"
                     :disabled="!canAddSub"
-                    :title="!canAddSub ? '已有模組，無法新增子層級' : ''"
+                    :title="!canAddSub ? '已有模組或 URL，無法新增子層級' : ''"
                     @click="onAddSub?.(level)" />
                 <UButton
                     icon="i-lucide-trash"

@@ -9,7 +9,7 @@ export const useAppContact = () => {
 
     const form = reactive<ContactForm>({
         status: 0,
-        reply: "",
+        reply: ""
     });
 
     const errors = reactive<ContactFormErrors>({
@@ -26,18 +26,31 @@ export const useAppContact = () => {
         Object.keys(errors).forEach((key) => {
             errors[key as keyof ContactFormErrors] = false;
         });
+
+        // 驗證標題
+        if (!form.reply || form.reply.trim() === "") {
+            errors.reply = "請輸入回信內容";
+        } else if (form.reply.trim().length > 255) {
+            errors.reply = "回信內容長度不能超過255個字元";
+        }
+
+        return !Object.values(errors).some((v) => v);
     };
 
     /**
      * 前台提交聯絡表單
      */
-    const submitContact = async (formData: ContactForm, structureId?: number | null) => {
+    const submitContact = async (
+        formData: ContactForm,
+        structureId?: number | null
+    ) => {
         loading.value = true;
         try {
-            const body = structureId !== undefined && structureId !== null
-                ? { ...formData, structure_id: structureId }
-                : formData;
-            
+            const body =
+                structureId !== undefined && structureId !== null
+                    ? { ...formData, structure_id: structureId }
+                    : formData;
+
             const response = await $fetch<{
                 success: boolean;
                 message: string;
@@ -45,21 +58,21 @@ export const useAppContact = () => {
                 errors?: Record<string, string>;
             }>(`${apiBase}/app-contact/submit`, {
                 method: "POST",
-                body: body,
+                body: body
             });
 
             if (response.success) {
                 toast.add({
                     title: "成功",
                     description: response.message || "表單提交成功",
-                    color: "success",
+                    color: "success"
                 });
                 return { success: true, data: response.data };
             } else {
                 toast.add({
                     title: "錯誤",
                     description: response.message || "提交失敗",
-                    color: "error",
+                    color: "error"
                 });
                 return { success: false, errors: response.errors };
             }
@@ -69,11 +82,11 @@ export const useAppContact = () => {
             toast.add({
                 title: "錯誤",
                 description: errorMessage,
-                color: "error",
+                color: "error"
             });
             return {
                 success: false,
-                errors: error.data?.errors,
+                errors: error.data?.errors
             };
         } finally {
             loading.value = false;
@@ -83,22 +96,35 @@ export const useAppContact = () => {
     /**
      * 後台取得聯絡表單列表
      */
-    const fetchData = async (options?: { status?: 0 | 1 | 2; structure_id?: number | null }) => {
+    const fetchData = async (options?: {
+        status?: 0 | 1 | 2;
+        structure_id?: number | null;
+    }) => {
         loading.value = true;
         try {
             const queryParams = new URLSearchParams();
             if (options?.status !== undefined) {
                 queryParams.append("status", String(options.status));
             }
-            if (options?.structure_id !== undefined && options?.structure_id !== null) {
-                queryParams.append("structure_id", String(options.structure_id));
+            if (
+                options?.structure_id !== undefined &&
+                options?.structure_id !== null
+            ) {
+                queryParams.append(
+                    "structure_id",
+                    String(options.structure_id)
+                );
             }
 
             const response = await $fetch<{
                 success: boolean;
                 data: any[];
                 message?: string;
-            }>(`${apiBase}/app-contact/get${queryParams.toString() ? `?${queryParams.toString()}` : ""}`);
+            }>(
+                `${apiBase}/app-contact/get${
+                    queryParams.toString() ? `?${queryParams.toString()}` : ""
+                }`
+            );
 
             if (response.success) {
                 data.value = response.data.map((item: any) => ({
@@ -110,17 +136,19 @@ export const useAppContact = () => {
                 toast.add({
                     title: "錯誤",
                     description: response.message || "取得資料失敗",
-                    color: "error",
+                    color: "error"
                 });
                 return { success: false };
             }
         } catch (error: any) {
             const errorMessage =
-                error.data?.message || error.message || "取得資料失敗，請稍後再試";
+                error.data?.message ||
+                error.message ||
+                "取得資料失敗，請稍後再試";
             toast.add({
                 title: "錯誤",
                 description: errorMessage,
-                color: "error",
+                color: "error"
             });
             return { success: false };
         } finally {
@@ -141,15 +169,15 @@ export const useAppContact = () => {
                 method: "POST",
                 body: {
                     id,
-                    status,
-                },
+                    status
+                }
             });
 
             if (response.success) {
                 toast.add({
                     title: "成功",
                     description: response.message || "更新狀態成功",
-                    color: "success",
+                    color: "success"
                 });
                 // 更新本地數據
                 const item = data.value.find((item) => item.id === id);
@@ -161,17 +189,19 @@ export const useAppContact = () => {
                 toast.add({
                     title: "錯誤",
                     description: response.message || "更新狀態失敗",
-                    color: "error",
+                    color: "error"
                 });
                 return { success: false };
             }
         } catch (error: any) {
             const errorMessage =
-                error.data?.message || error.message || "更新狀態失敗，請稍後再試";
+                error.data?.message ||
+                error.message ||
+                "更新狀態失敗，請稍後再試";
             toast.add({
                 title: "錯誤",
                 description: errorMessage,
-                color: "error",
+                color: "error"
             });
             return { success: false };
         } finally {
@@ -182,7 +212,10 @@ export const useAppContact = () => {
     /**
      * 後台刪除聯絡表單
      */
-    const deleteContact = async (id: number | string, options?: { onSuccess?: () => void }) => {
+    const deleteContact = async (
+        id: number | string,
+        options?: { onSuccess?: () => void }
+    ) => {
         if (!id) return false;
         loading.value = true;
         try {
@@ -191,13 +224,13 @@ export const useAppContact = () => {
                 message: string;
             }>(`${apiBase}/app-contact/delete`, {
                 method: "POST",
-                body: { id },
+                body: { id }
             });
             if (response.success) {
                 toast.add({
                     title: "成功",
                     description: response.message || "刪除成功",
-                    color: "success",
+                    color: "success"
                 });
                 options?.onSuccess?.();
                 return { success: true };
@@ -205,7 +238,7 @@ export const useAppContact = () => {
                 toast.add({
                     title: "錯誤",
                     description: response.message || "刪除失敗",
-                    color: "error",
+                    color: "error"
                 });
                 return { success: false };
             }
@@ -215,7 +248,7 @@ export const useAppContact = () => {
             toast.add({
                 title: "錯誤",
                 description: errorMessage,
-                color: "error",
+                color: "error"
             });
             return { success: false };
         } finally {
@@ -240,17 +273,19 @@ export const useAppContact = () => {
                 toast.add({
                     title: "錯誤",
                     description: response.message || "載入資料失敗",
-                    color: "error",
+                    color: "error"
                 });
                 return null;
             }
         } catch (error: any) {
             const errorMessage =
-                error.data?.message || error.message || "載入資料失敗，請稍後再試";
+                error.data?.message ||
+                error.message ||
+                "載入資料失敗，請稍後再試";
             toast.add({
                 title: "錯誤",
                 description: errorMessage,
-                color: "error",
+                color: "error"
             });
             return null;
         } finally {
@@ -271,32 +306,81 @@ export const useAppContact = () => {
                 method: "POST",
                 body: {
                     id,
-                    reply,
-                },
+                    reply
+                }
             });
 
             if (response.success) {
                 toast.add({
                     title: "成功",
                     description: response.message || "更新回信成功",
-                    color: "success",
+                    color: "success"
                 });
                 return { success: true };
             } else {
                 toast.add({
                     title: "錯誤",
                     description: response.message || "更新回信失敗",
-                    color: "error",
+                    color: "error"
                 });
                 return { success: false };
             }
         } catch (error: any) {
             const errorMessage =
-                error.data?.message || error.message || "更新回信失敗，請稍後再試";
+                error.data?.message ||
+                error.message ||
+                "更新回信失敗，請稍後再試";
             toast.add({
                 title: "錯誤",
                 description: errorMessage,
-                color: "error",
+                color: "error"
+            });
+            return { success: false };
+        } finally {
+            loading.value = false;
+        }
+    };
+
+    /**
+     * 後台發送郵件
+     */
+    const sendEmail = async (id: number | string) => {
+        loading.value = true;
+        try {
+            const response = await $fetch<{
+                success: boolean;
+                message: string;
+            }>(`${apiBase}/app-contact/send-email`, {
+                method: "POST",
+                body: {
+                    id
+                }
+            });
+
+            if (response.success) {
+                toast.add({
+                    title: "成功",
+                    description: response.message || "郵件發送成功",
+                    color: "success"
+                });
+                return { success: true };
+            } else {
+                toast.add({
+                    title: "錯誤",
+                    description: response.message || "郵件發送失敗",
+                    color: "error"
+                });
+                return { success: false };
+            }
+        } catch (error: any) {
+            const errorMessage =
+                error.data?.message ||
+                error.message ||
+                "郵件發送失敗，請稍後再試";
+            toast.add({
+                title: "錯誤",
+                description: errorMessage,
+                color: "error"
             });
             return { success: false };
         } finally {
@@ -316,5 +400,6 @@ export const useAppContact = () => {
         deleteContact,
         loadContactData,
         updateReply,
+        sendEmail
     };
 };

@@ -119,7 +119,6 @@ const handleDateUpdate = (
 
 // 表單提交
 const handleSubmit = async (event?: Event) => {
-    console.log(form);
     if (event) event.preventDefault();
 
     // 在提交前，先上傳待上傳的圖片（如果有臨時 ID）
@@ -150,19 +149,22 @@ const handleSubmit = async (event?: Event) => {
         if (!uploadSlidesSuccess) {
             return;
         }
-        // 上傳完成後，更新 form.slide 為正式 URL
+        // 上傳完成後，更新 form.slide 為正式 URL（使用 formValue 以保持排序）
         if (slideUpload.formValue.value && slideUpload.formValue.value.length > 0) {
             form.slide = slideUpload.formValue.value.filter((url: string) => url && !url.startsWith("temp_"));
         } else if (props.mode === "edit" && props.initialData?.slide) {
             // 編輯模式下，如果上傳失敗，保持原值
             form.slide = props.initialData.slide;
         }
-    } else if (form.slide && form.slide.length > 0) {
-        // 如果已有正式 URL，直接使用（過濾掉臨時 ID）
-        form.slide = form.slide.filter((slide: string) => slide && !slide.startsWith("temp_"));
-    } else if (props.mode === "edit" && props.initialData?.slide) {
-        // 編輯模式下，如果沒有新上傳的圖片，保持原值
-        form.slide = props.initialData.slide;
+    } else {
+        // 無論是否有新上傳的圖片，都使用 formValue 的值以保持排序後的順序
+        if (slideUpload.formValue.value && slideUpload.formValue.value.length > 0) {
+            // 過濾掉臨時 ID，只保留正式 URL
+            form.slide = slideUpload.formValue.value.filter((url: string) => url && !url.startsWith("temp_"));
+        } else if (props.mode === "edit" && props.initialData?.slide) {
+            // 編輯模式下，如果沒有值，保持原值
+            form.slide = props.initialData.slide;
+        }
     }
 
     // 提交表單
@@ -499,6 +501,7 @@ defineExpose({
                                 <div
                                     v-for="(imageId, index) in slideUpload.sortableData.value"
                                     :key="imageId"
+                                    :data-image-id="imageId"
                                     class="relative group">
                                     <img
                                         :src="(slideUpload.previews.value && slideUpload.previews.value[index]) || ''"

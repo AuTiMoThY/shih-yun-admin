@@ -22,7 +22,8 @@ const {
     validateForm,
     loading: formLoading,
     updateReply,
-    updateStatus
+    updateStatus,
+    sendEmail
 } = useAppContact();
 
 // HTML 原始碼預覽開關
@@ -46,6 +47,20 @@ const loadInitialData = (data: any) => {
 const statusLabelMap: Record<number, string> = {
     0: "未處理",
     1: "已處理"
+};
+
+// 格式化日期時間
+const formatDateTime = (dateString: string | null | undefined) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleString("zh-TW", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+    });
 };
 
 // 處理狀態變更
@@ -79,7 +94,10 @@ const handleSubmit = async (event?: Event) => {
     formLoading.value = true;
 
     try {
-        const result = await updateReply(props.initialData.id, form.reply || "");
+        const result = await updateReply(
+            props.initialData.id,
+            form.reply || ""
+        );
 
         if (result.success) {
             emit("submit", form);
@@ -91,18 +109,43 @@ const handleSubmit = async (event?: Event) => {
     }
 };
 
-// 格式化日期時間
-const formatDateTime = (dateString: string | null | undefined) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toLocaleString("zh-TW", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit"
-    });
+const handleSendEmail = async () => {
+    if (!props.initialData?.id) {
+        errors.reply = "缺少聯絡表單 ID";
+        return;
+    }
+
+    if (!validateForm()) {
+        return;
+    }
+
+    formLoading.value = true;
+
+    try {
+        // 先更新回信內容
+        const updateResult = await updateReply(
+            props.initialData.id,
+            form.reply || ""
+        );
+
+        if (!updateResult.success) {
+            return;
+        }
+
+        // 然後發送郵件
+        const sendResult = await sendEmail(props.initialData.id);
+
+        if (sendResult.success) {
+            // 發送成功後，如果狀態是未處理，自動更新為已處理
+            if (form.status === 0) {
+                await updateStatus(props.initialData.id, 1);
+            }
+        }
+    } catch (error: any) {
+        errors.reply = error.message || "發送郵件失敗";
+    } finally {
+        formLoading.value = false;
+    }
 };
 
 // 監聽 initialData 變化
@@ -266,12 +309,19 @@ defineExpose({
                         label="取消" />
                     <UButton
                         type="button"
+                        color="primary"
+                        icon="lucide:send"
+                        :disabled="formLoading"
+                        @click="handleSendEmail()"
+                        label="發送信件" />
+                    <UButton
+                        type="button"
                         color="success"
                         icon="lucide:save"
                         :loading="formLoading"
                         :disabled="formLoading"
                         @click="handleSubmit()"
-                        label="儲存回信" />
+                        label="更新" />
                 </div>
             </section>
         </UForm>

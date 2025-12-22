@@ -118,6 +118,14 @@ const loadItemData = async () => {
             } else {
                 router.push(backToListPath.value);
             }
+        } else if (moduleName === 'case') {
+            const { loadCaseData } = useAppCase();
+            const data = await loadCaseData(itemId.value);
+            if (data) {
+                itemData.value = data;
+            } else {
+                router.push(backToListPath.value);
+            }
         } else {
             // 不支援的模組類型
             router.push(backToListPath.value);
