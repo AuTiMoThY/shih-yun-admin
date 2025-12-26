@@ -6,8 +6,6 @@ const props = defineProps<{
     structureId?: number | null;
 }>();
 
-console.log("[AppAbout] setup: 組件開始初始化", { structureId: props.structureId });
-
 const {
     buildId,
     sections: cutSections,
@@ -36,7 +34,7 @@ const addCutSection = async () => {
 
     // 等待 DOM 更新後再滾動
     await nextTick();
-    
+
     // 使用 data-id 屬性來找到元素（因為 UCollapsible 使用 data-id）
     const target = document.querySelector(`[data-id="${newSectionId}"]`);
     if (target) {
@@ -116,7 +114,7 @@ const saveAllSections = async () => {
 
 // 初始化資料
 onMounted(async () => {
-    console.log("[AppAbout] onMounted: 開始初始化", { 
+    console.log("[AppAbout] onMounted: 開始初始化", {
         structureId: props.structureId,
         timestamp: new Date().toISOString()
     });
@@ -135,7 +133,9 @@ onMounted(async () => {
 
 // 添加 onBeforeMount 來確認組件生命週期
 onBeforeMount(() => {
-    console.log("[AppAbout] onBeforeMount: 組件即將掛載", { structureId: props.structureId });
+    console.log("[AppAbout] onBeforeMount: 組件即將掛載", {
+        structureId: props.structureId
+    });
 });
 
 // 暴露方法和狀態給父組件使用（用於 header 按鈕）
@@ -162,13 +162,13 @@ defineExpose({
                 :description="submitError"
                 class="mb-4" />
             <template v-if="cutSections.length == 0">
-                <AppCutSection
+                <CutSection
                     index="1"
                     @update="updateSection"
                     @delete="deleteSection" />
             </template>
             <template v-else>
-                <AppCutSection
+                <CutSection
                     v-for="section in cutSections"
                     :key="section.id"
                     :index="section.index"

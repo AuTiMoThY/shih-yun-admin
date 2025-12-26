@@ -126,6 +126,14 @@ const loadItemData = async () => {
             } else {
                 router.push(backToListPath.value);
             }
+        } else if (moduleName === 'progress') {
+            const { loadProgressData } = useAppProgress();
+            const data = await loadProgressData(itemId.value);
+            if (data) {
+                itemData.value = data;
+            } else {
+                router.push(backToListPath.value);
+            }
         } else {
             // 不支援的模組類型
             router.push(backToListPath.value);

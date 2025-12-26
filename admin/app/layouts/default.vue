@@ -7,7 +7,7 @@ import { system } from "~/constants/menu/system";
 
 const route = useRoute();
 const open = ref(false);
-const { data: structureData, fetchData: fetchStructure } = useStructure();
+const { asideData: structureData, fetchDataForAside: fetchStructureForAside } = useStructure();
 const { data: modulesData, fetchData: fetchModules } = useModule();
 
 // 檢查某個 menu item 或其子層級是否包含當前路由
@@ -46,27 +46,45 @@ const resolveModulePath = (item: any): string | undefined => {
     return undefined;
 };
 
+// 檢查項目是否啟用
+const isItemActive = (item: any): boolean => {
+    const status = item?.status;
+    return status === 1 || status === '1' || status === true;
+};
+
 const mapStructureToMenu = (
     item: any,
     sidebarOpen: Ref<boolean>
-): NavigationMenuItem => {
+): NavigationMenuItem | null => {
+    // 過濾停用的項目
+    if (!isItemActive(item)) {
+        return null;
+    }
+
     const hasChildren = item?.children && item?.children.length > 0;
     const currentPath = route.path;
     const isActive = hasActiveRoute(item, currentPath);
 
     const baseMenu: NavigationMenuItem = {
         label: item?.label,
-        icon: item?.icon || "lucide:network"
+        icon: item?.icon || "i-lucide-network"
     };
 
     if (hasChildren) {
-        // 有子層級：建立 children 陣列
+        // 有子層級：建立 children 陣列，並過濾停用的子項目
+        const activeChildren = item.children
+            .map((child: any) => mapStructureToMenu(child, sidebarOpen))
+            .filter((child: any) => child !== null);
+        
+        // 如果所有子項目都被過濾掉，則不顯示此項目
+        if (activeChildren.length === 0) {
+            return null;
+        }
+
         return {
             ...baseMenu,
             defaultOpen: !isActive, // 如果包含當前路由，不收起（展開）
-            children: item.children.map((child: any) =>
-                mapStructureToMenu(child, sidebarOpen)
-            )
+            children: activeChildren
         };
     } else {
         // 無子層級：設定 to 屬性
@@ -87,9 +105,9 @@ const mapStructureToMenu = (
 const buildStructureMenu = (
     sidebarOpen: Ref<boolean>
 ): NavigationMenuItem[] => {
-    return (structureData.value || []).map((item) =>
-        mapStructureToMenu(item, sidebarOpen)
-    );
+    return (structureData.value || [])
+        .map((item) => mapStructureToMenu(item, sidebarOpen))
+        .filter((item): item is NavigationMenuItem => item !== null);
 };
 
 // 檢查當前路由是否在 system 子項目中
@@ -146,11 +164,12 @@ const links = computed(() => {
 
 onMounted(() => {
     console.log("[default layout] onMounted, route:", route.path);
+    console.log("[default layout] structureData:", structureData.value);
     // 確保初次載入取得樹狀結構，並共享後續更新（如排序變動）
     // 使用非阻塞方式載入，避免阻塞頁面渲染
     if (!structureData.value?.length) {
-        fetchStructure().catch((err) => {
-            console.error("fetchStructure error:", err);
+        fetchStructureForAside().catch((err) => {
+            console.error("fetchStructureForAside error:", err);
         });
     }
     if (!modulesData.value?.length) {

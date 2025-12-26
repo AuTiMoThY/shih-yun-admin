@@ -106,10 +106,10 @@ watch(
                 </template>
                 <template #right>
                     <UButton
-                        label="新增"
+                        label="儲存"
                         type="button"
-                        color="primary"
-                        icon="lucide:plus"
+                        color="success"
+                        icon="i-lucide-save"
                         :loading="formLoading"
                         :disabled="formLoading"
                         @click="handleSubmit()" />

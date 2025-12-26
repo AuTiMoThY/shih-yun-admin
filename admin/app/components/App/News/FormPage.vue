@@ -1,11 +1,5 @@
 <script setup lang="ts">
-import {
-    CalendarDate,
-    DateFormatter,
-    getLocalTimeZone
-} from "@internationalized/date";
-import type { DateValue } from "@internationalized/date";
-import { shallowRef, onMounted } from "vue";
+import { onMounted } from "vue";
 
 const router = useRouter();
 const props = withDefaults(
@@ -44,27 +38,6 @@ const { getBasePath } = useBasePath();
 const basePath = getBasePath(router.currentRoute.value.path);
 const pathInfo = resolvePath(basePath);
 
-// 日期選擇器格式
-const df = new DateFormatter("zh-TW", {
-    dateStyle: "long"
-});
-// 日期選擇器
-const dateValue = shallowRef(
-    form.show_date
-        ? new CalendarDate(
-              Number(form.show_date.split("-")[0] || "2024"),
-              Number(form.show_date.split("-")[1] || "1"),
-              Number(form.show_date.split("-")[2] || "1")
-          )
-        : new CalendarDate(2024, 1, 1)
-);
-// 日期選擇器文字
-const dateText = computed(() => {
-    return dateValue.value
-        ? df.format(dateValue.value.toDate(getLocalTimeZone()))
-        : "請選擇日期";
-});
-
 // 封面圖相關（使用 composable）
 const coverUpload = useImageUploadSingle({
     onPreviewChange: (preview) => {
@@ -91,20 +64,6 @@ const loadInitialData = (data: any) => {
 
 // HTML 原始碼預覽開關
 const showHtmlCode = ref(false);
-
-// 日期選擇器更新
-const handleDateUpdate = (
-    date:
-        | DateValue
-        | DateValue[]
-        | { start?: DateValue; end?: DateValue }
-        | null
-        | undefined
-) => {
-    if (date && !Array.isArray(date) && !("start" in date)) {
-        form.show_date = date.toString();
-    }
-};
 
 // 表單提交
 const handleSubmit = async (event?: Event) => {
@@ -185,9 +144,8 @@ const handleSubmit = async (event?: Event) => {
     } else {
         success = await addNews(props.structureId ?? null);
         if (success) {
-            const targetPath = basePath || `/news`;
             setTimeout(() => {
-                router.push(targetPath);
+                router.push(`/${pathInfo.structure?.url}`);
             }, 1000);
         }
     }
@@ -196,14 +154,6 @@ const handleSubmit = async (event?: Event) => {
         emit("submit", form);
     }
 };
-
-// 監聽日期變化
-watch(
-    () => form.show_date,
-    (newValue) => {
-        console.log(newValue);
-    }
-);
 
 // 綁定封面圖表單數據
 // 當出現預覽圖時，使用臨時 ID 更新 form.cover
@@ -384,7 +334,6 @@ watch(
 
 // 初始化時重置表單（僅在新增模式）
 onMounted(() => {
-    console.log(form.show_date);
     if (props.mode === "add" && !props.initialData) {
         resetForm();
         coverUpload.reset();
@@ -425,36 +374,13 @@ defineExpose({
                                     @input="clearError('title')" />
                             </UFormField>
 
-                            <UFormField
+                            <FormDateField
+                                v-model="form.show_date"
                                 label="日期"
                                 name="show_date"
                                 :error="errors.show_date"
-                                required>
-                                <UPopover
-                                    :content="{
-                                        side: 'bottom',
-                                        align: 'start'
-                                    }">
-                                    <UButton
-                                        color="neutral"
-                                        variant="outline"
-                                        icon="i-lucide-calendar"
-                                        class="w-full">
-                                        {{ dateText }}
-                                    </UButton>
-
-                                    <template #content>
-                                        <UCalendar
-                                            v-model="dateValue"
-                                            class="p-2"
-                                            locale="zh-TW"
-                                            :ui="{ cell: 'cursor-pointer' }"
-                                            @update:model-value="
-                                                handleDateUpdate
-                                            " />
-                                    </template>
-                                </UPopover>
-                            </UFormField>
+                                :disabled="formLoading"
+                                required />
                         </div>
                         <UCard :ui="{ body: 'space-y-4' }">
                             <FormStatusField
@@ -632,12 +558,12 @@ defineExpose({
                         label="取消" />
                     <UButton
                         type="button"
-                        :color="mode === 'add' ? 'primary' : 'success'"
-                        :icon="mode === 'add' ? 'lucide:plus' : 'lucide:save'"
+                        color="success"
+                        icon="i-lucide-save"
                         :loading="formLoading"
                         :disabled="formLoading"
                         @click="handleSubmit()"
-                        :label="mode === 'add' ? '新增' : '更新'" />
+                        label="儲存" />
                 </div>
             </section>
         </UForm>

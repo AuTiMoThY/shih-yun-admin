@@ -34,8 +34,35 @@ class AppCaseController extends BaseController
 
             $cases = $query->findAll();
 
-            // 解析 JSON 欄位
+            // 解析 JSON 欄位並確保 ID 為整數類型
             foreach ($cases as &$item) {
+                // 確保 ID 相關欄位為整數
+                if (isset($item['id'])) {
+                    $item['id'] = (int)$item['id'];
+                }
+                if (isset($item['structure_id'])) {
+                    $item['structure_id'] = $item['structure_id'] !== null ? (int)$item['structure_id'] : null;
+                }
+                if (isset($item['year'])) {
+                    $item['year'] = $item['year'] !== null ? (int)$item['year'] : null;
+                }
+                if (isset($item['sort'])) {
+                    $item['sort'] = (int)$item['sort'];
+                }
+                if (isset($item['status'])) {
+                    $item['status'] = (int)$item['status'];
+                }
+                if (isset($item['ca_pop_type'])) {
+                    $item['ca_pop_type'] = (int)$item['ca_pop_type'];
+                }
+                if (isset($item['is_sale'])) {
+                    $item['is_sale'] = (int)$item['is_sale'];
+                }
+                if (isset($item['is_msg'])) {
+                    $item['is_msg'] = (int)$item['is_msg'];
+                }
+                
+                // 解析 JSON 欄位
                 if (!empty($item['content'])) {
                     $item['content'] = json_decode($item['content'], true) ?? [];
                 } else {
@@ -87,6 +114,32 @@ class AppCaseController extends BaseController
                 ]);
             }
 
+            // 確保 ID 相關欄位為整數
+            if (isset($case['id'])) {
+                $case['id'] = (int)$case['id'];
+            }
+            if (isset($case['structure_id'])) {
+                $case['structure_id'] = $case['structure_id'] !== null ? (int)$case['structure_id'] : null;
+            }
+            if (isset($case['year'])) {
+                $case['year'] = $case['year'] !== null ? (int)$case['year'] : null;
+            }
+            if (isset($case['sort'])) {
+                $case['sort'] = (int)$case['sort'];
+            }
+            if (isset($case['status'])) {
+                $case['status'] = (int)$case['status'];
+            }
+            if (isset($case['ca_pop_type'])) {
+                $case['ca_pop_type'] = (int)$case['ca_pop_type'];
+            }
+            if (isset($case['is_sale'])) {
+                $case['is_sale'] = (int)$case['is_sale'];
+            }
+            if (isset($case['is_msg'])) {
+                $case['is_msg'] = (int)$case['is_msg'];
+            }
+            
             // 解析 JSON 欄位
             if (!empty($case['content'])) {
                 $case['content'] = json_decode($case['content'], true) ?? [];

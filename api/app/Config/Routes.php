@@ -83,3 +83,10 @@ $routes->get('/app-case/get-by-id', 'AppCaseController::getById');
 $routes->post('/app-case/add', 'AppCaseController::add');
 $routes->post('/app-case/update', 'AppCaseController::update');
 $routes->post('/app-case/delete', 'AppCaseController::delete');
+
+// 工程進度相關路由
+$routes->get('/app-progress/get', 'AppProgressController::get');
+$routes->get('/app-progress/get-by-id', 'AppProgressController::getById');
+$routes->post('/app-progress/add', 'AppProgressController::add');
+$routes->post('/app-progress/update', 'AppProgressController::update');
+$routes->post('/app-progress/delete', 'AppProgressController::delete');

@@ -138,8 +138,6 @@ const loadInitialData = async (data: any) => {
 };
 // 提交
 const handleSubmit = async (event?: Event) => {
-    console.log(pathInfo.structure?.url);
-
     if (event) event.preventDefault();
     // 先處理封面
     if (form.cover && form.cover.startsWith("temp_")) {
@@ -197,9 +195,8 @@ const handleSubmit = async (event?: Event) => {
     } else {
         success = await addCase(props.structureId ?? null);
         if (success) {
-            const targetPath = basePath || `/case`;
             setTimeout(() => {
-                router.push(targetPath);
+                router.push(`/${pathInfo.structure?.url}`);
             }, 1000);
         }
     }
@@ -459,7 +456,7 @@ defineExpose({
 
                 <UCard :ui="{ body: 'space-y-4' }">
                     <template #header>
-                        <h3 class="text-lg font-semibold">內容編輯</h3>
+                        <h3 class="text-lg font-semibold">建案資訊</h3>
                     </template>
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <UFormField label="建案規劃" name="ca_type">
@@ -653,7 +650,7 @@ defineExpose({
                             </div>
                         </template>
                         <template v-else>
-                            <AppCutSection
+                            <CutSection
                                 v-for="section in sections"
                                 :key="section.id"
                                 :index="section.index"
@@ -679,12 +676,12 @@ defineExpose({
                         color="neutral"
                         variant="ghost"
                         :disabled="formLoading"
-                        :to="pathInfo.structure?.url || '/case'"
+                        :to="`/${pathInfo.structure?.url}`"
                         label="取消" />
                     <UButton
                         type="button"
-                        color="primary"
-                        icon="lucide:save"
+                        color="success"
+                        icon="i-lucide-save"
                         :loading="formLoading"
                         :disabled="formLoading"
                         @click="handleSubmit()"

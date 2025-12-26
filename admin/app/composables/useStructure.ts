@@ -6,6 +6,8 @@ export const useStructure = () => {
     const apiBase = runtimePublic.apiBase;
     const toast = useToast();
     const data = useState<any[]>("structure-data", () => []);
+    // 側邊欄專用的資料（只包含啟用的項目）
+    const asideData = useState<any[]>("structure-aside-data", () => []);
 
     const loading = useState("structure-loading", () => false);
     const submitError = ref("");
@@ -40,6 +42,25 @@ export const useStructure = () => {
             //     ids: data.value.map((x) => x?.id),
             //     data: data.value
             // });
+        } else {
+            console.error(res.message);
+            toast.add({ title: res.message, color: "error" });
+        }
+        loading.value = false;
+    };
+
+    const fetchDataForAside = async () => {
+        loading.value = true;
+        const res = await $fetch<{
+            success: boolean;
+            data: any[];
+            message?: string;
+        }>(`${apiBase}/structure/get?tree=1&only_active=1`, {
+            method: "GET"
+        });
+        if (res?.success) {
+            // 使用獨立的 asideData，避免被管理頁面的 fetchData 覆蓋
+            asideData.value = (res.data || []).filter(Boolean);
         } else {
             console.error(res.message);
             toast.add({ title: res.message, color: "error" });
@@ -343,8 +364,10 @@ export const useStructure = () => {
 
     return {
         data,
+        asideData,
         loading,
         fetchData,
+        fetchDataForAside,
         updateSortOrder,
         deleteLevel,
         form,

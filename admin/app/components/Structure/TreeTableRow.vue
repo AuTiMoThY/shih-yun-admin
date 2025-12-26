@@ -13,14 +13,23 @@ import { useSortable } from "@vueuse/integrations/useSortable";
 import { LEVEL_STATUS_LABEL_MAP } from "~/constants/level_status";
 import TreeTableRow from "./TreeTableRow.vue";
 
-const props = defineProps<{
-    level: any;
-    depth?: number;
-    onEdit?: (level: any) => void;
-    onAddSub?: (level: any) => void;
-    onDelete?: (level: any) => void;
-    onUpdateSortOrder?: (list: any[]) => Promise<void>;
-}>();
+const props = withDefaults(
+    defineProps<{
+        level: any;
+        depth?: number;
+        isExpanded?: boolean;
+        mobileOnly?: boolean; // 只渲染手機版
+        desktopOnly?: boolean; // 只渲染桌面版
+        onEdit?: (level: any) => void;
+        onAddSub?: (level: any) => void;
+        onDelete?: (level: any) => void;
+        onUpdateSortOrder?: (list: any[]) => Promise<void>;
+    }>(),
+    {
+        mobileOnly: false,
+        desktopOnly: false
+    }
+);
 
 const emit = defineEmits<{
     (e: "refresh"): void;
@@ -28,7 +37,7 @@ const emit = defineEmits<{
 
 const UButton = resolveComponent("UButton");
 const UBadge = resolveComponent("UBadge");
-const isExpanded = ref(true);
+const isExpanded = ref(props.isExpanded ?? true);
 const currentDepth = props.depth ?? 0;
 const indentWidth = 24; // 每層縮進 24px
 const childrenBodyRef = ref<HTMLElement | null>(null);
@@ -94,6 +103,10 @@ const setupChildrenSortable = () => {
         draggable: `tr[data-depth="${depth}"]`,
         fallbackOnBody: true,
         swapThreshold: 0.65,
+        onStart: () => {
+            // 拖曳開始時收合當前層級
+            isExpanded.value = false;
+        },
         onUpdate: async (evt: any) => {
             console.log("onUpdate children", {
                 oldIndex: evt.oldIndex,
@@ -183,181 +196,186 @@ onUnmounted(() => {
 
 <template>
     <!-- 手機版：卡片式佈局 -->
-    <div
-        class="block md:hidden bg-white dark:bg-gray-900 rounded-lg border border-default shadow-sm mb-3"
-        :data-depth="currentDepth"
-        :data-level-id="level.id"
-        :style="{ marginLeft: `${currentDepth * 16}px` }">
-        <div class="p-4 space-y-3">
-            <!-- 標題列 -->
-            <div class="flex items-center gap-2">
-                <UIcon
-                    name="i-lucide-grip-vertical"
-                    :data-depth="currentDepth"
-                    class="w-4 h-4 text-gray-500 drag-handle cursor-grab shrink-0" />
-                <button
-                    v-if="hasChildren"
-                    @click="toggleExpand"
-                    class="flex items-center justify-center w-5 h-5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors shrink-0">
+    <template v-if="!desktopOnly">
+        <div
+            class="block md:hidden bg-white dark:bg-gray-900 rounded-lg border border-default shadow-sm mb-3"
+            :data-depth="currentDepth"
+            :data-level-id="level.id"
+            :style="{ marginLeft: `${currentDepth * 16}px` }">
+            <div class="p-4 space-y-3">
+                <!-- 標題列 -->
+                <div class="flex items-center gap-2">
                     <UIcon
-                        :name="
-                            isExpanded
-                                ? 'i-lucide-chevron-down'
-                                : 'i-lucide-chevron-right'
-                        "
-                        class="w-4 h-4" />
-                </button>
-                <span v-else class="w-5 shrink-0"></span>
-                <span class="font-medium text-base flex-1">
-                    {{ level.label }} ( {{ level.url }} )
-                </span>
-            </div>
-
-            <!-- 資訊欄位 -->
-            <div class="grid grid-cols-2 gap-2 text-sm">
-                <div class="flex flex-col gap-1">
-                    <span class="text-gray-500 dark:text-gray-400 text-xs">
-                        是否上線
+                        name="i-lucide-grip-vertical"
+                        :data-depth="currentDepth"
+                        class="w-4 h-4 text-gray-500 drag-handle cursor-grab shrink-0" />
+                    <button
+                        v-if="hasChildren"
+                        @click="toggleExpand"
+                        class="flex items-center justify-center w-5 h-5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors shrink-0">
+                        <UIcon
+                            :name="
+                                isExpanded
+                                    ? 'i-lucide-chevron-down'
+                                    : 'i-lucide-chevron-right'
+                            "
+                            class="w-4 h-4" />
+                    </button>
+                    <span v-else class="w-5 shrink-0"></span>
+                    <span class="font-medium text-base flex-1">
+                        {{ level.label }} ( {{ level.url }} )
                     </span>
-                    <UBadge
-                        :label="
-                            levelStatusLabelMap[level.status] ?? level.status
-                        "
-                        :color="level.status === '1' ? 'success' : 'error'"
-                        size="sm" />
+                </div>
+
+                <!-- 資訊欄位 -->
+                <div class="grid grid-cols-2 gap-2 text-sm">
+                    <div class="flex flex-col gap-1">
+                        <span class="text-gray-500 dark:text-gray-400 text-xs">
+                            是否上線
+                        </span>
+                        <UBadge
+                            :label="
+                                levelStatusLabelMap[level.status] ?? level.status
+                            "
+                            :color="level.status === '1' ? 'success' : 'error'"
+                            size="sm" />
+                    </div>
+                </div>
+
+                <!-- 操作按鈕 -->
+                <div class="flex flex-wrap gap-2 pt-2 border-t border-default">
+                    <UButton
+                        icon="i-lucide-edit"
+                        label="編輯"
+                        color="primary"
+                        size="xs"
+                        variant="outline"
+                        class="flex-1 min-w-[80px]"
+                        @click="onEdit?.(level)" />
+                    <UButton
+                        icon="i-lucide-plus"
+                        label="子層級"
+                        color="primary"
+                        size="xs"
+                        variant="outline"
+                        class="flex-1 min-w-[80px]"
+                        :disabled="!canAddSub"
+                        :title="!canAddSub ? '已有模組或 URL，無法新增子層級' : ''"
+                        @click="onAddSub?.(level)" />
+                    <UButton
+                        icon="i-lucide-trash"
+                        label="刪除"
+                        color="error"
+                        variant="ghost"
+                        size="xs"
+                        class="flex-1 min-w-[80px]"
+                        @click="onDelete?.(level)" />
                 </div>
             </div>
-
-            <!-- 操作按鈕 -->
-            <div class="flex flex-wrap gap-2 pt-2 border-t border-default">
-                <UButton
-                    icon="i-lucide-edit"
-                    label="編輯"
-                    color="primary"
-                    size="xs"
-                    variant="outline"
-                    class="flex-1 min-w-[80px]"
-                    @click="onEdit?.(level)" />
-                <UButton
-                    icon="i-lucide-plus"
-                    label="子層級"
-                    color="primary"
-                    size="xs"
-                    variant="outline"
-                    class="flex-1 min-w-[80px]"
-                    :disabled="!canAddSub"
-                    :title="!canAddSub ? '已有模組或 URL，無法新增子層級' : ''"
-                    @click="onAddSub?.(level)" />
-                <UButton
-                    icon="i-lucide-trash"
-                    label="刪除"
-                    color="error"
-                    variant="ghost"
-                    size="xs"
-                    class="flex-1 min-w-[80px]"
-                    @click="onDelete?.(level)" />
-            </div>
         </div>
-    </div>
+        <!-- 子層級（手機版） -->
+        <template v-if="hasChildren && isExpanded && !desktopOnly">
+            <div class="block md:hidden">
+                <TreeTableRow
+                    v-for="child in childrenData"
+                    :key="child.id"
+                    :level="child"
+                    :depth="currentDepth + 1"
+                    mobile-only
+                    :on-edit="onEdit"
+                    :on-add-sub="onAddSub"
+                    :on-update-sort-order="onUpdateSortOrder"
+                    :on-delete="onDelete"
+                    @refresh="emit('refresh')" />
+            </div>
+        </template>
+    </template>
 
     <!-- 桌面版：表格行佈局 -->
-    <tr
-        class="hidden md:table-row hover:bg-gray-50 dark:hover:bg-gray-800/50"
-        :data-depth="currentDepth"
-        :data-level-id="level.id">
-        <td class="py-2 px-4 border-b border-default">
-            <div
-                class="flex items-center gap-2"
-                :style="{ paddingLeft: `${currentDepth * indentWidth}px` }">
-                <UIcon
-                    name="i-lucide-grip-vertical"
-                    :data-depth="currentDepth"
-                    class="w-4 h-4 text-gray-500 drag-handle cursor-grab" />
-                <button
-                    v-if="hasChildren"
-                    @click="toggleExpand"
-                    class="flex items-center justify-center w-5 h-5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+    <template v-if="!mobileOnly">
+        <tr
+            class="hidden md:table-row hover:bg-gray-50 dark:hover:bg-gray-800/50"
+            :data-depth="currentDepth"
+            :data-level-id="level.id">
+            <td class="py-2 px-4 border-b border-default">
+                <div
+                    class="flex items-center gap-2"
+                    :style="{ paddingLeft: `${currentDepth * indentWidth}px` }">
                     <UIcon
-                        :name="
-                            isExpanded
-                                ? 'i-lucide-chevron-down'
-                                : 'i-lucide-chevron-right'
-                        "
-                        class="w-4 h-4" />
-                </button>
-                <span v-else class="w-5"></span>
-                <span class="font-medium">{{ level.label }}</span>
-            </div>
-        </td>
-        <td class="py-2 px-4 border-b border-default">
-            <span class="font-medium">{{ level.url }}</span>
-        </td>
-        <td class="py-2 px-4 border-b border-default">
-            <span class="font-medium">{{ moduleName }}</span>
-        </td>
-        <td class="py-2 px-4 border-b border-default">
-            <div class="flex items-center gap-2">
-                <UBadge
-                    variant="outline"
-                    :label="levelStatusLabelMap[level.status] ?? level.status"
-                    :color="level.status === '1' ? 'success' : 'error'" />
-            </div>
-        </td>
-        <td class="py-2 px-4 border-b border-default">
-            <div class="flex items-center gap-2">
-                <UButton
-                    icon="i-lucide-edit"
-                    label="編輯"
-                    color="primary"
-                    size="xs"
-                    @click="onEdit?.(level)" />
-                <UButton
-                    icon="i-lucide-plus"
-                    label="加入子層級"
-                    color="primary"
-                    size="xs"
-                    :disabled="!canAddSub"
-                    :title="!canAddSub ? '已有模組或 URL，無法新增子層級' : ''"
-                    @click="onAddSub?.(level)" />
-                <UButton
-                    icon="i-lucide-trash"
-                    label="刪除"
-                    color="error"
-                    variant="ghost"
-                    size="xs"
-                    @click="onDelete?.(level)" />
-            </div>
-        </td>
-    </tr>
-
-    <!-- 子層級（手機版） -->
-    <template v-if="hasChildren && isExpanded">
-        <div class="block md:hidden">
-            <TreeTableRow
-                v-for="child in childrenData"
-                :key="child.id"
-                :level="child"
-                :depth="currentDepth + 1"
-                :on-edit="onEdit"
-                :on-add-sub="onAddSub"
-                :on-update-sort-order="onUpdateSortOrder"
-                :on-delete="onDelete"
-                @refresh="emit('refresh')" />
-        </div>
-    </template>
-    <!-- 子層級（桌面版） -->
-    <template v-if="hasChildren && isExpanded">
-        <tbody ref="childrenBodyRef" style="display: contents">
-            <TreeTableRow
-                v-for="child in childrenData"
-                :key="child.id"
-                :level="child"
-                :depth="currentDepth + 1"
-                :on-edit="onEdit"
-                :on-add-sub="onAddSub"
-                :on-update-sort-order="onUpdateSortOrder"
-                :on-delete="onDelete"
-                @refresh="emit('refresh')" />
-        </tbody>
+                        name="i-lucide-grip-vertical"
+                        :data-depth="currentDepth"
+                        class="w-4 h-4 text-gray-500 drag-handle cursor-grab" />
+                    <button
+                        v-if="hasChildren"
+                        @click="toggleExpand"
+                        class="flex items-center justify-center w-5 h-5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                        <UIcon
+                            :name="
+                                isExpanded
+                                    ? 'i-lucide-chevron-down'
+                                    : 'i-lucide-chevron-right'
+                            "
+                            class="w-4 h-4" />
+                    </button>
+                    <span v-else class="w-5"></span>
+                    <span class="font-medium">{{ level.label }}</span>
+                </div>
+            </td>
+            <td class="py-2 px-4 border-b border-default">
+                <span class="font-medium">{{ level.url }}</span>
+            </td>
+            <td class="py-2 px-4 border-b border-default">
+                <span class="font-medium">{{ moduleName }}</span>
+            </td>
+            <td class="py-2 px-4 border-b border-default">
+                <div class="flex items-center gap-2">
+                    <UBadge
+                        variant="outline"
+                        :label="levelStatusLabelMap[level.status] ?? level.status"
+                        :color="level.status === '1' ? 'success' : 'error'" />
+                </div>
+            </td>
+            <td class="py-2 px-4 border-b border-default">
+                <div class="flex items-center gap-2">
+                    <UButton
+                        icon="i-lucide-edit"
+                        label="編輯"
+                        color="primary"
+                        size="xs"
+                        @click="onEdit?.(level)" />
+                    <UButton
+                        icon="i-lucide-plus"
+                        label="加入子層級"
+                        color="primary"
+                        size="xs"
+                        :disabled="!canAddSub"
+                        :title="!canAddSub ? '已有模組或 URL，無法新增子層級' : ''"
+                        @click="onAddSub?.(level)" />
+                    <UButton
+                        icon="i-lucide-trash"
+                        label="刪除"
+                        color="error"
+                        variant="ghost"
+                        size="xs"
+                        @click="onDelete?.(level)" />
+                </div>
+            </td>
+        </tr>
+        <!-- 子層級（桌面版） -->
+        <template v-if="hasChildren && isExpanded && !mobileOnly">
+            <tbody ref="childrenBodyRef" style="display: contents">
+                <TreeTableRow
+                    v-for="child in childrenData"
+                    :key="child.id"
+                    :level="child"
+                    :depth="currentDepth + 1"
+                    desktop-only
+                    :on-edit="onEdit"
+                    :on-add-sub="onAddSub"
+                    :on-update-sort-order="onUpdateSortOrder"
+                    :on-delete="onDelete"
+                    @refresh="emit('refresh')" />
+            </tbody>
+        </template>
     </template>
 </template>

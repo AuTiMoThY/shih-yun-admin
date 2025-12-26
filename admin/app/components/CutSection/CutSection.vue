@@ -228,7 +228,7 @@ watch(
             <div class="p-4">
                 <!-- 欄位列表 -->
                 <div v-if="sectionData.fields.length > 0" class="space-y-4">
-                    <AppCutSectionFieldItem
+                    <CutSectionFieldItem
                         v-for="(field, index) in sectionData.fields"
                         :key="field.id"
                         :field="field"
@@ -252,7 +252,7 @@ watch(
 
                 <!-- 欄位選擇器 -->
                 <div v-if="showFieldSelector" class="mt-4">
-                    <AppCutSectionFieldSelector @select="addField" />
+                    <CutSectionFieldSelector @select="addField" />
                 </div>
             </div>
         </template>

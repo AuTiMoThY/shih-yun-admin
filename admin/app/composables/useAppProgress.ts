@@ -1,41 +1,51 @@
-import type { CaseForm, CaseFormErrors } from "~/types/CaseForm";
-import type { CutSectionData } from "~/types/CutSectionField";
+import { useDateFormat, useNow } from "@vueuse/core";
 
-export const useAppCase = () => {
+export interface ProgressForm {
+    case_id: number | null;
+    title: string;
+    progress_date: string;
+    images: string[];
+    sort: number;
+    status: number;
+}
+
+export interface ProgressFormErrors {
+    case_id: string | false;
+    title: string | false;
+    progress_date: string | false;
+    images: string | false;
+}
+
+export const useAppProgress = () => {
     const { public: runtimePublic } = useRuntimeConfig();
     const apiBase = runtimePublic.apiBase;
     const toast = useToast();
-
-    const data = useState<any[]>("app-case-data", () => []);
-    const loading = useState("app-case-loading", () => false);
+    const data = useState<any[]>("app-progress-data", () => []);
+    const loading = useState("app-progress-loading", () => false);
     const submitError = ref("");
 
-    const form = reactive<CaseForm>({
-        year: null,
+    // 取得今天的日期（格式：YYYY-MM-DD）
+    const getTodayDate = (): string => {
+        return (
+            useDateFormat(useNow(), "YYYY-MM-DD", { locales: "zh-TW" })
+                ?.value ?? ""
+        );
+    };
+
+    const form = reactive<ProgressForm>({
+        case_id: null,
         title: "",
-        s_text: "",
-        cover: "",
-        content: [],
-        slide: [],
-        ca_type: "",
-        ca_area: "",
-        ca_square: "",
-        ca_phone: "",
-        ca_adds: "",
-        ca_map: "",
-        ca_pop_type: 0,
-        ca_pop: "",
-        is_sale: 0,
-        is_msg: 0,
+        progress_date: getTodayDate(),
+        images: [],
         sort: 0,
         status: 1
     });
 
-    const errors = reactive<CaseFormErrors>({
-        year: false,
+    const errors = reactive<ProgressFormErrors>({
+        case_id: false,
         title: false,
-        cover: false,
-        content: false,
+        progress_date: false,
+        images: false
     });
 
     const clearError = (field: keyof typeof errors) => {
@@ -44,48 +54,38 @@ export const useAppCase = () => {
 
     const validateForm = (): boolean => {
         submitError.value = "";
+        // 先清除所有錯誤
         Object.keys(errors).forEach((key) => {
             // @ts-ignore
             errors[key] = false;
         });
 
+        // 驗證標題
         if (!form.title || form.title.trim() === "") {
             errors.title = "請輸入標題";
-        }
-        if (!form.year || form.year === null) {
-            errors.year = "請輸入年份";
-        }
-        if (!form.cover || (form.cover.trim() === "" && !form.cover.startsWith("temp_"))) {
-            errors.cover = "請上傳封面圖";
+        } else if (form.title.trim().length > 255) {
+            errors.title = "標題長度不能超過255個字元";
         }
 
-        // 內容區塊 JSON（可選，但若存在需為有效陣列）
-        if (form.content && !Array.isArray(form.content)) {
-            errors.content = "內容格式不正確";
+        // 驗證日期格式（如果提供）
+        if (form.progress_date && form.progress_date.trim() !== "") {
+            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+            if (!dateRegex.test(form.progress_date)) {
+                errors.progress_date = "日期格式不正確，請使用 YYYY-MM-DD 格式";
+            }
         }
 
         return !Object.values(errors).some((v) => v);
     };
 
     const resetForm = () => {
-        form.year = null;
+        form.case_id = null;
         form.title = "";
-        form.s_text = "";
-        form.cover = "";
-        form.content = [];
-        form.slide = [];
-        form.ca_type = "";
-        form.ca_area = "";
-        form.ca_square = "";
-        form.ca_phone = "";
-        form.ca_adds = "";
-        form.ca_map = "";
-        form.ca_pop_type = 0;
-        form.ca_pop = "";
-        form.is_sale = 0;
-        form.is_msg = 0;
+        form.progress_date = getTodayDate();
+        form.images = [];
         form.sort = 0;
         form.status = 1;
+
         Object.keys(errors).forEach((key) => {
             // @ts-ignore
             errors[key] = false;
@@ -95,39 +95,30 @@ export const useAppCase = () => {
 
     const loadDataToForm = (data: any) => {
         if (!data) return;
-        form.year = data.year !== undefined && data.year !== null ? Number(data.year) : null;
+        form.case_id = data.case_id !== null && data.case_id !== undefined ? Number(data.case_id) : null;
         form.title = data.title || "";
-        form.s_text = data.s_text || "";
-        form.cover = data.cover || "";
-        form.content = Array.isArray(data.content) ? data.content : [];
-        form.slide = Array.isArray(data.slide) ? data.slide : [];
-        form.ca_type = data.ca_type || "";
-        form.ca_area = data.ca_area || "";
-        form.ca_square = data.ca_square || "";
-        form.ca_phone = data.ca_phone || "";
-        form.ca_adds = data.ca_adds || "";
-        form.ca_map = data.ca_map || "";
-        form.ca_pop_type = data.ca_pop_type || 0;
-        form.ca_pop = data.ca_pop || "";
-        form.is_sale = data.is_sale !== undefined ? Number(data.is_sale) : 0;
-        form.is_msg = data.is_msg !== undefined ? Number(data.is_msg) : 0;
+        form.progress_date = data.progress_date || getTodayDate();
+        form.images = Array.isArray(data.images) ? data.images : [];
         form.sort = data.sort !== undefined ? Number(data.sort) : 0;
         form.status = data.status !== undefined ? Number(data.status) : 1;
     };
 
-    const fetchData = async (structureId?: number | null) => {
+    const fetchData = async (caseId?: number | null) => {
         loading.value = true;
         try {
             const queryParams = new URLSearchParams();
-            if (structureId !== undefined && structureId !== null) {
-                queryParams.append("structure_id", String(structureId));
+            if (caseId !== undefined && caseId !== null) {
+                queryParams.append("case_id", String(caseId));
             }
             const queryString = queryParams.toString();
+
             const res = await $fetch<{
                 success: boolean;
                 data: any[];
                 message?: string;
-            }>(`${apiBase}/app-case/get${queryString ? `?${queryString}` : ""}`);
+            }>(
+                `${apiBase}/app-progress/get${queryString ? `?${queryString}` : ""}`
+            );
             if (res.success) {
                 // 後端已確保類型正確，這裡直接使用（如需可在此處再次轉換）
                 data.value = res.data || [];
@@ -136,14 +127,47 @@ export const useAppCase = () => {
                 data.value = [];
             }
         } catch (error: any) {
-            submitError.value = error?.message || "取得建案資料失敗，請稍後再試";
+            submitError.value =
+                error?.message || "取得工程進度失敗，請稍後再試";
             console.error(error);
         } finally {
             loading.value = false;
         }
     };
 
-    const addCase = async (structureId?: number | null) => {
+    const loadProgressData = async (progressId: number) => {
+        loading.value = true;
+        try {
+            const res = await $fetch<{
+                success: boolean;
+                data: any;
+            }>(`/app-progress/get-by-id`, {
+                baseURL: apiBase,
+                method: "GET",
+                params: { id: progressId },
+                headers: { "Content-Type": "application/json" },
+                credentials: "include"
+            });
+            if (res.success) {
+                loadDataToForm(res.data);
+                return res.data;
+            } else {
+                toast.add({ title: "載入工程進度失敗", color: "error" });
+                return null;
+            }
+        } catch (error: any) {
+            console.error("loadProgressData error", error);
+            toast.add({
+                title: error?.message || "載入工程進度失敗，請稍後再試",
+                color: "error"
+            });
+            return null;
+        } finally {
+            loading.value = false;
+        }
+    };
+
+    const addProgress = async () => {
         loading.value = true;
         submitError.value = "";
 
@@ -157,23 +181,16 @@ export const useAppCase = () => {
             return false;
         }
         try {
-            const body: any = {
-                ...form,
-                content: form.content as CutSectionData[]
-            };
-            if (structureId !== undefined && structureId !== null) {
-                body.structure_id = structureId;
-            }
             const res = await $fetch<{
                 success: boolean;
                 message: string;
-            }>(`${apiBase}/app-case/add`, {
+            }>(`${apiBase}/app-progress/add`, {
                 method: "POST",
-                body
+                body: form
             });
             if (res.success) {
                 toast.add({
-                    title: res.message ?? "新增建案成功",
+                    title: res.message ?? "新增工程進度成功",
                     color: "success"
                 });
                 return true;
@@ -204,17 +221,17 @@ export const useAppCase = () => {
                 (typeof data?.message === "string" && data.message) ||
                 (typeof data === "string" ? data : null) ||
                 error?.message ||
-                "新增建案失敗，請稍後再試";
+                "新增工程進度失敗，請稍後再試";
             submitError.value = msg;
             toast.add({ title: msg, color: "error" });
-            console.error("add case error", error);
+            console.error("add error", error);
             return false;
         } finally {
             loading.value = false;
         }
     };
 
-    const editCase = async (id: number | string) => {
+    const editProgress = async (id: number | string) => {
         loading.value = true;
         if (!validateForm()) {
             loading.value = false;
@@ -226,22 +243,21 @@ export const useAppCase = () => {
             });
             return false;
         }
-        loading.value = true;
+
         try {
             const res = await $fetch<{
                 success: boolean;
                 message: string;
-            }>(`${apiBase}/app-case/update`, {
+            }>(`${apiBase}/app-progress/update`, {
                 method: "POST",
                 body: {
-                    id,
-                    ...form,
-                    content: form.content as CutSectionData[]
+                    id: id,
+                    ...form
                 }
             });
             if (res.success) {
                 toast.add({
-                    title: res.message ?? "更新建案成功",
+                    title: res.message ?? "更新工程進度成功",
                     color: "success"
                 });
                 return true;
@@ -272,72 +288,31 @@ export const useAppCase = () => {
                 (typeof data?.message === "string" && data.message) ||
                 (typeof data === "string" ? data : null) ||
                 error?.message ||
-                "更新建案失敗，請稍後再試";
+                "更新工程進度失敗，請稍後再試";
             submitError.value = msg;
             toast.add({ title: msg, color: "error" });
-            console.error("edit case error", error);
+            console.error("edit error", error);
             return false;
         } finally {
             loading.value = false;
         }
     };
 
-    const loadCaseData = async (caseId: number) => {
-        loading.value = true;
-        try {
-            const res = await $fetch<{
-                success: boolean;
-                data: any;
-            }>(`/app-case/get-by-id`, {
-                baseURL: apiBase,
-                method: "GET",
-                params: { id: caseId },
-                headers: { "Content-Type": "application/json" },
-                credentials: "include"
-            });
-            if (res.success) {
-                const parsedContent =
-                    res.data?.content && typeof res.data.content === "string"
-                        ? JSON.parse(res.data.content)
-                        : res.data?.content;
-                const parsedSlide =
-                    res.data?.slide && typeof res.data.slide === "string"
-                        ? JSON.parse(res.data.slide)
-                        : res.data?.slide;
-                loadDataToForm({
-                    ...res.data,
-                    content: parsedContent ?? [],
-                    slide: Array.isArray(parsedSlide) ? parsedSlide : []
-                });
-                return res.data;
-            } else {
-                toast.add({ title: "載入建案失敗", color: "error" });
-                return null;
-            }
-        } catch (error: any) {
-            console.error("loadCaseData error", error);
-            toast.add({
-                title: error?.message || "載入建案失敗，請稍後再試",
-                color: "error"
-            });
-            return null;
-        } finally {
-            loading.value = false;
+    const deleteProgress = async (
+        id: number | string,
+        options?: {
+            onSuccess?: () => void;
         }
-    };
-
-    const deleteCase = async (id: number | string, options?: {
-        onSuccess?: () => void;
-    }) => {
+    ) => {
         if (!id) return false;
         loading.value = true;
         try {
             const res = await $fetch<{
                 success: boolean;
                 message: string;
-            }>(`${apiBase}/app-case/delete`, {
+            }>(`${apiBase}/app-progress/delete`, {
                 method: "POST",
-                body: { id }
+                body: { id: id }
             });
             if (res.success) {
                 toast.add({ title: res.message, color: "success" });
@@ -348,9 +323,9 @@ export const useAppCase = () => {
                 return false;
             }
         } catch (error: any) {
-            console.error("deleteCase error", error);
+            console.error("deleteProgress error", error);
             toast.add({
-                title: error?.message || "刪除建案失敗，請稍後再試",
+                title: error?.message || "刪除工程進度失敗，請稍後再試",
                 color: "error"
             });
             return false;
@@ -365,15 +340,14 @@ export const useAppCase = () => {
         submitError,
         form,
         errors,
-        validateForm,
         clearError,
         resetForm,
         loadDataToForm,
         fetchData,
-        addCase,
-        editCase,
-        deleteCase,
-        loadCaseData
+        loadProgressData,
+        addProgress,
+        editProgress,
+        deleteProgress
     };
 };
 

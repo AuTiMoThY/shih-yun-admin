@@ -21,6 +21,7 @@ const deleteTarget = ref<{ id: string; label: string } | null>(null);
 // 當前操作的層級資料
 const currentParentLevel = ref<any>(null);
 const currentEditLevel = ref<any>(null);
+const isExpanded = ref(true);
 
 const handleModalSuccess = async () => {
     await fetchData();
@@ -83,7 +84,13 @@ const setupRootSortable = () => {
         draggable: "tr[data-depth='0']",
         fallbackOnBody: true,
         swapThreshold: 0.65,
+        onStart: function (evt: any) {
+            console.log("onStart", evt);
+            // 拖曳開始時收合當前層級
+            isExpanded.value = false;
+        },
         onUpdate: async (evt: any) => {
+
             console.log("onUpdate", evt);
             const list = data.value || [];
             const rows = (Array.from(
@@ -179,6 +186,7 @@ onMounted(async () => {
                             v-if="level"
                             :level="level"
                             :depth="0"
+                            :is-expanded="isExpanded"
                             :on-edit="handleEdit"
                             :on-add-sub="handleAddSub"
                             :on-update-sort-order="updateSortOrder"
@@ -227,6 +235,7 @@ onMounted(async () => {
                                     v-if="level"
                                     :level="level"
                                     :depth="0"
+                                    :is-expanded="isExpanded"
                                     :on-edit="handleEdit"
                                     :on-add-sub="handleAddSub"
                                     :on-update-sort-order="updateSortOrder"
