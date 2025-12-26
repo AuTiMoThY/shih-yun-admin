@@ -23,8 +23,8 @@ export const useAppCase = () => {
         ca_phone: "",
         ca_adds: "",
         ca_map: "",
-        ca_pop_type: "",
-        ca_pop_img: "",
+        ca_pop_type: 0,
+        ca_pop: "",
         is_sale: 0,
         is_msg: 0,
         sort: 0,
@@ -35,8 +35,7 @@ export const useAppCase = () => {
         year: false,
         title: false,
         cover: false,
-        slide: false,
-        content: false
+        content: false,
     });
 
     const clearError = (field: keyof typeof errors) => {
@@ -53,13 +52,11 @@ export const useAppCase = () => {
         if (!form.title || form.title.trim() === "") {
             errors.title = "請輸入標題";
         }
-
+        if (!form.year || form.year === null) {
+            errors.year = "請輸入年份";
+        }
         if (!form.cover || (form.cover.trim() === "" && !form.cover.startsWith("temp_"))) {
             errors.cover = "請上傳封面圖";
-        }
-
-        if (!form.slide || form.slide.length === 0) {
-            errors.slide = "請上傳輪播圖";
         }
 
         // 內容區塊 JSON（可選，但若存在需為有效陣列）
@@ -83,8 +80,8 @@ export const useAppCase = () => {
         form.ca_phone = "";
         form.ca_adds = "";
         form.ca_map = "";
-        form.ca_pop_type = "";
-        form.ca_pop_img = "";
+        form.ca_pop_type = 0;
+        form.ca_pop = "";
         form.is_sale = 0;
         form.is_msg = 0;
         form.sort = 0;
@@ -110,8 +107,8 @@ export const useAppCase = () => {
         form.ca_phone = data.ca_phone || "";
         form.ca_adds = data.ca_adds || "";
         form.ca_map = data.ca_map || "";
-        form.ca_pop_type = data.ca_pop_type || "";
-        form.ca_pop_img = data.ca_pop_img || "";
+        form.ca_pop_type = data.ca_pop_type || 0;
+        form.ca_pop = data.ca_pop || "";
         form.is_sale = data.is_sale !== undefined ? Number(data.is_sale) : 0;
         form.is_msg = data.is_msg !== undefined ? Number(data.is_msg) : 0;
         form.sort = data.sort !== undefined ? Number(data.sort) : 0;
@@ -151,6 +148,11 @@ export const useAppCase = () => {
 
         if (!validateForm()) {
             loading.value = false;
+            submitError.value = useValidateFormErrorMsg(errors);
+            toast.add({
+                title: submitError.value,
+                color: "error"
+            });
             return false;
         }
         try {
@@ -212,7 +214,17 @@ export const useAppCase = () => {
     };
 
     const editCase = async (id: number | string) => {
-        if (!validateForm()) return false;
+        loading.value = true;
+        if (!validateForm()) {
+            loading.value = false;
+
+            submitError.value = useValidateFormErrorMsg(errors);
+            toast.add({
+                title: submitError.value,
+                color: "error"
+            });
+            return false;
+        }
         loading.value = true;
         try {
             const res = await $fetch<{
@@ -352,6 +364,7 @@ export const useAppCase = () => {
         submitError,
         form,
         errors,
+        validateForm,
         clearError,
         resetForm,
         loadDataToForm,

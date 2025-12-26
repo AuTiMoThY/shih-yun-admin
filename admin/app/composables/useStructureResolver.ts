@@ -17,15 +17,15 @@ export const useStructureResolver = () => {
         }
 
         // 移除開頭的斜線
-        const normalizedPath = path.startsWith('/') ? path.slice(1) : path;
+        const normalizedPath = path.startsWith("/") ? path.slice(1) : path;
 
         // 遞迴搜尋結構樹
         const searchInTree = (items: any[]): any | null => {
             for (const item of items) {
                 // 檢查是否有自訂 URL
                 if (item.url) {
-                    const itemUrl = item.url.startsWith('/') 
-                        ? item.url.slice(1) 
+                    const itemUrl = item.url.startsWith("/")
+                        ? item.url.slice(1)
                         : item.url;
                     if (itemUrl === normalizedPath) {
                         return item;
@@ -38,7 +38,7 @@ export const useStructureResolver = () => {
                         (m: any) => String(m.id) === String(item.module_id)
                     );
                     if (module?.name) {
-                        const modulePath = module.name.startsWith('/')
+                        const modulePath = module.name.startsWith("/")
                             ? module.name.slice(1)
                             : module.name;
                         if (modulePath === normalizedPath) {
@@ -93,14 +93,16 @@ export const useStructureResolver = () => {
      * @param path URL 路徑
      * @returns 包含 structure_id, module_id, module_name 等資訊的物件
      */
-    const resolvePath = (path: string): {
+    const resolvePath = (
+        path: string
+    ): {
         structure_id: number | null;
         module_id: number | null;
         module_name: string | null;
         structure: any | null;
     } => {
         const structure = findStructureByPath(path);
-        
+
         if (!structure) {
             return {
                 structure_id: null,

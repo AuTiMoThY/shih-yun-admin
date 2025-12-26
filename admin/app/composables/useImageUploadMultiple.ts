@@ -10,7 +10,7 @@ export const useImageUploadMultiple = (options?: {
     acceptTypes?: string[]; // 接受的檔案類型，默認 ["image/*"]
     enableSortable?: boolean; // 是否啟用排序功能，默認 true
 }) => {
-    console.log("useImageUploadMultiple");
+    // console.log("useImageUploadMultiple");
     const { uploadImage, getImagePreview } = useImageUpload();
     const toast = useToast();
 

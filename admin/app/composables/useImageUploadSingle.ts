@@ -118,6 +118,7 @@ export const useImageUploadSingle = (options?: {
      * 觸發文件選擇
      */
     const triggerFileSelect = () => {
+        console.log("triggerFileSelect", inputRef.value);
         inputRef.value?.click();
     };
 

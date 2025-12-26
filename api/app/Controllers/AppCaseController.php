@@ -135,7 +135,7 @@ class AppCaseController extends BaseController
             'ca_adds' => 'permit_empty|max_length[500]',
             'ca_map' => 'permit_empty',
             'ca_pop_type' => 'permit_empty|max_length[255]',
-            'ca_pop_img' => 'permit_empty|max_length[500]',
+            'ca_pop' => 'permit_empty|max_length[500]',
             'is_sale' => 'permit_empty|in_list[0,1]',
             'is_msg' => 'permit_empty|in_list[0,1]',
             'sort' => 'permit_empty|integer',
@@ -185,7 +185,7 @@ class AppCaseController extends BaseController
                 'ca_adds' => isset($data['ca_adds']) ? trim($data['ca_adds']) : null,
                 'ca_map' => $data['ca_map'] ?? null,
                 'ca_pop_type' => isset($data['ca_pop_type']) ? trim($data['ca_pop_type']) : null,
-                'ca_pop_img' => $data['ca_pop_img'] ?? null,
+                'ca_pop' => $data['ca_pop'] ?? null,
                 'is_sale' => isset($data['is_sale']) ? (int)$data['is_sale'] : 0,
                 'is_msg' => isset($data['is_msg']) ? (int)$data['is_msg'] : 0,
                 'sort' => isset($data['sort']) ? (int)$data['sort'] : 0,
@@ -257,7 +257,7 @@ class AppCaseController extends BaseController
             'ca_adds' => 'permit_empty|max_length[500]',
             'ca_map' => 'permit_empty',
             'ca_pop_type' => 'permit_empty|max_length[255]',
-            'ca_pop_img' => 'permit_empty|max_length[500]',
+            'ca_pop' => 'permit_empty|max_length[500]',
             'is_sale' => 'permit_empty|in_list[0,1]',
             'is_msg' => 'permit_empty|in_list[0,1]',
             'sort' => 'permit_empty|integer',
@@ -366,10 +366,10 @@ class AppCaseController extends BaseController
                     $updateData['ca_pop_type'] = $newCaPopType;
                 }
             }
-            if (isset($data['ca_pop_img'])) {
-                $newCaPopImg = $data['ca_pop_img'];
-                if (($case['ca_pop_img'] ?? null) !== $newCaPopImg) {
-                    $updateData['ca_pop_img'] = $newCaPopImg;
+            if (isset($data['ca_pop'])) {
+                $newCaPop = $data['ca_pop'];
+                if (($case['ca_pop'] ?? null) !== $newCaPop) {
+                    $updateData['ca_pop'] = $newCaPop;
                 }
             }
             if (isset($data['is_sale'])) {

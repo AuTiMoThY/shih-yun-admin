@@ -63,7 +63,10 @@ export const useAppNews = () => {
         }
 
         // 驗證封面圖：臨時 ID（temp_ 開頭）或正式 URL 表示有預覽圖（允許），空字串表示沒有圖片（不允許）
-        if (!form.cover || (form.cover.trim() === "" && !form.cover.startsWith("temp_"))) {
+        if (
+            !form.cover ||
+            (form.cover.trim() === "" && !form.cover.startsWith("temp_"))
+        ) {
             errors.cover = "請上傳封面圖";
         }
 
@@ -108,12 +111,14 @@ export const useAppNews = () => {
                 queryParams.append("structure_id", String(structureId));
             }
             const queryString = queryParams.toString();
-            
+
             const res = await $fetch<{
                 success: boolean;
                 data: any[];
                 message?: string;
-            }>(`${apiBase}/app-news/get${queryString ? `?${queryString}` : ""}`);
+            }>(
+                `${apiBase}/app-news/get${queryString ? `?${queryString}` : ""}`
+            );
             if (res.success) {
                 data.value = res.data || [];
             } else {
@@ -135,13 +140,19 @@ export const useAppNews = () => {
 
         if (!validateForm()) {
             loading.value = false;
+            submitError.value = useValidateFormErrorMsg(errors);
+            toast.add({
+                title: submitError.value,
+                color: "error"
+            });
             return false;
         }
         try {
-            const body = structureId !== undefined && structureId !== null
-                ? { ...form, structure_id: structureId }
-                : form;
-            
+            const body =
+                structureId !== undefined && structureId !== null
+                    ? { ...form, structure_id: structureId }
+                    : form;
+
             const res = await $fetch<{
                 success: boolean;
                 message: string;
@@ -193,9 +204,17 @@ export const useAppNews = () => {
     };
 
     const editNews = async (id: number | string) => {
-        if (!validateForm()) return false;
-
         loading.value = true;
+        if (!validateForm()) {
+            loading.value = false;
+
+            submitError.value = useValidateFormErrorMsg(errors);
+            toast.add({
+                title: submitError.value,
+                color: "error"
+            });
+            return false;
+        }
 
         try {
             const res = await $fetch<{
@@ -284,10 +303,13 @@ export const useAppNews = () => {
         }
     };
 
-    const deleteNews = async (id: number | string, options?: {
-        id?: number | string;
-        onSuccess?: () => void;
-    }) => {
+    const deleteNews = async (
+        id: number | string,
+        options?: {
+            id?: number | string;
+            onSuccess?: () => void;
+        }
+    ) => {
         if (!id) return false;
         loading.value = true;
         try {
@@ -308,7 +330,10 @@ export const useAppNews = () => {
             }
         } catch (error: any) {
             console.error("deleteNews error", error);
-            toast.add({ title: error?.message || "刪除最新消息失敗，請稍後再試", color: "error" });
+            toast.add({
+                title: error?.message || "刪除最新消息失敗，請稍後再試",
+                color: "error"
+            });
             return false;
         } finally {
             loading.value = false;

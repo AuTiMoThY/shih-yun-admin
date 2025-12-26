@@ -13,8 +13,8 @@ export interface CaseForm {
     ca_phone: string;
     ca_adds: string;
     ca_map: string;
-    ca_pop_type: string;
-    ca_pop_img: string;
+    ca_pop_type: number;
+    ca_pop: string;
     is_sale: number;
     is_msg: number;
     sort: number;
@@ -25,7 +25,6 @@ export interface CaseFormErrors {
     year: string | boolean;
     title: string | boolean;
     cover: string | boolean;
-    slide: string | boolean;
     content: string | boolean;
 }
 

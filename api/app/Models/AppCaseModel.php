@@ -22,7 +22,7 @@ class AppCaseModel extends Model
         'ca_adds',
         'ca_map',
         'ca_pop_type',
-        'ca_pop_img',
+        'ca_pop',
         'is_sale',
         'is_msg',
         'sort',
