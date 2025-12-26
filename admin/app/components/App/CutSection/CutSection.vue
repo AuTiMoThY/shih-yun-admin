@@ -4,8 +4,8 @@ import type {
     FieldType,
     CutSectionData
 } from "~/types/CutSectionField";
+import { useDateFormat, useNow } from "@vueuse/core";
 
-const { buildId } = useAppAbout();
 const { hasPermission, isSuperAdmin } = usePermission();
 const deleteConfirmModalOpen = ref(false);
 const deleteTarget = ref<{ id: string; label: string } | null>(null);
@@ -31,7 +31,7 @@ const emit = defineEmits<{
 
 // 區塊資料
 const sectionData = ref<CutSectionData>({
-    id: props.data?.id || `section-${buildId.value}`,
+    id: props.data?.id || `section-${useDateFormat(useNow(), "YYYYMMDDHHmmss").value}`,
     index:
         typeof props.index === "number"
             ? props.index
@@ -228,7 +228,7 @@ watch(
             <div class="p-4">
                 <!-- 欄位列表 -->
                 <div v-if="sectionData.fields.length > 0" class="space-y-4">
-                    <AppAboutFieldItem
+                    <AppCutSectionFieldItem
                         v-for="(field, index) in sectionData.fields"
                         :key="field.id"
                         :field="field"
@@ -252,7 +252,7 @@ watch(
 
                 <!-- 欄位選擇器 -->
                 <div v-if="showFieldSelector" class="mt-4">
-                    <AppAboutFieldSelector @select="addField" />
+                    <AppCutSectionFieldSelector @select="addField" />
                 </div>
             </div>
         </template>
@@ -267,3 +267,4 @@ watch(
         "
         :on-confirm="confirmDeleteField" />
 </template>
+

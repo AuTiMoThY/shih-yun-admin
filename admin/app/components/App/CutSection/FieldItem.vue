@@ -321,3 +321,4 @@ watch(isEditingLabel, async (editing) => {
         </div>
     </UCard>
 </template>
+

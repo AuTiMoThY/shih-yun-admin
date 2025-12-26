@@ -39,20 +39,10 @@ const {
     editNews
 } = useAppNews();
 
-
 const { resolvePath } = useStructureResolver();
-// 解析路徑：移除 /add 或 /edit/[id] 後綴，取得基礎路徑
-const getBasePath = (path: string): string => {
-    // 移除 /edit/[id] 部分
-    const editMatch = path.match(/^(.+)\/edit\/\d+$/);
-    if (editMatch && editMatch[1]) {
-        return editMatch[1];
-    }
-    // 移除 /add 部分
-    return path.replace('/add', '');
-};
-const pathInfo = resolvePath(getBasePath(router.currentRoute.value.path));
-console.log("pathInfo", pathInfo);
+const { getBasePath } = useBasePath();
+const basePath = getBasePath(router.currentRoute.value.path);
+const pathInfo = resolvePath(basePath);
 
 // 日期選擇器格式
 const df = new DateFormatter("zh-TW", {
@@ -86,7 +76,6 @@ const slideUpload = useImageUploadMultiple({
     enableSortable: true
 });
 
-
 // 載入初始資料
 const loadInitialData = (data: any) => {
     if (data) {
@@ -94,11 +83,11 @@ const loadInitialData = (data: any) => {
         // 載入封面圖（編輯模式下，封面圖已上傳）
         coverUpload.loadInitialValue(data.cover || null);
         // 載入輪播圖（編輯模式下，輪播圖已上傳）
-        slideUpload.loadInitialValue(Array.isArray(data.slide) ? data.slide : []);
+        slideUpload.loadInitialValue(
+            Array.isArray(data.slide) ? data.slide : []
+        );
     }
 };
-
-
 
 // HTML 原始碼預覽開關
 const showHtmlCode = ref(false);
@@ -129,7 +118,10 @@ const handleSubmit = async (event?: Event) => {
             return;
         }
         // 上傳完成後，更新 form.cover 為正式 URL
-        if (coverUpload.formValue.value && !coverUpload.formValue.value.startsWith("temp_")) {
+        if (
+            coverUpload.formValue.value &&
+            !coverUpload.formValue.value.startsWith("temp_")
+        ) {
             form.cover = coverUpload.formValue.value;
         } else if (props.mode === "edit" && props.initialData?.cover) {
             // 編輯模式下，如果上傳失敗，保持原值
@@ -144,23 +136,37 @@ const handleSubmit = async (event?: Event) => {
     }
 
     // 上傳輪播圖
-    if (form.slide && form.slide.length > 0 && form.slide.some((slide: string) => slide && slide.startsWith("temp_"))) {
+    if (
+        form.slide &&
+        form.slide.length > 0 &&
+        form.slide.some((slide: string) => slide && slide.startsWith("temp_"))
+    ) {
         const uploadSlidesSuccess = await slideUpload.upload();
         if (!uploadSlidesSuccess) {
             return;
         }
         // 上傳完成後，更新 form.slide 為正式 URL（使用 formValue 以保持排序）
-        if (slideUpload.formValue.value && slideUpload.formValue.value.length > 0) {
-            form.slide = slideUpload.formValue.value.filter((url: string) => url && !url.startsWith("temp_"));
+        if (
+            slideUpload.formValue.value &&
+            slideUpload.formValue.value.length > 0
+        ) {
+            form.slide = slideUpload.formValue.value.filter(
+                (url: string) => url && !url.startsWith("temp_")
+            );
         } else if (props.mode === "edit" && props.initialData?.slide) {
             // 編輯模式下，如果上傳失敗，保持原值
             form.slide = props.initialData.slide;
         }
     } else {
         // 無論是否有新上傳的圖片，都使用 formValue 的值以保持排序後的順序
-        if (slideUpload.formValue.value && slideUpload.formValue.value.length > 0) {
+        if (
+            slideUpload.formValue.value &&
+            slideUpload.formValue.value.length > 0
+        ) {
             // 過濾掉臨時 ID，只保留正式 URL
-            form.slide = slideUpload.formValue.value.filter((url: string) => url && !url.startsWith("temp_"));
+            form.slide = slideUpload.formValue.value.filter(
+                (url: string) => url && !url.startsWith("temp_")
+            );
         } else if (props.mode === "edit" && props.initialData?.slide) {
             // 編輯模式下，如果沒有值，保持原值
             form.slide = props.initialData.slide;
@@ -179,18 +185,10 @@ const handleSubmit = async (event?: Event) => {
     } else {
         success = await addNews(props.structureId ?? null);
         if (success) {
-            // 根據是否有 structureId 決定導向的路徑
-            if (props.structureId) {
-                // 如果有 structureId，需要找到對應的路徑
-                const targetPath = pathInfo.structure?.url || `/news`;
-                setTimeout(() => {
-                    router.push(targetPath);
-                }, 1000);
-            } else {
-                setTimeout(() => {
-                    router.push("/news");
-                }, 1000);
-            }
+            const targetPath = basePath || `/news`;
+            setTimeout(() => {
+                router.push(targetPath);
+            }, 1000);
         }
     }
 
@@ -200,10 +198,12 @@ const handleSubmit = async (event?: Event) => {
 };
 
 // 監聽日期變化
-watch(() => form.show_date, (newValue) => {
-    console.log(newValue);
-});
-
+watch(
+    () => form.show_date,
+    (newValue) => {
+        console.log(newValue);
+    }
+);
 
 // 綁定封面圖表單數據
 // 當出現預覽圖時，使用臨時 ID 更新 form.cover
@@ -213,7 +213,10 @@ watch(
         if (preview) {
             // 有預覽圖時，更新 form.cover
             // 優先使用 formValue（已上傳的 URL），如果沒有則使用臨時 ID
-            if (coverUpload.formValue.value && !coverUpload.formValue.value.startsWith("temp_")) {
+            if (
+                coverUpload.formValue.value &&
+                !coverUpload.formValue.value.startsWith("temp_")
+            ) {
                 // 已上傳的正式 URL
                 form.cover = coverUpload.formValue.value;
             } else if (coverUpload.tempId.value) {
@@ -226,7 +229,10 @@ watch(
         } else {
             // 沒有預覽圖時，只有在新增模式下才清空，編輯模式下保持原值
             if (props.mode === "add") {
-                if (!coverUpload.formValue.value || coverUpload.formValue.value.startsWith("temp_")) {
+                if (
+                    !coverUpload.formValue.value ||
+                    coverUpload.formValue.value.startsWith("temp_")
+                ) {
                     form.cover = "";
                 }
             }
@@ -242,10 +248,18 @@ watch(
         if (newValue && !newValue.startsWith("temp_")) {
             // 只有正式 URL 才更新
             form.cover = newValue;
-        } else if (!newValue && !coverUpload.preview.value && props.mode === "add") {
+        } else if (
+            !newValue &&
+            !coverUpload.preview.value &&
+            props.mode === "add"
+        ) {
             // 只有在新增模式且沒有預覽圖時才清空
             form.cover = "";
-        } else if (newValue && newValue.startsWith("temp_") && coverUpload.tempId.value) {
+        } else if (
+            newValue &&
+            newValue.startsWith("temp_") &&
+            coverUpload.tempId.value
+        ) {
             // 如果是臨時 ID，確保 form.cover 也是臨時 ID
             form.cover = newValue;
         }
@@ -257,12 +271,14 @@ watch(
     (newValue) => {
         // 從外部更新 form.cover 時，同步到 coverUpload（避免循環更新）
         // 只有在沒有預覽圖時才同步，避免覆蓋新上傳的圖片
-        if (newValue !== coverUpload.formValue.value && !coverUpload.preview.value) {
+        if (
+            newValue !== coverUpload.formValue.value &&
+            !coverUpload.preview.value
+        ) {
             coverUpload.formValue.value = newValue;
         }
     }
 );
-
 
 // 綁定輪播圖表單數據
 // 當出現預覽圖時，使用臨時 ID 更新 form.slide
@@ -292,8 +308,12 @@ watch(
         } else {
             // 沒有預覽圖時，只有在新增模式下才清空，編輯模式下保持原值
             if (props.mode === "add") {
-                if (slideUpload.formValue.value.length === 0 || 
-                    slideUpload.formValue.value.every((v: string) => v.startsWith("temp_"))) {
+                if (
+                    slideUpload.formValue.value.length === 0 ||
+                    slideUpload.formValue.value.every((v: string) =>
+                        v.startsWith("temp_")
+                    )
+                ) {
                     form.slide = [];
                 }
             }
@@ -309,7 +329,10 @@ watch(
         if (newValue.length > 0) {
             // 使用 formValue（可能包含臨時 ID 或正式 URL）
             form.slide = [...newValue];
-        } else if (slideUpload.previews.value.length === 0 && props.mode === "add") {
+        } else if (
+            slideUpload.previews.value.length === 0 &&
+            props.mode === "add"
+        ) {
             // 只有在新增模式且沒有預覽圖時才清空
             form.slide = [];
         }
@@ -323,7 +346,7 @@ watch(
         // 只有在沒有預覽圖時才同步，避免覆蓋新上傳的圖片
         if (
             JSON.stringify(newValue) !==
-            JSON.stringify(slideUpload.formValue.value) &&
+                JSON.stringify(slideUpload.formValue.value) &&
             slideUpload.previews.value.length === 0
         ) {
             slideUpload.formValue.value = [...(newValue || [])];
@@ -386,56 +409,62 @@ defineExpose({
                     <template #header>
                         <h3 class="text-lg font-semibold">編輯</h3>
                     </template>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="flex flex-col gap-4">
+                            <UFormField
+                                label="標題"
+                                name="title"
+                                :error="errors.title"
+                                required>
+                                <UInput
+                                    v-model="form.title"
+                                    placeholder="請輸入標題"
+                                    size="lg"
+                                    :disabled="formLoading"
+                                    class="w-full"
+                                    @input="clearError('title')" />
+                            </UFormField>
 
-                    <FormStatusField
-                        v-model="form.status"
-                        label="狀態"
-                        name="status"
-                        :error="errors.status"
-                        :disabled="formLoading" />
+                            <UFormField
+                                label="日期"
+                                name="show_date"
+                                :error="errors.show_date"
+                                required>
+                                <UPopover
+                                    :content="{
+                                        side: 'bottom',
+                                        align: 'start'
+                                    }">
+                                    <UButton
+                                        color="neutral"
+                                        variant="outline"
+                                        icon="i-lucide-calendar"
+                                        class="w-full">
+                                        {{ dateText }}
+                                    </UButton>
 
-                    <UFormField
-                        label="標題"
-                        name="title"
-                        :error="errors.title"
-                        required>
-                        <UInput
-                            v-model="form.title"
-                            placeholder="請輸入標題"
-                            size="lg"
-                            :disabled="formLoading"
-                            class="w-full"
-                            @input="clearError('title')" />
-                    </UFormField>
-
-                    <UFormField
-                        label="日期"
-                        name="show_date"
-                        :error="errors.show_date"
-                        required>
-                        <UPopover
-                            :content="{
-                                side: 'bottom',
-                                align: 'start'
-                            }">
-                            <UButton
-                                color="neutral"
-                                variant="outline"
-                                icon="i-lucide-calendar"
-                                class="w-full">
-                                {{ dateText }}
-                            </UButton>
-
-                            <template #content>
-                                <UCalendar
-                                    v-model="dateValue"
-                                    class="p-2"
-                                    locale="zh-TW"
-                                    :ui="{ cell: 'cursor-pointer' }"
-                                    @update:model-value="handleDateUpdate" />
-                            </template>
-                        </UPopover>
-                    </UFormField>
+                                    <template #content>
+                                        <UCalendar
+                                            v-model="dateValue"
+                                            class="p-2"
+                                            locale="zh-TW"
+                                            :ui="{ cell: 'cursor-pointer' }"
+                                            @update:model-value="
+                                                handleDateUpdate
+                                            " />
+                                    </template>
+                                </UPopover>
+                            </UFormField>
+                        </div>
+                        <UCard :ui="{ body: 'space-y-4' }">
+                            <FormStatusField
+                                v-model="form.status"
+                                label="狀態"
+                                name="status"
+                                :error="errors.status"
+                                :disabled="formLoading" />
+                        </UCard>
+                    </div>
 
                     <UFormField
                         label="代表圖檔"
@@ -453,7 +482,11 @@ defineExpose({
                                 v-if="coverUpload.preview.value || form.cover"
                                 class="relative w-full max-w-lg">
                                 <img
-                                    :src="coverUpload.preview.value || form.cover || ''"
+                                    :src="
+                                        coverUpload.preview.value ||
+                                        form.cover ||
+                                        ''
+                                    "
                                     alt="封面圖預覽"
                                     class="w-full max-w-lg object-cover rounded-lg border"
                                     style="max-height: 300px" />
@@ -476,7 +509,9 @@ defineExpose({
                                 variant="outline"
                                 block
                                 :loading="coverUpload.isUploading.value"
-                                :disabled="coverUpload.isUploading.value || formLoading"
+                                :disabled="
+                                    coverUpload.isUploading.value || formLoading
+                                "
                                 @click="coverUpload.triggerFileSelect" />
                         </div>
                     </UFormField>
@@ -499,14 +534,21 @@ defineExpose({
                                 :ref="slideUpload.sortableListRef"
                                 class="grid grid-cols-5 gap-2">
                                 <div
-                                    v-for="(imageId, index) in slideUpload.sortableData.value"
+                                    v-for="(imageId, index) in slideUpload
+                                        .sortableData.value"
                                     :key="imageId"
                                     :data-image-id="imageId"
                                     class="relative group">
                                     <img
-                                        :src="(slideUpload.previews.value && slideUpload.previews.value[index]) || ''"
+                                        :src="
+                                            (slideUpload.previews.value &&
+                                                slideUpload.previews.value[
+                                                    index
+                                                ]) ||
+                                            ''
+                                        "
                                         :alt="`輪播圖 ${index + 1}`"
-                                        class="w-full object-cover rounded-lg border aspect-square"/>
+                                        class="w-full object-cover rounded-lg border aspect-square" />
                                     <!-- 拖動把手 -->
                                     <div
                                         class="drag-handle absolute top-2 left-2 cursor-grab active:cursor-grabbing bg-black/50 hover:bg-black/70 rounded p-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -531,7 +573,9 @@ defineExpose({
                                 variant="outline"
                                 block
                                 :loading="slideUpload.isUploading.value"
-                                :disabled="slideUpload.isUploading.value || formLoading"
+                                :disabled="
+                                    slideUpload.isUploading.value || formLoading
+                                "
                                 @click="slideUpload.triggerFileSelect" />
                         </div>
                     </UFormField>
@@ -593,9 +637,7 @@ defineExpose({
                         :loading="formLoading"
                         :disabled="formLoading"
                         @click="handleSubmit()"
-                        :label="
-                            mode === 'add' ? '新增' : '更新'
-                        " />
+                        :label="mode === 'add' ? '新增' : '更新'" />
                 </div>
             </section>
         </UForm>

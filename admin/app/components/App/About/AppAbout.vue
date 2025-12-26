@@ -162,13 +162,13 @@ defineExpose({
                 :description="submitError"
                 class="mb-4" />
             <template v-if="cutSections.length == 0">
-                <AppAboutCutSection
+                <AppCutSection
                     index="1"
                     @update="updateSection"
                     @delete="deleteSection" />
             </template>
             <template v-else>
-                <AppAboutCutSection
+                <AppCutSection
                     v-for="section in cutSections"
                     :key="section.id"
                     :index="section.index"

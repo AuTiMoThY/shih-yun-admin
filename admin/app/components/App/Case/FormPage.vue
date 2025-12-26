@@ -2,6 +2,7 @@
 import type { CutSectionData } from "~/types/CutSectionField";
 
 const router = useRouter();
+const toast = useToast();
 const props = withDefaults(
     defineProps<{
         mode: "add" | "edit";
@@ -30,24 +31,20 @@ const {
     loadCaseData,
     resetForm,
     addCase,
-    editCase
+    editCase,
 } = useAppCase();
 
 const { resolvePath } = useStructureResolver();
-const getBasePath = (path: string): string => {
-    const editMatch = path.match(/^(.+)\/edit\/\d+$/);
-    if (editMatch && editMatch[1]) {
-        return editMatch[1];
-    }
-    return path.replace("/add", "");
-};
-const pathInfo = resolvePath(getBasePath(router.currentRoute.value.path));
+const { getBasePath } = useBasePath();
+const basePath = getBasePath(router.currentRoute.value.path);
+const pathInfo = resolvePath(basePath);
 
 // 圖片上傳
 const coverUpload = useImageUploadSingle();
 const slideUpload = useImageUploadMultiple({
     enableSortable: true
 });
+const popImgUpload = useImageUploadSingle();
 
 // 內容區塊（沿用 About 模組的切卡）
 const sections = computed<CutSectionData[]>(
@@ -124,8 +121,8 @@ const loadInitialData = async (data: any) => {
         form.ca_phone = data.ca_phone ?? "";
         form.ca_adds = data.ca_adds ?? "";
         form.ca_map = data.ca_map ?? "";
-        form.ca_pop_type = data.ca_pop_type ?? "";
-        form.ca_pop_img = data.ca_pop_img ?? "";
+        form.ca_pop_type = data.ca_pop_type ?? 0;
+        form.ca_pop = data.ca_pop ?? "";
         form.is_sale = data.is_sale ?? 0;
         form.is_msg = data.is_msg ?? 0;
         form.sort = data.sort ?? 0;
@@ -134,6 +131,81 @@ const loadInitialData = async (data: any) => {
     // 載入圖片預設值
     coverUpload.loadInitialValue(form.cover || null);
     slideUpload.loadInitialValue(Array.isArray(form.slide) ? form.slide : []);
+    // 載入彈窗圖片預設值（僅當類型為圖片時）
+    if (form.ca_pop_type === 1 && form.ca_pop) {
+        popImgUpload.loadInitialValue(form.ca_pop);
+    }
+};
+// 提交
+const handleSubmit = async (event?: Event) => {
+    console.log(pathInfo.structure?.url);
+
+    if (event) event.preventDefault();
+    // 先處理封面
+    if (form.cover && form.cover.startsWith("temp_")) {
+        const uploaded = await coverUpload.upload();
+        if (!uploaded) return;
+        if (
+            coverUpload.formValue.value &&
+            !coverUpload.formValue.value.startsWith("temp_")
+        ) {
+            form.cover = coverUpload.formValue.value;
+        }
+    }
+    // 處理輪播
+    if (form.slide.some((s: string) => s && s.startsWith("temp_"))) {
+        const uploaded = await slideUpload.upload();
+        if (!uploaded) return;
+        if (slideUpload.formValue.value?.length) {
+            form.slide = slideUpload.formValue.value.filter(
+                (url: string) => url && !url.startsWith("temp_")
+            );
+        }
+    } else if (slideUpload.formValue.value?.length) {
+        form.slide = slideUpload.formValue.value;
+    }
+    // 處理彈窗圖片（僅當類型為圖片時）
+    if (
+        form.ca_pop_type === 1 &&
+        form.ca_pop &&
+        form.ca_pop.startsWith("temp_")
+    ) {
+        const uploaded = await popImgUpload.upload();
+        if (!uploaded) return;
+        if (
+            popImgUpload.formValue.value &&
+            !popImgUpload.formValue.value.startsWith("temp_")
+        ) {
+            form.ca_pop = popImgUpload.formValue.value;
+        }
+    } else if (
+        form.ca_pop_type === 1 &&
+        popImgUpload.formValue.value &&
+        !popImgUpload.formValue.value.startsWith("temp_")
+    ) {
+        form.ca_pop = popImgUpload.formValue.value;
+    }
+
+    let success = false;
+    if (props.mode === "edit") {
+        const caseId = props.initialData?.id;
+        if (!caseId) {
+            submitError.value = "缺少建案 ID";
+            return;
+        }
+        success = await editCase(caseId);
+    } else {
+        success = await addCase(props.structureId ?? null);
+        if (success) {
+            const targetPath = basePath || `/case`;
+            setTimeout(() => {
+                router.push(targetPath);
+            }, 1000);
+        }
+    }
+    if (success) {
+        emit("submit", form);
+    }
 };
 
 // 監聽 initialData
@@ -183,6 +255,57 @@ watch(
     { immediate: true }
 );
 
+// 綁定彈窗圖片
+watch(
+    () => popImgUpload.preview.value,
+    (preview) => {
+        if (preview && form.ca_pop_type === 1) {
+            form.ca_pop =
+                popImgUpload.formValue.value &&
+                !popImgUpload.formValue.value.startsWith("temp_")
+                    ? popImgUpload.formValue.value
+                    : popImgUpload.tempId.value ||
+                      popImgUpload.formValue.value ||
+                      form.ca_pop;
+        } else if (props.mode === "add" || form.ca_pop_type !== 1) {
+            form.ca_pop = "";
+        }
+    },
+    { immediate: true }
+);
+watch(
+    () => popImgUpload.formValue.value,
+    (newValue) => {
+        if (
+            newValue &&
+            !newValue.startsWith("temp_") &&
+            form.ca_pop_type === 1
+        ) {
+            form.ca_pop = newValue;
+        }
+    }
+);
+
+// 監聽彈窗類型變化，切換時清空內容
+watch(
+    () => form.ca_pop_type,
+    (newType, oldType) => {
+        if (newType !== oldType) {
+            if (newType === 0) {
+                // 不顯示時清空
+                form.ca_pop = "";
+                popImgUpload.remove();
+            } else if (newType === 2) {
+                // 切換到影片時清空圖片
+                popImgUpload.remove();
+            } else if (newType === 1 && oldType === 2) {
+                // 從影片切換到圖片時清空連結
+                form.ca_pop = "";
+            }
+        }
+    }
+);
+
 // 啟用排序
 watch(
     () => ({
@@ -197,54 +320,10 @@ watch(
     { immediate: true }
 );
 
-// 提交
-const handleSubmit = async (event?: Event) => {
-    if (event) event.preventDefault();
-    // 先處理封面
-    if (form.cover && form.cover.startsWith("temp_")) {
-        const uploaded = await coverUpload.upload();
-        if (!uploaded) return;
-        if (
-            coverUpload.formValue.value &&
-            !coverUpload.formValue.value.startsWith("temp_")
-        ) {
-            form.cover = coverUpload.formValue.value;
-        }
-    }
-    // 處理輪播
-    if (form.slide.some((s: string) => s && s.startsWith("temp_"))) {
-        const uploaded = await slideUpload.upload();
-        if (!uploaded) return;
-        if (slideUpload.formValue.value?.length) {
-            form.slide = slideUpload.formValue.value.filter(
-                (url: string) => url && !url.startsWith("temp_")
-            );
-        }
-    } else if (slideUpload.formValue.value?.length) {
-        form.slide = slideUpload.formValue.value;
-    }
 
-    let success = false;
-    if (props.mode === "edit") {
-        const caseId = props.initialData?.id;
-        if (!caseId) {
-            submitError.value = "缺少建案 ID";
-            return;
-        }
-        success = await editCase(caseId);
-    } else {
-        success = await addCase(props.structureId ?? null);
-        if (success) {
-            const targetPath = pathInfo.structure?.url || `/case`;
-            setTimeout(() => {
-                router.push(targetPath);
-            }, 600);
-        }
-    }
-    if (success) {
-        emit("submit", form);
-    }
-};
+onMounted(() => {
+    console.log(form);
+});
 
 defineExpose({
     loading: formLoading,
@@ -262,28 +341,23 @@ defineExpose({
                     <template #header>
                         <div class="flex items-center justify-between">
                             <h3 class="text-lg font-semibold">基本資訊</h3>
-                            <div class="flex items-center gap-2">
-                                <UBadge
-                                    color="primary"
-                                    variant="soft"
-                                    size="xs"
-                                    label="建案" />
-                            </div>
                         </div>
                     </template>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="flex flex-col gap-4">
-                            <UFormField label="年份" name="year">
+                            <UFormField label="年份" name="year" :error="errors.year" required>
                                 <UInput
                                     v-model="form.year"
                                     type="number"
                                     placeholder="例如 2025"
-                                    :ui="{ root: 'w-full' }" />
+                                    :ui="{ root: 'w-full' }"
+                                    @update:model-value="clearError('year')" />
                             </UFormField>
                             <UFormField
                                 label="標題"
                                 name="title"
-                                :error="errors.title">
+                                :error="errors.title"
+                                required>
                                 <UInput
                                     v-model="form.title"
                                     placeholder="請輸入標題"
@@ -299,10 +373,12 @@ defineExpose({
                             <UFormField
                                 label="封面圖"
                                 name="cover"
-                                :error="errors.cover">
+                                description="建議尺寸：1920x1080"
+                                :error="errors.cover"
+                                :ui="{ description: 'text-sm text-primary-500' }">
                                 <div class="space-y-2">
                                     <input
-                                        ref="coverUpload.inputRef"
+                                        :ref="coverUpload.inputRef"
                                         type="file"
                                         accept="image/*"
                                         class="hidden"
@@ -353,15 +429,15 @@ defineExpose({
                                         @click="
                                             coverUpload.triggerFileSelect
                                         " />
-                                    <div
-                                        v-if="errors.cover"
-                                        class="text-sm text-red-500">
-                                        {{ errors.cover }}
-                                    </div>
                                 </div>
                             </UFormField>
                         </div>
                         <UCard :ui="{ body: 'space-y-4' }">
+                            <FormStatusField
+                                v-model="form.status"
+                                label="狀態"
+                                name="status"
+                                :disabled="formLoading" />
                             <UFormField label="排序" name="sort">
                                 <UInput v-model="form.sort" type="number" />
                             </UFormField>
@@ -377,12 +453,6 @@ defineExpose({
                                 :model-value="form.is_msg === 1"
                                 @update:model-value="(val: boolean) => (form.is_msg = val ? 1 : 0)"
                                 label="是否預約賞屋" />
-                            <USwitch
-                                unchecked-icon="i-lucide-x"
-                                checked-icon="i-lucide-check"
-                                :model-value="form.status === 1"
-                                @update:model-value="(val: boolean) => (form.status = val ? 1 : 0)"
-                                label="是否上線" />
                         </UCard>
                     </div>
                 </UCard>
@@ -422,32 +492,89 @@ defineExpose({
                                 placeholder="請輸入接待會館"
                                 :ui="{ root: 'w-full' }" />
                         </UFormField>
-                        <UFormField label="建案嵌入地圖" name="ca_map">
+                        <UFormField label="google地圖" name="ca_map">
                             <UTextarea
                                 v-model="form.ca_map"
-                                placeholder="貼上地圖 iframe 或網址"
+                                placeholder="可至google地圖查詢地址並點選分享->嵌入地圖->複製HTML，將其程式碼貼上即可"
                                 :rows="3"
                                 autoresize
                                 :ui="{ root: 'w-full' }" />
                         </UFormField>
                         <UFormField label="彈窗類型" name="ca_pop_type">
-                            <UInput
+                            <USelect
                                 v-model="form.ca_pop_type"
-                                placeholder="輸入彈窗類型"
-                                :ui="{ root: 'w-full' }" />
+                                :items="[
+                                    { label: '不顯示', value: 0 },
+                                    { label: '圖片', value: 1 },
+                                    { label: '影片', value: 2 }
+                                ]" />
                         </UFormField>
-                        <UFormField label="彈窗圖片" name="ca_pop_img">
+                        <UFormField
+                            v-if="form.ca_pop_type === 1"
+                            label="彈窗圖片"
+                            name="ca_pop">
+                            <div class="space-y-2">
+                                <input
+                                    :ref="popImgUpload.inputRef"
+                                    type="file"
+                                    accept="image/*"
+                                    class="hidden"
+                                    @change="popImgUpload.handleFileSelect" />
+                                <div
+                                    v-if="
+                                        popImgUpload.preview.value ||
+                                        form.ca_pop
+                                    "
+                                    class="relative w-full max-w-lg">
+                                    <img
+                                        :src="
+                                            popImgUpload.preview.value ||
+                                            form.ca_pop
+                                        "
+                                        alt="彈窗圖片預覽"
+                                        class="w-full max-w-lg object-cover rounded-lg border" />
+                                    <UButton
+                                        icon="i-lucide-x"
+                                        size="xs"
+                                        color="error"
+                                        variant="solid"
+                                        class="absolute top-2 right-2"
+                                        @click="
+                                            () => {
+                                                popImgUpload.remove();
+                                                form.ca_pop = '';
+                                            }
+                                        " />
+                                </div>
+                                <UButton
+                                    :label="
+                                        popImgUpload.preview.value ||
+                                        form.ca_pop
+                                            ? '更換圖片'
+                                            : '上傳圖片'
+                                    "
+                                    icon="i-lucide-upload"
+                                    color="primary"
+                                    variant="outline"
+                                    block
+                                    :loading="popImgUpload.isUploading.value"
+                                    :disabled="popImgUpload.isUploading.value"
+                                    @click="popImgUpload.triggerFileSelect" />
+                            </div>
+                        </UFormField>
+                        <UFormField
+                            v-if="form.ca_pop_type === 2"
+                            label="彈窗影片連結"
+                            name="ca_pop">
                             <UInput
-                                v-model="form.ca_pop_img"
-                                placeholder="圖片 URL"
+                                v-model="form.ca_pop"
+                                placeholder="請輸入影片連結 URL"
                                 :ui="{ root: 'w-full' }" />
                         </UFormField>
-
                     </div>
                     <UFormField
                         label="輪播圖"
-                        name="slide"
-                        :error="errors.slide">
+                        name="slide">
                         <div class="space-y-2">
                             <input
                                 :ref="slideUpload.inputRef"
@@ -457,10 +584,7 @@ defineExpose({
                                 multiple
                                 @change="slideUpload.handleFileSelect" />
                             <div
-                                v-if="
-                                    slideUpload.sortableData.value.length >
-                                    0
-                                "
+                                v-if="slideUpload.sortableData.value.length > 0"
                                 :ref="slideUpload.sortableListRef"
                                 class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
                                 <div
@@ -491,9 +615,7 @@ defineExpose({
                                         color="error"
                                         variant="solid"
                                         class="absolute top-2 right-2"
-                                        @click="
-                                            slideUpload.remove(index)
-                                        " />
+                                        @click="slideUpload.remove(index)" />
                                 </div>
                             </div>
                             <UButton
@@ -505,11 +627,6 @@ defineExpose({
                                 :loading="slideUpload.isUploading.value"
                                 :disabled="slideUpload.isUploading.value"
                                 @click="slideUpload.triggerFileSelect" />
-                            <div
-                                v-if="errors.slide"
-                                class="text-sm text-red-500">
-                                {{ errors.slide }}
-                            </div>
                         </div>
                     </UFormField>
                 </UCard>
@@ -536,7 +653,7 @@ defineExpose({
                             </div>
                         </template>
                         <template v-else>
-                            <AppAboutCutSection
+                            <AppCutSection
                                 v-for="section in sections"
                                 :key="section.id"
                                 :index="section.index"
