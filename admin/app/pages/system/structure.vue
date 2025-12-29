@@ -22,14 +22,15 @@ const deleteTarget = ref<{ id: string; label: string } | null>(null);
 const currentParentLevel = ref<any>(null);
 const currentEditLevel = ref<any>(null);
 const isExpanded = ref(true);
+const rootLevels = computed(() => (data.value || []).filter(Boolean));
 
 const handleModalSuccess = async () => {
     await fetchData();
+    // 注意：側邊欄選單會由 composable 自動更新（在 addLevel/updateLevel 成功後）
     await nextTick();
     setupRootSortable();
 };
 
-const rootLevels = computed(() => (data.value || []).filter(Boolean));
 
 const handleDelete = (level: any) => {
     console.log("handleDelete", level);
@@ -43,6 +44,7 @@ const confirmDelete = async () => {
     await deleteLevel(deleteTarget.value, {
         onSuccess: async () => {
             await fetchData();
+            // 注意：側邊欄選單會由 composable 自動更新（在 deleteLevel 成功後）
             await nextTick();
             setupRootSortable();
         }
@@ -130,6 +132,7 @@ const setupRootSortable = () => {
 
             data.value = [...newList];
             await updateSortOrder(data.value);
+            // 注意：側邊欄選單會由 composable 自動更新（在 updateSortOrder 成功後）
             console.log("onUpdate done", {
                 movedId: evt.item?.dataset?.levelId,
                 idsAfter: data.value.map((x) => x?.id)

@@ -52,6 +52,7 @@ $routes->get('/permission/get-by-id', 'PermissionController::getById');
 $routes->post('/permission/add', 'PermissionController::add');
 $routes->post('/permission/update', 'PermissionController::update');
 $routes->post('/permission/delete', 'PermissionController::delete');
+$routes->post('/permission/update-sort-order', 'PermissionController::updateSortOrder');
 
 // 公司基本資料相關路由
 $routes->get('/company-base/get', 'CompanyBaseController::get');

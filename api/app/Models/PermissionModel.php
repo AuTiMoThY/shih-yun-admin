@@ -15,6 +15,7 @@ class PermissionModel extends Model
         'category',
         'action',
         'status',
+        'sort_order',
     ];
     protected $useTimestamps = true;
     protected $createdField = 'created_at';
@@ -35,4 +36,34 @@ class PermissionModel extends Model
             'required' => '權限顯示名稱不能為空',
         ],
     ];
+
+    /**
+     * 更新排序順序
+     * @param array $list 排序順序列表
+     * @return bool
+     */
+    public function updateSortOrder($list)
+    {
+        if (empty($list) || !is_array($list)) {
+            throw new \InvalidArgumentException('updateBatch() has no data.');
+        }
+
+        // 確保每個項目都有 id 和 sort_order
+        $validList = [];
+        foreach ($list as $item) {
+            if (isset($item['id']) && isset($item['sort_order'])) {
+                $validList[] = [
+                    'id' => (int) $item['id'],
+                    'sort_order' => (int) $item['sort_order'],
+                ];
+            }
+        }
+
+        if (empty($validList)) {
+            throw new \InvalidArgumentException('updateBatch() has no data.');
+        }
+
+        $this->updateBatch($validList, 'id');
+        return true;
+    }
 }

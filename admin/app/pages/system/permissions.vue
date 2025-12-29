@@ -2,13 +2,13 @@
 definePageMeta({
     middleware: "auth"
 });
-import type { TableColumn } from "@nuxt/ui";
+import { useSortable } from "@vueuse/integrations/useSortable";
 import { STATUS_LABEL_MAP } from "~/constants/system/status";
 import { STATUS_ICON_MAP } from "~/constants/system/status_icon";
 
 const UButton = resolveComponent("UButton");
 const UIcon = resolveComponent("UIcon");
-const { data, loading, fetchData, deletePermission } = usePermissionData();
+const { data, loading, fetchData, deletePermission, updateSortOrder } = usePermissionData();
 const { data: moduleData, fetchData: fetchModules } = useModule();
 const addPermissionModalOpen = ref(false);
 const editPermissionModalOpen = ref(false);
@@ -16,59 +16,8 @@ const editData = ref<any>(null);
 const selectedModuleId = ref<number | null>(null);
 const deleteConfirmModalOpen = ref(false);
 const deleteTarget = ref<{ id: number | string; label: string } | null>(null);
-const columns: TableColumn<any>[] = [
-    { accessorKey: "label", header: "權限名稱" },
-    { accessorKey: "name", header: "權限代碼" },
-    {
-        accessorKey: "module_id",
-        header: "模組",
-        cell: ({ row }) => {
-            const moduleId = row.original.module_id;
-            if (!moduleId) return "-";
-            const module = moduleData.value.find((m: any) => m.id === moduleId);
-            return module ? module.label : "-";
-        }
-    },
-    {
-        accessorKey: "status",
-        header: "狀態",
-        cell: ({ row }) => {
-            const status = String(row.original.status);
-            const label = STATUS_LABEL_MAP[status] ?? status;
-            const icon = STATUS_ICON_MAP[status] ?? "i-lucide-help-circle";
-
-            return h("div", { class: "flex items-center gap-2" }, [
-                h(UIcon, {
-                    name: icon,
-                    class: status === "1" ? "text-emerald-500" : "text-rose-500"
-                }),
-                h("span", label)
-            ]);
-        }
-    },
-    {
-        header: "操作",
-        cell: ({ row }) => {
-            return h("div", { class: "flex items-center gap-2" }, [
-                h(UButton, {
-                    icon: "i-lucide-edit",
-                    label: "編輯",
-                    color: "primary",
-                    size: "xs",
-                    onClick: () => editPermission(row.original)
-                }),
-                h(UButton, {
-                    icon: "i-lucide-trash",
-                    label: "刪除",
-                    color: "error",
-                    variant: "ghost",
-                    size: "xs",
-                    onClick: () => handleDelete(row.original)
-                })
-            ]);
-        }
-    }
-];
+const tableBodyRef = ref<HTMLElement | null>(null);
+let sortableStop: (() => void) | null = null;
 
 const addPermission = () => {
     addPermissionModalOpen.value = true;
@@ -89,20 +38,102 @@ const handleDelete = async (data: any) => {
 
 const confirmDelete = async () => {
     await deletePermission(deleteTarget.value?.id as number, {
-        onSuccess: () => fetchData()
+        onSuccess: async () => {
+            await fetchData(selectedModuleId.value ?? undefined);
+            await nextTick();
+            setupSortable();
+        }
     });
     deleteConfirmModalOpen.value = false;
     deleteTarget.value = null;
 };
 
-const handleModuleFilter = () => {
+const handleModuleFilter = async () => {
     const moduleId = selectedModuleId.value;
-    fetchData(moduleId ?? undefined);
+    await fetchData(moduleId ?? undefined);
+    await nextTick();
+    setupSortable();
 };
+
+const setupSortable = () => {
+    // 清理舊的實例
+    if (sortableStop) {
+        sortableStop();
+        sortableStop = null;
+    }
+
+    if (!tableBodyRef.value) {
+        return;
+    }
+
+    const { stop } = useSortable(tableBodyRef, data, {
+        handle: ".drag-handle",
+        animation: 150,
+        draggable: "tr",
+        fallbackOnBody: true,
+        swapThreshold: 0.65,
+        onUpdate: async (evt: any) => {
+            console.log("onUpdate", evt);
+            const list = data.value || [];
+            const rows = (Array.from(
+                tableBodyRef.value?.querySelectorAll("tr[data-permission-id]") ?? []
+            ) || []) as HTMLElement[];
+            const idsAfterDom = rows
+                .map((r) => r.dataset.permissionId)
+                .filter(Boolean);
+            console.log("onUpdate start", {
+                oldIndex: evt.oldIndex,
+                newIndex: evt.newIndex,
+                listLength: list.length,
+                idsBefore: list.map((x) => x?.id),
+                idsAfterDom
+            });
+
+            // 根據 DOM 順序重建資料
+            const map = new Map(
+                list
+                    .filter((x) => x && x.id !== undefined)
+                    .map((x) => [String(x.id), x])
+            );
+            const newList = idsAfterDom
+                .map((id) => map.get(String(id)))
+                .filter(Boolean);
+
+            if (!newList.length || newList.length !== map.size) {
+                console.warn("[permission-sort] reorder mismatch, refetch", {
+                    idsAfterDom,
+                    listIds: list.map((x) => x?.id)
+                });
+                await fetchData(selectedModuleId.value ?? undefined);
+                await nextTick();
+                setupSortable();
+                return;
+            }
+
+            data.value = [...newList];
+            await updateSortOrder(data.value);
+            console.log("onUpdate done", {
+                movedId: evt.item?.dataset?.permissionId,
+                idsAfter: data.value.map((x) => x?.id)
+            });
+        }
+    });
+    sortableStop = stop;
+};
+
+// 組件卸載時清理
+onUnmounted(() => {
+    if (sortableStop) {
+        sortableStop();
+        sortableStop = null;
+    }
+});
 
 onMounted(async () => {
     await fetchModules();
     await fetchData();
+    await nextTick();
+    setupSortable();
 });
 </script>
 <template>
@@ -126,7 +157,7 @@ onMounted(async () => {
                 <template #left>
                     <USelect
                         v-model="selectedModuleId"
-                        :options="[
+                        :items="[
                             { label: '全部模組', value: null },
                             ...moduleData.map((m: any) => ({ label: m.label, value: m.id }))
                         ]"
@@ -137,7 +168,113 @@ onMounted(async () => {
             </UDashboardToolbar>
         </template>
         <template #body>
-            <DataTable :data="data" :columns="columns" :loading="loading" />
+            <div v-if="loading" class="flex items-center justify-center py-12">
+                <UIcon name="i-lucide-loader-2" class="w-6 h-6 animate-spin" />
+            </div>
+            <div v-else class="overflow-x-auto">
+                <table
+                    class="w-full table-fixed border-separate border-spacing-0 text-sm">
+                    <thead>
+                        <tr class="bg-elevated/50">
+                            <th
+                                class="w-[40px] py-2 px-4 text-left first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r">
+                            </th>
+                            <th
+                                class="py-2 px-4 text-left first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r">
+                                權限名稱
+                            </th>
+                            <th
+                                class="py-2 px-4 text-left first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r">
+                                權限代碼
+                            </th>
+                            <th
+                                class="py-2 px-4 text-left first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r">
+                                模組
+                            </th>
+                            <th
+                                class="py-2 px-4 text-left first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r">
+                                狀態
+                            </th>
+                            <th
+                                class="py-2 px-4 text-left first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r">
+                                操作
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody ref="tableBodyRef">
+                        <template v-for="(item, idx) in data" :key="item?.id ?? `permission-${idx}`">
+                            <tr
+                                v-if="item"
+                                :data-permission-id="item.id"
+                                class="hover:bg-elevated/30">
+                                <td class="py-2 px-4 border-b border-default">
+                                    <UIcon
+                                        name="i-lucide-grip-vertical"
+                                        class="w-4 h-4 cursor-grab text-gray-400 hover:text-gray-600 drag-handle" />
+                                </td>
+                                <td class="py-2 px-4 border-b border-default">
+                                    {{ item.label }}
+                                </td>
+                                <td class="py-2 px-4 border-b border-default">
+                                    {{ item.name }}
+                                </td>
+                                <td class="py-2 px-4 border-b border-default">
+                                    <template v-if="item.module_id">
+                                        {{
+                                            moduleData.find(
+                                                (m: any) => m.id === item.module_id
+                                            )?.label ?? "-"
+                                        }}
+                                    </template>
+                                    <template v-else>-</template>
+                                </td>
+                                <td class="py-2 px-4 border-b border-default">
+                                    <div class="flex items-center gap-2">
+                                        <UIcon
+                                            :name="
+                                                STATUS_ICON_MAP[String(item.status)] ??
+                                                'i-lucide-help-circle'
+                                            "
+                                            :class="
+                                                Number(item.status) === 1
+                                                    ? 'text-emerald-500'
+                                                    : 'text-rose-500'
+                                            " />
+                                        <span>
+                                            {{
+                                                STATUS_LABEL_MAP[String(item.status)] ??
+                                                item.status
+                                            }}
+                                        </span>
+                                    </div>
+                                </td>
+                                <td class="py-2 px-4 border-b border-default">
+                                    <div class="flex items-center gap-2">
+                                        <UButton
+                                            icon="i-lucide-edit"
+                                            label="編輯"
+                                            color="primary"
+                                            size="xs"
+                                            @click="editPermission(item)" />
+                                        <UButton
+                                            icon="i-lucide-trash"
+                                            label="刪除"
+                                            color="error"
+                                            variant="ghost"
+                                            size="xs"
+                                            @click="handleDelete(item)" />
+                                    </div>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+                <div
+                    v-if="!loading && data.length === 0"
+                    class="flex items-center justify-center py-12 text-gray-500">
+                    暫無資料
+                </div>
+            </div>
         </template>
         <template #footer>
             <PageFooter />
@@ -147,9 +284,11 @@ onMounted(async () => {
         v-model:open="addPermissionModalOpen"
         mode="add"
         @added="
-            () => {
+            async () => {
                 const moduleId = selectedModuleId;
-                fetchData(moduleId ?? undefined);
+                await fetchData(moduleId ?? undefined);
+                await nextTick();
+                setupSortable();
             }
         " />
     <PermissionFrmModal
@@ -157,9 +296,11 @@ onMounted(async () => {
         mode="edit"
         :data="editData"
         @updated="
-            () => {
+            async () => {
                 const moduleId = selectedModuleId;
-                fetchData(moduleId ?? undefined);
+                await fetchData(moduleId ?? undefined);
+                await nextTick();
+                setupSortable();
             }
         " />
     <DeleteConfirmModal

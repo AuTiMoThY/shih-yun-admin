@@ -126,7 +126,7 @@ class RoleController extends BaseController
                 'name' => trim($data['name']),
                 'label' => trim($data['label']),
                 'description' => $data['description'] ?? null,
-                'status' => isset($data['status']) ? (int)$data['status'] : 1,
+                'status' => isset($data['status']) ? (int) $data['status'] : 1,
             ];
 
             $insertId = $this->roleModel->insert($insertData);
@@ -237,30 +237,10 @@ class RoleController extends BaseController
                 }
             }
             if (isset($data['status'])) {
-                $newStatus = (int)$data['status'];
-                if ((int)($role['status'] ?? 1) !== $newStatus) {
+                $newStatus = (int) $data['status'];
+                if ((int) ($role['status'] ?? 1) !== $newStatus) {
                     $updateData['status'] = $newStatus;
                 }
-            }
-
-            if (empty($updateData)) {
-                return $this->response->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST)->setJSON([
-                    'success' => false,
-                    'message' => '沒有需要更新的資料',
-                ]);
-            }
-
-            // 跳過 Model 驗證，因為我們已經在 Controller 中手動驗證了
-            $updated = $this->roleModel->skipValidation(true)->update($id, $updateData);
-            if (!$updated) {
-                $error = $this->roleModel->errors();
-                $response = [
-                    'success' => false,
-                    'message' => '更新角色失敗，請稍後再試',
-                    'error' => 'Model update failed',
-                    'model_errors' => $error,
-                ];
-                return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON($response);
             }
 
             // 更新權限關聯
@@ -268,14 +248,14 @@ class RoleController extends BaseController
                 try {
                     // 刪除舊的關聯
                     $this->rolePermissionModel->where('role_id', $id)->delete();
-                    
+
                     // 建立新的關聯
                     foreach ($data['permission_ids'] as $permissionId) {
                         // 確保 permission_id 是整數
-                        $permissionId = (int)$permissionId;
+                        $permissionId = (int) $permissionId;
                         if ($permissionId > 0) {
                             $this->rolePermissionModel->insert([
-                                'role_id' => (int)$id,
+                                'role_id' => (int) $id,
                                 'permission_id' => $permissionId,
                             ]);
                         }
@@ -285,6 +265,24 @@ class RoleController extends BaseController
                     throw $e;
                 }
             }
+
+            // 如果有欄位需要更新，才執行 Model 的 update
+            if (!empty($updateData)) {
+                // 跳過 Model 驗證，因為我們已經在 Controller 中手動驗證了
+                $updated = $this->roleModel->skipValidation(true)->update($id, $updateData);
+                if (!$updated) {
+                    $error = $this->roleModel->errors();
+                    $response = [
+                        'success' => false,
+                        'message' => '更新角色失敗，請稍後再試',
+                        'error' => 'Model update failed',
+                        'model_errors' => $error,
+                    ];
+                    return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON($response);
+                }
+            }
+
+
 
             return $this->response->setJSON([
                 'success' => true,

@@ -26,7 +26,8 @@ class PermissionController extends BaseController
     {
         try {
             $moduleId = $this->request->getGet('module_id');
-            $query = $this->permissionModel->orderBy('id', 'ASC');
+            $query = $this->permissionModel->orderBy('sort_order', 'ASC');
+            $query->orderBy('id', 'ASC');
             
             if ($moduleId) {
                 $query->where('module_id', $moduleId);
@@ -335,5 +336,55 @@ class PermissionController extends BaseController
             'success' => true,
             'message' => '刪除權限成功',
         ]);
+    }
+
+    /**
+     * 更新排序順序
+     */
+    public function updateSortOrder()
+    {
+        $data = $this->request->getJSON(true) ?: $this->request->getPost();
+
+        // 如果直接是數組，使用數組；否則從 list 鍵取得
+        $list = is_array($data) && isset($data[0]) ? $data : ($data['list'] ?? []);
+
+        if (empty($list) || !is_array($list)) {
+            return $this->response->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST)->setJSON([
+                'success' => false,
+                'message' => '缺少排序資料',
+            ]);
+        }
+
+        // 驗證資料格式
+        foreach ($list as $item) {
+            if (!isset($item['id']) || !isset($item['sort_order'])) {
+                return $this->response->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST)->setJSON([
+                    'success' => false,
+                    'message' => '排序資料格式錯誤，缺少 id 或 sort_order',
+                ]);
+            }
+        }
+
+        try {
+            $updated = $this->permissionModel->updateSortOrder($list);
+            if (!$updated) {
+                return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON([
+                    'success' => false,
+                    'message' => '更新排序順序失敗，請稍後再試',
+                ]);
+            }
+
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => '更新排序順序成功',
+            ]);
+        } catch (\Throwable $e) {
+            log_message('error', 'updateSortOrder failed: {message}', ['message' => $e->getMessage()]);
+            return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON([
+                'success' => false,
+                'message' => '更新排序順序失敗，請稍後再試',
+                'error' => ENVIRONMENT !== 'production' ? $e->getMessage() : null,
+            ]);
+        }
     }
 }

@@ -1,15 +1,17 @@
+import { defineStore } from "pinia";
 import type { Ref } from "vue";
 import type { LevelForm, LevelFormErrors } from "~/types/level";
-export const useStructure = () => {
-    const modalOpen = ref(false);
+
+export const useStructureStore = defineStore("structure", () => {
     const { public: runtimePublic } = useRuntimeConfig();
     const apiBase = runtimePublic.apiBase;
     const toast = useToast();
-    const data = useState<any[]>("structure-data", () => []);
-    // 側邊欄專用的資料（只包含啟用的項目）
-    const asideData = useState<any[]>("structure-aside-data", () => []);
 
-    const loading = useState("structure-loading", () => false);
+    // State
+    const data = ref<any[]>([]);
+    const asideData = ref<any[]>([]); // 側邊欄專用的資料（只包含啟用的項目）
+    const loading = ref(false);
+    const modalOpen = ref(false);
     const submitError = ref("");
 
     const form = reactive<LevelForm>({
@@ -26,46 +28,56 @@ export const useStructure = () => {
         status: false
     });
 
+    // Getters
+    const rootLevels = computed(() => (data.value || []).filter(Boolean));
+
+    // Actions
     const fetchData = async () => {
         loading.value = true;
-        const res = await $fetch<{
-            success: boolean;
-            data: any[];
-            message?: string;
-        }>(`${apiBase}/structure/get?tree=1`, {
-            method: "GET"
-        });
-        if (res?.success) {
-            data.value = (res.data || []).filter(Boolean);
-            // console.log("fetchData success", {
-            //     count: data.value.length,
-            //     ids: data.value.map((x) => x?.id),
-            //     data: data.value
-            // });
-        } else {
-            console.error(res.message);
-            toast.add({ title: res.message, color: "error" });
+        try {
+            const res = await $fetch<{
+                success: boolean;
+                data: any[];
+                message?: string;
+            }>(`${apiBase}/structure/get?tree=1`, {
+                method: "GET"
+            });
+            if (res?.success) {
+                data.value = (res.data || []).filter(Boolean);
+            } else {
+                console.error(res.message);
+                toast.add({ title: res.message, color: "error" });
+            }
+        } catch (error: any) {
+            console.error("fetchData error:", error);
+            toast.add({ title: error.message || "載入資料失敗", color: "error" });
+        } finally {
+            loading.value = false;
         }
-        loading.value = false;
     };
 
     const fetchDataForAside = async () => {
         loading.value = true;
-        const res = await $fetch<{
-            success: boolean;
-            data: any[];
-            message?: string;
-        }>(`${apiBase}/structure/get?tree=1&only_active=1`, {
-            method: "GET"
-        });
-        if (res?.success) {
-            // 使用獨立的 asideData，避免被管理頁面的 fetchData 覆蓋
-            asideData.value = (res.data || []).filter(Boolean);
-        } else {
-            console.error(res.message);
-            toast.add({ title: res.message, color: "error" });
+        try {
+            const res = await $fetch<{
+                success: boolean;
+                data: any[];
+                message?: string;
+            }>(`${apiBase}/structure/get?tree=1&only_active=1`, {
+                method: "GET"
+            });
+            if (res?.success) {
+                asideData.value = (res.data || []).filter(Boolean);
+            } else {
+                console.error(res.message);
+                toast.add({ title: res.message, color: "error" });
+            }
+        } catch (error: any) {
+            console.error("fetchDataForAside error:", error);
+            toast.add({ title: error.message || "載入資料失敗", color: "error" });
+        } finally {
+            loading.value = false;
         }
-        loading.value = false;
     };
 
     const updateSortOrder = async (list: any[]) => {
@@ -116,7 +128,6 @@ export const useStructure = () => {
 
     const validateForm = (): boolean => {
         submitError.value = "";
-        // 先清除所有錯誤
         Object.keys(errors).forEach((key) => {
             // @ts-ignore
             errors[key] = false;
@@ -124,7 +135,6 @@ export const useStructure = () => {
 
         let isValid = true;
 
-        // 驗證層級名稱
         if (!form.label || form.label.trim() === "") {
             errors.label = "請輸入層級名稱";
             isValid = false;
@@ -148,7 +158,6 @@ export const useStructure = () => {
 
     const normalizeModuleId = (val: LevelForm["module_id"]) => {
         if (val === null || val === undefined || val === "") return null;
-        // USelect 會回傳值本身或物件，統一取 value/id
         if (typeof val === "object") {
             // @ts-ignore
             return val.value ?? val.id ?? null;
@@ -371,21 +380,26 @@ export const useStructure = () => {
     };
 
     return {
+        // State
         data,
         asideData,
         loading,
+        modalOpen,
+        submitError,
+        form,
+        errors,
+        // Getters
+        rootLevels,
+        // Actions
         fetchData,
         fetchDataForAside,
         updateSortOrder,
         deleteLevel,
-        form,
-        errors,
-        submitError,
-        clearError,
         resetForm,
+        clearError,
         loadFormData,
         addLevel,
-        updateLevel,
-        modalOpen
+        updateLevel
     };
-};
+});
+

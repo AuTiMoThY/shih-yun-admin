@@ -9,6 +9,7 @@ const route = useRoute();
 const open = ref(false);
 const { asideData: structureData, fetchDataForAside: fetchStructureForAside } = useStructure();
 const { data: modulesData, fetchData: fetchModules } = useModule();
+const { hasPermission, isSuperAdmin } = usePermission();
 
 // 檢查某個 menu item 或其子層級是否包含當前路由
 const hasActiveRoute = (item: any, currentPath: string): boolean => {
@@ -52,12 +53,43 @@ const isItemActive = (item: any): boolean => {
     return status === 1 || status === '1' || status === true;
 };
 
+// 檢查項目是否有權限
+const hasItemPermission = (item: any): boolean => {
+    // 超級管理員擁有所有權限
+    if (isSuperAdmin()) {
+        return true;
+    }
+
+    // 如果沒有關聯模組，則不需要檢查權限（例如父層級）
+    if (!item?.module_id) {
+        return true;
+    }
+
+    // 如果沒有 url，表示不是實際的單元（可能是父層級），不需要檢查權限
+    if (!item?.url) {
+        return true;
+    }
+
+    // 根據單元的 url 構建權限名稱（格式：{url}.view）
+    // 例如：url='about' → 權限名稱='about.view'
+    // 例如：url='media' → 權限名稱='media.view'
+    const permissionName = `${item.url}.view`;
+
+    // 檢查是否有權限
+    return hasPermission(permissionName);
+};
+
 const mapStructureToMenu = (
     item: any,
     sidebarOpen: Ref<boolean>
 ): NavigationMenuItem | null => {
     // 過濾停用的項目
     if (!isItemActive(item)) {
+        return null;
+    }
+
+    // 過濾沒有權限的項目
+    if (!hasItemPermission(item)) {
         return null;
     }
 

@@ -102,8 +102,6 @@ onMounted(async () => {
                 <template #leading>
                     <UDashboardSidebarCollapse />
                 </template>
-            </UDashboardNavbar>
-            <UDashboardToolbar>
                 <template #right>
                     <UButton
                         label="新增角色"
@@ -111,7 +109,7 @@ onMounted(async () => {
                         icon="lucide:plus"
                         @click="addRole" />
                 </template>
-            </UDashboardToolbar>
+            </UDashboardNavbar>
         </template>
         <template #body>
             <DataTable :data="data" :columns="columns" :loading="loading" />

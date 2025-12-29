@@ -293,9 +293,10 @@ export const useRole = () => {
 
             // 組合錯誤訊息
             const msg =
+                data?.error ||
                 data?.model_errors?.name ||
                 data?.message ||
-                "更新角色失敗，請稍後再試";
+                "更新角色失敗，請稍後再試2";
             submitError.value = msg;
             toast.add({
                 title: msg,

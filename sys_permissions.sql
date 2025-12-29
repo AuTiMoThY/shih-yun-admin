@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- 主機： 127.0.0.1
--- 產生時間： 2025-12-16 08:54:29
+-- 產生時間： 2025-12-29 03:52:22
 -- 伺服器版本： 10.4.32-MariaDB
 -- PHP 版本： 8.1.25
 
@@ -45,13 +45,13 @@ CREATE TABLE `sys_permissions` (
 --
 
 INSERT INTO `sys_permissions` (`id`, `name`, `label`, `description`, `module_id`, `category`, `action`, `status`, `created_at`, `updated_at`) VALUES
-(1, 'about.section.create', '關於我們-新增區塊', '新增區塊(卡)', NULL, NULL, 'create', 1, '2025-12-16 02:53:57', '2025-12-16 02:53:57'),
-(2, 'about.section.delete', '關於我們-刪除區塊', '刪除區塊(卡)', NULL, NULL, 'delete', 1, '2025-12-16 02:53:57', '2025-12-16 02:53:57'),
-(3, 'about.section.sort', '關於我們-區塊排序', '區塊上移/下移', NULL, NULL, 'sort', 1, '2025-12-16 02:53:57', '2025-12-16 02:53:57'),
-(4, 'about.field.create', '關於我們-新增欄位', '新增欄位', NULL, NULL, 'create', 1, '2025-12-16 02:53:57', '2025-12-16 02:53:57'),
-(5, 'about.field.delete', '關於我們-刪除欄位', '刪除欄位', NULL, NULL, 'delete', 1, '2025-12-16 02:53:57', '2025-12-16 02:53:57'),
-(6, 'about.field.sort', '關於我們-欄位排序', '欄位上移/下移', NULL, NULL, 'sort', 1, '2025-12-16 02:53:57', '2025-12-16 02:53:57'),
-(8, 'system.admin.view', '管理員設定', '', NULL, 'admin', 'view', 1, '2025-12-15 23:48:53', '2025-12-15 23:48:53');
+(1, 'about.section.create', '關於我們-新增區塊', '新增區塊(卡)', NULL, '', 'create', 1, '2025-12-15 18:53:57', '2025-12-16 19:39:58'),
+(2, 'about.section.delete', '關於我們-刪除區塊', '刪除區塊(卡)', NULL, NULL, 'delete', 1, '2025-12-15 18:53:57', '2025-12-15 18:53:57'),
+(3, 'about.section.sort', '關於我們-區塊排序', '區塊上移/下移', NULL, NULL, 'sort', 1, '2025-12-15 18:53:57', '2025-12-15 18:53:57'),
+(4, 'about.field.create', '關於我們-新增欄位', '新增欄位', NULL, NULL, 'create', 1, '2025-12-15 18:53:57', '2025-12-15 18:53:57'),
+(5, 'about.field.delete', '關於我們-刪除欄位', '刪除欄位', NULL, NULL, 'delete', 1, '2025-12-15 18:53:57', '2025-12-15 18:53:57'),
+(6, 'about.field.sort', '關於我們-欄位排序', '欄位上移/下移', NULL, NULL, 'sort', 1, '2025-12-15 18:53:57', '2025-12-15 18:53:57'),
+(11, 'about.view', '關於我們-單元查看', '', 1, '', '', 1, '2025-12-28 18:48:21', '2025-12-28 18:48:21');
 
 --
 -- 已傾印資料表的索引
@@ -73,7 +73,7 @@ ALTER TABLE `sys_permissions`
 -- 使用資料表自動遞增(AUTO_INCREMENT) `sys_permissions`
 --
 ALTER TABLE `sys_permissions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主鍵', AUTO_INCREMENT=9;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主鍵', AUTO_INCREMENT=12;
 
 --
 -- 已傾印資料表的限制式

@@ -339,6 +339,32 @@ export const usePermissionData = () => {
         }
     };
 
+    const updateSortOrder = async (list: any[]) => {
+        const payload = (list || []).map((item, index) => ({
+            id: item?.id,
+            sort_order: index + 1
+        }));
+        console.log("updateSortOrder payload", payload);
+        try {
+            const res = await $fetch<{
+                success: boolean;
+                message?: string;
+            }>(`${apiBase}/permission/update-sort-order`, {
+                method: "POST",
+                body: payload
+            });
+            if (res?.success) {
+                toast.add({ title: "排序已更新", color: "success" });
+            } else {
+                console.error(res.message);
+                toast.add({ title: res.message || "更新排序失敗", color: "error" });
+            }
+        } catch (error: any) {
+            console.error(error.message);
+            toast.add({ title: error.message || "更新排序失敗", color: "error" });
+        }
+    };
+
     return {
         form,
         errors,
@@ -352,6 +378,7 @@ export const usePermissionData = () => {
         loadFormData,
         addPermission,
         editPermission,
-        deletePermission
+        deletePermission,
+        updateSortOrder
     };
 };

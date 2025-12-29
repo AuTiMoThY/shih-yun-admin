@@ -89,7 +89,7 @@ watch(
 );
 </script>
 <template>
-    <UModal
+    <UModal 
         v-model:open="modalOpen"
         :title="modalTitle"
         :close="{
