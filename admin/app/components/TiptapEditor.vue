@@ -634,7 +634,7 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- 編輯器內容 -->
-        <div class="editor-content">
+        <div class="editor-content prose-content">
             <TiptapEditorContent :editor="editor" />
         </div>
     </div>
@@ -656,50 +656,5 @@ onBeforeUnmount(() => {
     float: left;
     height: 0;
     pointer-events: none;
-}
-
-.editor-content :deep(.ProseMirror img) {
-    @apply max-w-full h-auto rounded-lg;
-}
-
-.editor-content :deep(.ProseMirror h1) {
-    @apply text-3xl font-bold mt-4 mb-2;
-}
-
-.editor-content :deep(.ProseMirror h2) {
-    @apply text-2xl font-bold mt-4 mb-2;
-}
-
-.editor-content :deep(.ProseMirror h3) {
-    @apply text-xl font-bold mt-4 mb-2;
-}
-
-.editor-content :deep(.ProseMirror ul),
-.editor-content :deep(.ProseMirror ol) {
-    @apply pl-6 my-2;
-}
-
-.editor-content :deep(.ProseMirror ul) {
-    @apply list-disc;
-}
-
-.editor-content :deep(.ProseMirror ol) {
-    @apply list-decimal;
-}
-
-.editor-content :deep(.ProseMirror blockquote) {
-    @apply border-l-4 border-gray-300 pl-4 italic my-2;
-}
-
-.editor-content :deep(.ProseMirror code) {
-    @apply bg-gray-100 px-1 py-0.5 rounded text-sm font-mono;
-}
-
-.editor-content :deep(.ProseMirror pre) {
-    @apply bg-gray-100 p-4 rounded-lg my-2 overflow-x-auto;
-}
-
-.editor-content :deep(.ProseMirror pre code) {
-    @apply bg-transparent p-0;
 }
 </style>

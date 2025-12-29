@@ -6,7 +6,8 @@ definePageMeta({
 const route = useRoute();
 const router = useRouter();
 const { resolvePath } = useStructureResolver();
-const { getFormComponentByModule, hasFormComponentForModule } = useModuleComponent();
+const { getFormComponentByModule, hasFormComponentForModule } =
+    useModuleComponent();
 
 // 等待結構資料載入
 const { data: structureData, fetchData: fetchStructure } = useStructure();
@@ -14,7 +15,7 @@ const { data: modulesData, fetchData: fetchModules } = useModule();
 
 // 解析路徑並取得結構資訊（移除 /add 後綴）
 const currentPath = computed(() => {
-    return route.path.replace(/\/add$/, '');
+    return route.path.replace(/\/add$/, "");
 });
 
 const pathInfo = computed(() => {
@@ -43,18 +44,20 @@ const formComponent = computed(() => {
 // 頁面標題
 const pageTitle = computed(() => {
     const { structure } = structureInfo.value;
-    return structure ? `新增${structure.label}` : '新增';
+    return structure ? `新增${structure.label}` : "新增";
 });
 
 // 返回列表的路徑
 const backToListPath = computed(() => {
     const { structure } = structureInfo.value;
     if (structure?.url) {
-        return structure.url.startsWith('/') ? structure.url : `/${structure.url}`;
+        return structure.url.startsWith("/")
+            ? structure.url
+            : `/${structure.url}`;
     }
     // 如果沒有自訂 URL，使用模組的 name
     const { moduleName } = structureInfo.value;
-    return moduleName ? `/${moduleName}` : '/';
+    return moduleName ? `/${moduleName}` : "/";
 });
 
 // 載入狀態
@@ -75,6 +78,44 @@ const handleSubmit = () => {
     formRef.value?.submit();
 };
 
+// 預覽功能（僅支援有預覽功能的模組）
+const previewOpen = ref(false);
+const hasPreview = computed(() => {
+    // 檢查子組件是否有預覽功能
+    return formRef.value?.preview !== undefined;
+});
+
+// 取得預覽相關的方法和數據
+const previewData = computed(() => {
+    return formRef.value?.preview?.previewData?.value ?? {};
+});
+
+const getCoverUrl = () => {
+    return formRef.value?.preview?.getCoverUrl?.() ?? "";
+};
+
+const getSlideUrls = () => {
+    return formRef.value?.preview?.getSlideUrls?.() ?? [];
+};
+
+// 取得模組類型（用於 FormPreview）
+const moduleType = computed<"news" | "case" | "about" | "custom">(() => {
+    const moduleName = structureInfo.value.moduleName;
+    if (
+        moduleName === "news" ||
+        moduleName === "case" ||
+        moduleName === "about"
+    ) {
+        return moduleName;
+    }
+    return "custom";
+});
+
+// 開啟預覽
+const openPreview = () => {
+    previewOpen.value = true;
+};
+
 // 初始化：載入結構和模組資料
 onMounted(async () => {
     if (!structureData.value?.length) {
@@ -83,6 +124,8 @@ onMounted(async () => {
     if (!modulesData.value?.length) {
         await fetchModules();
     }
+
+    console.log(moduleType.value);
 });
 
 // 監聽路徑變化
@@ -124,6 +167,33 @@ watch(
                         icon="i-lucide-arrow-left"
                         :to="backToListPath" />
                 </template>
+                <template #right>
+                    <!-- 側邊欄預覽（僅在有預覽功能的模組中顯示） -->
+                    <USlideover
+                        v-if="hasPreview"
+                        v-model:open="previewOpen"
+                        :ui="{ content: 'w-full max-w-2xl' }">
+                        <UButton
+                            icon="i-lucide-eye"
+                            label="預覽"
+                            color="primary"
+                            variant="outline"
+                            size="sm"
+                            @click="openPreview" />
+                        <template #body>
+                            <FormPreview
+                                :data="{
+                                    ...previewData,
+                                    slide: previewData.slide
+                                        ? [...previewData.slide]
+                                        : undefined
+                                }"
+                                :cover-url="getCoverUrl()"
+                                :slide-urls="getSlideUrls()"
+                                :module-type="moduleType" />
+                        </template>
+                    </USlideover>
+                </template>
             </UDashboardToolbar>
         </template>
         <template #body>
@@ -157,10 +227,12 @@ watch(
                 :is="formComponent"
                 mode="add"
                 :structure-id="structureInfo.structureId"
-                @submit="() => {
-                    // 表單組件內部已經處理導向，這裡可以處理其他邏輯
-                    // 如果需要覆蓋導向，可以在這裡處理
-                }" />
+                @submit="
+                    () => {
+                        // 表單組件內部已經處理導向，這裡可以處理其他邏輯
+                        // 如果需要覆蓋導向，可以在這裡處理
+                    }
+                " />
         </template>
         <template #footer>
             <PageFooter />

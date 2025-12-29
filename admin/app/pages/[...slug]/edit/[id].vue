@@ -6,7 +6,8 @@ definePageMeta({
 const route = useRoute();
 const router = useRouter();
 const { resolvePath } = useStructureResolver();
-const { getFormComponentByModule, hasFormComponentForModule } = useModuleComponent();
+const { getFormComponentByModule, hasFormComponentForModule } =
+    useModuleComponent();
 
 // 等待結構資料載入
 const { data: structureData, fetchData: fetchStructure } = useStructure();
@@ -23,13 +24,13 @@ const itemId = computed(() => {
 // 解析路徑並取得結構資訊（移除 /edit/[id] 後綴）
 const currentPath = computed(() => {
     // 移除 /edit/[id] 部分，取得基礎路徑
-    const path = route.path || '';
+    const path = route.path || "";
     const match = path.match(/^(.+)\/edit\/\d+$/);
     return match && match[1] ? match[1] : path;
 });
 
 const pathInfo = computed(() => {
-    const path = currentPath.value || route.path || '';
+    const path = currentPath.value || route.path || "";
     return resolvePath(path);
 });
 
@@ -55,18 +56,20 @@ const formComponent = computed(() => {
 // 頁面標題
 const pageTitle = computed(() => {
     const { structure } = structureInfo.value;
-    return structure ? `編輯${structure.label}` : '編輯';
+    return structure ? `編輯${structure.label}` : "編輯";
 });
 
 // 返回列表的路徑
 const backToListPath = computed(() => {
     const { structure } = structureInfo.value;
     if (structure?.url) {
-        return structure.url.startsWith('/') ? structure.url : `/${structure.url}`;
+        return structure.url.startsWith("/")
+            ? structure.url
+            : `/${structure.url}`;
     }
     // 如果沒有自訂 URL，使用模組的 name
     const { moduleName } = structureInfo.value;
-    return moduleName ? `/${moduleName}` : '/';
+    return moduleName ? `/${moduleName}` : "/";
 });
 
 // 載入狀態
@@ -102,7 +105,7 @@ const loadItemData = async () => {
     loadingData.value = true;
 
     try {
-        if (moduleName === 'news') {
+        if (moduleName === "news") {
             const { loadNewsData } = useAppNews();
             const data = await loadNewsData(itemId.value);
             if (data) {
@@ -110,7 +113,7 @@ const loadItemData = async () => {
             } else {
                 router.push(backToListPath.value);
             }
-        } else if (moduleName === 'contact') {
+        } else if (moduleName === "contact") {
             const { loadContactData } = useAppContact();
             const data = await loadContactData(itemId.value);
             if (data) {
@@ -118,7 +121,7 @@ const loadItemData = async () => {
             } else {
                 router.push(backToListPath.value);
             }
-        } else if (moduleName === 'case') {
+        } else if (moduleName === "case") {
             const { loadCaseData } = useAppCase();
             const data = await loadCaseData(itemId.value);
             if (data) {
@@ -126,7 +129,7 @@ const loadItemData = async () => {
             } else {
                 router.push(backToListPath.value);
             }
-        } else if (moduleName === 'progress') {
+        } else if (moduleName === "progress") {
             const { loadProgressData } = useAppProgress();
             const data = await loadProgressData(itemId.value);
             if (data) {
@@ -139,12 +142,43 @@ const loadItemData = async () => {
             router.push(backToListPath.value);
         }
     } catch (error) {
-        console.error('載入資料失敗', error);
+        console.error("載入資料失敗", error);
         router.push(backToListPath.value);
     } finally {
         loadingData.value = false;
     }
 };
+
+
+// 預覽功能（僅支援有預覽功能的模組）
+const previewOpen = ref(false);
+const hasPreview = computed(() => {
+    // 檢查子組件是否有預覽功能
+    return formRef.value?.preview !== undefined;
+});
+
+// 取得預覽相關的方法和數據
+const previewData = computed(() => {
+    return formRef.value?.preview?.previewData?.value ?? {};
+});
+
+const getCoverUrl = () => {
+    return formRef.value?.preview?.getCoverUrl?.() ?? "";
+};
+
+const getSlideUrls = () => {
+    return formRef.value?.preview?.getSlideUrls?.() ?? [];
+};
+
+// 取得模組類型（用於 FormPreview）
+const moduleType = computed<"news" | "case" | "about" | "custom">(() => {
+    const moduleName = structureInfo.value.moduleName;
+    if (moduleName === "news" || moduleName === "case" || moduleName === "about") {
+        return moduleName;
+    }
+    return "custom";
+});
+
 
 // 初始化：載入結構和模組資料
 onMounted(async () => {
@@ -199,6 +233,33 @@ watch(
                         icon="i-lucide-arrow-left"
                         :to="backToListPath" />
                 </template>
+                <template #right>
+                    <!-- 預覽按鈕（僅在有預覽功能的模組中顯示） -->
+                    <USlideover
+                        v-if="hasPreview"
+                        v-model:open="previewOpen"
+                        :ui="{ content: 'w-full max-w-2xl' }">
+                        <UButton
+                            v-if="hasPreview"
+                            icon="i-lucide-eye"
+                            label="預覽"
+                            color="primary"
+                            variant="outline"
+                            size="sm"/>
+                        <template #body>
+                            <FormPreview
+                                :data="{
+                                    ...previewData,
+                                    slide: previewData.slide
+                                        ? [...previewData.slide]
+                                        : undefined
+                                }"
+                                :cover-url="getCoverUrl()"
+                                :slide-urls="getSlideUrls()"
+                                :module-type="moduleType" />
+                        </template>
+                    </USlideover>
+                </template>
             </UDashboardToolbar>
         </template>
         <template #body>
@@ -233,10 +294,12 @@ watch(
                 mode="edit"
                 :initial-data="itemData"
                 :structure-id="structureInfo.structureId"
-                @submit="() => {
-                    // 編輯模式下，導向回列表頁
-                    router.push(backToListPath);
-                }" />
+                @submit="
+                    () => {
+                        // 編輯模式下，導向回列表頁
+                        router.push(backToListPath);
+                    }
+                " />
         </template>
         <template #footer>
             <PageFooter />

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted } from "vue";
 
+const USlideover = resolveComponent("USlideover");
 const router = useRouter();
 const props = withDefaults(
     defineProps<{
@@ -64,6 +65,46 @@ const loadInitialData = (data: any) => {
 
 // HTML 原始碼預覽開關
 const showHtmlCode = ref(false);
+
+// 側邊欄預覽功能
+const preview = useFormPreview({
+    defaultOpen: false,
+    width: "500px",
+    title: "最新消息預覽"
+});
+
+// 監聽表單數據變化，即時更新預覽
+watch(
+    () => ({
+        title: form.title,
+        content: form.content,
+        show_date: form.show_date,
+        cover: form.cover,
+        slide: form.slide
+    }),
+    () => {
+        preview.updatePreview(
+            {
+                title: form.title,
+                content: form.content,
+                show_date: form.show_date,
+                cover: form.cover,
+                slide: form.slide
+            },
+            {
+                cover: {
+                    preview: coverUpload.preview.value,
+                    formValue: coverUpload.formValue.value
+                },
+                slide: {
+                    previews: slideUpload.previews.value,
+                    formValue: slideUpload.formValue.value
+                }
+            }
+        );
+    },
+    { deep: true, immediate: true }
+);
 
 // 表單提交
 const handleSubmit = async (event?: Event) => {
@@ -344,7 +385,17 @@ onMounted(() => {
 // 暴露方法給父組件
 defineExpose({
     loading: formLoading,
-    submit: handleSubmit
+    submit: handleSubmit,
+    // 預覽相關方法
+    preview: {
+        isOpen: preview.isOpen,
+        toggle: preview.toggle,
+        open: preview.open,
+        close: preview.close,
+        previewData: preview.previewData,
+        getCoverUrl: preview.getCoverUrl,
+        getSlideUrls: preview.getSlideUrls
+    }
 });
 // console.log(form);
 </script>
@@ -356,7 +407,9 @@ defineExpose({
             <section class="frm-bd grid grid-cols-1 gap-4">
                 <UCard :ui="{ body: 'space-y-4' }">
                     <template #header>
-                        <h3 class="text-lg font-semibold">編輯</h3>
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-semibold">編輯</h3>
+                        </div>
                     </template>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="flex flex-col gap-4">

@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import type { CutSectionData } from "~/types/CutSectionField";
 
-// 接收 structureId 作為 prop
+// 接收 structureId 和 url 作為 prop
 const props = defineProps<{
     structureId?: number | null;
+    url?: string | null;
 }>();
 
 const {
@@ -17,6 +18,7 @@ const {
 const { hasPermission, isSuperAdmin } = usePermission();
 
 // 權限檢查
+// 模組級操作權限（適用於所有使用 about 模組的單元）
 const canSortSection = computed(
     () => isSuperAdmin() || hasPermission("about.section.sort")
 );
@@ -196,13 +198,15 @@ defineExpose({
                         @click="addCutSection"
                         :ui="{ base: 'justify-center' }" />
                 </PermissionGuard>
-                <UButton
+                <PermissionGuard :permission="url ? `${url}.edit` : undefined">
+                    <UButton
                     label="儲存"
                     color="success"
                     icon="i-lucide-save"
                     :loading="loading"
                     :disabled="loading"
                     @click="saveAllSections" />
+                </PermissionGuard>
             </div>
         </template>
     </div>

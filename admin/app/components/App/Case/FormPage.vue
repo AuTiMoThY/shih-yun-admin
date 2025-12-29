@@ -39,6 +39,13 @@ const { getBasePath } = useBasePath();
 const basePath = getBasePath(router.currentRoute.value.path);
 const pathInfo = resolvePath(basePath);
 
+// 側邊欄預覽功能
+const preview = useFormPreview({
+    defaultOpen: false,
+    width: "500px",
+    title: "建案預覽"
+});
+
 // 圖片上傳
 const coverUpload = useImageUploadSingle();
 const slideUpload = useImageUploadMultiple({
@@ -317,6 +324,58 @@ watch(
     { immediate: true }
 );
 
+// 監聽表單數據變化，即時更新預覽
+watch(
+    () => ({
+        title: form.title,
+        content: form.content,
+        year: form.year,
+        s_text: form.s_text,
+        cover: form.cover,
+        ca_type: form.ca_type,
+        ca_area: form.ca_area,
+        ca_square: form.ca_square,
+        ca_phone: form.ca_phone,
+        ca_adds: form.ca_adds,
+        ca_map: form.ca_map,
+        ca_pop_type: form.ca_pop_type,
+        ca_pop: form.ca_pop,
+        slide: form.slide
+    }),
+    () => {
+        console.log(form.content);
+        preview.updatePreview(
+            {
+                title: form.title,
+                content: JSON.stringify(form.content),
+                year: form.year,
+                s_text: form.s_text,
+                cover: form.cover,
+                slide: form.slide,
+                ca_type: form.ca_type,
+                ca_area: form.ca_area,
+                ca_square: form.ca_square,
+                ca_phone: form.ca_phone,
+                ca_adds: form.ca_adds,
+                ca_map: form.ca_map,
+                ca_pop_type: form.ca_pop_type,
+                ca_pop: form.ca_pop,
+            },
+            {
+                cover: {
+                    preview: coverUpload.preview.value,
+                    formValue: coverUpload.formValue.value
+                },
+                slide: {
+                    previews: slideUpload.previews.value,
+                    formValue: slideUpload.formValue.value
+                }
+            }
+        );
+    },
+    { deep: true, immediate: true }
+);
+
 
 onMounted(() => {
     console.log(form);
@@ -325,7 +384,17 @@ onMounted(() => {
 defineExpose({
     loading: formLoading,
     submit: handleSubmit,
-    addCutSection
+    addCutSection,
+    // 預覽相關方法
+    preview: {
+        isOpen: preview.isOpen,
+        toggle: preview.toggle,
+        open: preview.open,
+        close: preview.close,
+        previewData: preview.previewData,
+        getCoverUrl: preview.getCoverUrl,
+        getSlideUrls: preview.getSlideUrls
+    }
 });
 </script>
 

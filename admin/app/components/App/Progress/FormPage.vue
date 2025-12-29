@@ -184,7 +184,8 @@ defineExpose({
                                     placeholder="請選擇建案"
                                     @update:model-value="
                                         clearError('case_id')
-                                    " />
+                                    "
+                                    :ui="{ base: 'min-w-[120px]' }" />
                             </UFormField>
                             <UFormField
                                 label="標題"

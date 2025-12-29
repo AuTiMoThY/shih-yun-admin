@@ -170,13 +170,15 @@ onMounted(async () => {
                                 @click="() => componentRef?.addCutSection?.()"
                                 :ui="{ base: 'justify-center' }" />
                         </PermissionGuard>
+                        <PermissionGuard permission="about.edit">
                         <UButton
                             label="儲存"
-                            color="success"
-                            icon="i-lucide-save"
-                            :loading="componentLoading"
-                            :disabled="componentLoading"
-                            @click="() => componentRef?.saveAllSections?.()" />
+                                color="success"
+                                icon="i-lucide-save"
+                                :loading="componentLoading"
+                                :disabled="componentLoading"
+                                @click="() => componentRef?.saveAllSections?.()" />
+                        </PermissionGuard>
                     </template>
 
                     <!-- News 模組的按鈕 -->
@@ -254,6 +256,7 @@ onMounted(async () => {
                 :is="component"
                 :key="`${structureInfo.moduleName}-${structureInfo.structureId}-${selectedCaseId}`"
                 :structure-id="structureInfo.structureId"
+                :url="structureInfo.url"
                 v-bind="
                     structureInfo.moduleName === 'progress'
                         ? { 'case-id': selectedCaseId }

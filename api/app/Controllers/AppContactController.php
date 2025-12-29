@@ -37,7 +37,7 @@ class AppContactController extends BaseController
 
         try {
             $insertData = [
-                'structure_id' => isset($data['structure_id']) ? (int)$data['structure_id'] : null,
+                'structure_id' => isset($data['structure_id']) ? (int) $data['structure_id'] : null,
                 'name' => trim($data['name']),
                 'phone' => trim($data['phone']),
                 'email' => trim($data['email']),
@@ -84,11 +84,11 @@ class AppContactController extends BaseController
 
             // 如果提供了 structure_id，則過濾該單元的資料
             if ($structureId !== null) {
-                $query->where('structure_id', (int)$structureId);
+                $query->where('structure_id', (int) $structureId);
             }
 
             if ($status !== null) {
-                $query->where('status', (int)$status);
+                $query->where('status', (int) $status);
             }
 
             $contacts = $query->findAll();
@@ -185,7 +185,7 @@ class AppContactController extends BaseController
 
         try {
             $updateData = [
-                'status' => (int)$data['status'],
+                'status' => (int) $data['status'],
             ];
 
             $updated = $this->appContactModel->skipValidation(true)->update($id, $updateData);
@@ -369,7 +369,7 @@ class AppContactController extends BaseController
 
             // 設定郵件配置（從環境變數或配置檔讀取）
             $emailConfig = config('Email');
-            
+
             // 設定發件人（如果配置檔中有設定）
             if (!empty($emailConfig->fromEmail)) {
                 $email->setFrom($emailConfig->fromEmail, $emailConfig->fromName ?? '');
@@ -383,7 +383,7 @@ class AppContactController extends BaseController
 
             // 設定郵件內容（HTML 格式）
             $email->setMailType('html');
-            
+
             // 建立郵件內容
             $emailBody = $this->buildEmailBody($contact);
             $email->setMessage($emailBody);
@@ -391,7 +391,7 @@ class AppContactController extends BaseController
             // 發送郵件
             if (!$email->send()) {
                 log_message('error', '發送郵件失敗: {error}', ['error' => $email->printDebugger(['headers'])]);
-                
+
                 return $this->response->setStatusCode(ResponseInterface::HTTP_INTERNAL_SERVER_ERROR)->setJSON([
                     'success' => false,
                     'message' => '發送郵件失敗：' . ($email->printDebugger(['headers']) ?? '未知錯誤'),
@@ -425,7 +425,7 @@ class AppContactController extends BaseController
     {
         $name = htmlspecialchars($contact['name'] ?? '客戶', ENT_QUOTES, 'UTF-8');
         $reply = $contact['reply'] ?? '';
-        
+
         // 如果回信內容是 HTML，直接使用；否則轉換為 HTML
         $replyHtml = strip_tags($reply) !== $reply ? $reply : nl2br(htmlspecialchars($reply, ENT_QUOTES, 'UTF-8'));
 
