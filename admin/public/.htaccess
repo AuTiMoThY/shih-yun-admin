@@ -1,0 +1,12 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # 如果請求的是實際存在的檔案或目錄，直接提供
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    
+    # 如果請求的不是實際存在的檔案或目錄，重定向到 index.html
+    # 這樣可以讓 SPA 路由正常工作
+    RewriteRule ^(.*)$ index.html [L]
+</IfModule>
+
