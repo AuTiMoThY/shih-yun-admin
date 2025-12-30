@@ -2,9 +2,10 @@
 import type { TableColumn } from "@nuxt/ui";
 import { h, resolveComponent } from "vue";
 
-// 接收 structureId 作為 prop
+// 接收 structureId 和 url 作為 prop
 const props = defineProps<{
     structureId?: number | null;
+    url?: string | null;
 }>();
 
 const UCheckbox = resolveComponent("UCheckbox");

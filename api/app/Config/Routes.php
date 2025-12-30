@@ -10,6 +10,9 @@ $routes->get('/test-db-connection', 'testDbConnection::index');
 $routes->get('/test-db-connection2', 'testDbConnection2::index');
 $routes->get('/test-cors', 'TestCors::index');
 
+// 密碼雜湊工具（用於產生管理員密碼雜湊值）
+$routes->get('/password-hash', 'PasswordHashController::hash');
+
 
 
 // 讓 preflight OPTIONS 不落 404（CORS filter 仍會附加 headers）

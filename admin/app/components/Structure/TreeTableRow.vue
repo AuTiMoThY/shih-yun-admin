@@ -44,7 +44,6 @@ const childrenBodyRef = ref<HTMLElement | null>(null);
 const childrenData = shallowRef<any[]>([]);
 let sortableStop: (() => void) | null = null;
 
-
 const levelStatusLabelMap = LEVEL_STATUS_LABEL_MAP;
 
 const { data: modulesData } = useModule();
@@ -56,10 +55,7 @@ const moduleName = computed(() => {
     return target ? `${target.label} (${target.name})` : "";
 });
 
-const canAddSub = computed(
-    () => !props.level?.module_id && !props.level?.url
-);
-
+const canAddSub = computed(() => !props.level?.module_id && !props.level?.url);
 
 const hasChildren = computed(() => {
     return props.level.children && props.level.children.length > 0;
@@ -103,10 +99,10 @@ const setupChildrenSortable = () => {
         draggable: `tr[data-depth="${depth}"]`,
         fallbackOnBody: true,
         swapThreshold: 0.65,
-        onStart: () => {
-            // 拖曳開始時收合當前層級
-            isExpanded.value = false;
-        },
+        // onStart: () => {
+        //     // 拖曳開始時收合當前層級
+        //     isExpanded.value = false;
+        // },
         onUpdate: async (evt: any) => {
             console.log("onUpdate children", {
                 oldIndex: evt.oldIndex,
@@ -168,6 +164,12 @@ const setupChildrenSortable = () => {
                 movedId: evt.item?.dataset?.levelId,
                 idsAfter: childrenData.value.map((x) => x?.id)
             });
+
+            // 重新設置 sortable，確保拖曳功能繼續有效
+            await nextTick();
+            if (hasChildren.value && isExpanded.value) {
+                setupChildrenSortable();
+            }
         }
     });
     sortableStop = stop;
@@ -231,14 +233,9 @@ onUnmounted(() => {
                 <div class="grid grid-cols-2 gap-2 text-sm">
                     <div class="flex flex-col gap-1">
                         <span class="text-gray-500 dark:text-gray-400 text-xs">
-                            是否上線
+                            狀態
                         </span>
-                        <UBadge
-                            :label="
-                                levelStatusLabelMap[level.status] ?? level.status
-                            "
-                            :color="level.status === '1' ? 'success' : 'error'"
-                            size="sm" />
+                        <DataTableStatus :status="level.status" />
                     </div>
                 </div>
 
@@ -260,7 +257,9 @@ onUnmounted(() => {
                         variant="outline"
                         class="flex-1 min-w-[80px]"
                         :disabled="!canAddSub"
-                        :title="!canAddSub ? '已有模組或 URL，無法新增子層級' : ''"
+                        :title="
+                            !canAddSub ? '已有模組或 URL，無法新增子層級' : ''
+                        "
                         @click="onAddSub?.(level)" />
                     <UButton
                         icon="i-lucide-trash"
@@ -329,10 +328,7 @@ onUnmounted(() => {
             </td>
             <td class="py-2 px-4 border-b border-default">
                 <div class="flex items-center gap-2">
-                    <UBadge
-                        variant="outline"
-                        :label="levelStatusLabelMap[level.status] ?? level.status"
-                        :color="level.status === '1' ? 'success' : 'error'" />
+                    <DataTableStatus :status="level.status" />
                 </div>
             </td>
             <td class="py-2 px-4 border-b border-default">
@@ -349,7 +345,9 @@ onUnmounted(() => {
                         color="primary"
                         size="xs"
                         :disabled="!canAddSub"
-                        :title="!canAddSub ? '已有模組或 URL，無法新增子層級' : ''"
+                        :title="
+                            !canAddSub ? '已有模組或 URL，無法新增子層級' : ''
+                        "
                         @click="onAddSub?.(level)" />
                     <UButton
                         icon="i-lucide-trash"

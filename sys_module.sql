@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- 主機： 127.0.0.1
--- 產生時間： 2025-12-16 03:11:30
+-- 產生時間： 2025-12-30 07:58:26
 -- 伺服器版本： 10.4.32-MariaDB
 -- PHP 版本： 8.1.25
 
@@ -40,10 +40,11 @@ CREATE TABLE `sys_module` (
 --
 
 INSERT INTO `sys_module` (`id`, `label`, `name`, `created_at`, `updated_at`) VALUES
-(1, '關於我們', 'about', '2025-12-12 07:21:18', '2025-12-12 07:21:18'),
+(1, '關於我們', 'about', '2025-12-12 07:21:18', '2025-12-17 05:33:50'),
 (2, '最新消息', 'news', '2025-12-12 07:21:30', '2025-12-12 07:21:30'),
 (3, '聯絡我們', 'contact', '2025-12-12 08:41:59', '2025-12-12 08:41:59'),
-(4, '建案', 'case', '2025-12-12 08:42:24', '2025-12-12 08:42:24');
+(4, '建案', 'case', '2025-12-12 08:42:24', '2025-12-12 08:42:24'),
+(13, '工程進度', 'progress', '2025-12-26 02:39:24', '2025-12-26 02:39:24');
 
 --
 -- 已傾印資料表的索引
@@ -63,7 +64,7 @@ ALTER TABLE `sys_module`
 -- 使用資料表自動遞增(AUTO_INCREMENT) `sys_module`
 --
 ALTER TABLE `sys_module`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

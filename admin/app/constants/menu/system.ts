@@ -31,15 +31,6 @@ export const system: (open: Ref<boolean>) => NavigationMenuItem = (open) => {
             },
         },
         {
-            label: "系統架構設定",
-            icon: "lucide:network",
-            to: "/system/structure",
-            permission: "system.structure.view",
-            onSelect: () => {
-                open.value = false;
-            },
-        },
-        {
             label: "模組設定",
             icon: "lucide:package",
             to: "/system/module",
@@ -48,6 +39,16 @@ export const system: (open: Ref<boolean>) => NavigationMenuItem = (open) => {
                 open.value = false;
             },
         },
+        {
+            label: "系統架構設定",
+            icon: "lucide:network",
+            to: "/system/structure",
+            permission: "system.structure.view",
+            onSelect: () => {
+                open.value = false;
+            },
+        },
+
 
         {
             label: "權限設定",

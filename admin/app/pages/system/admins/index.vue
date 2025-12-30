@@ -1,6 +1,6 @@
 <script setup lang="ts">
 definePageMeta({
-    middleware: "auth"
+    middleware: ["auth", "permission"]
 });
 import type { TableColumn } from "@nuxt/ui";
 import { h, resolveComponent } from "vue";
@@ -42,14 +42,6 @@ const columns: TableColumn<any>[] = [
                 )
             );
         }
-    },
-    {
-        accessorKey: "permission_name",
-        header: "舊權限（相容）",
-        cell: ({ row }) =>
-            PERMISSION_LABEL_MAP[row.original.permission_name] ??
-            row.original.permission_name ??
-            "-"
     },
     {
         accessorKey: "status",

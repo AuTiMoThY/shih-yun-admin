@@ -1,6 +1,6 @@
 <script setup lang="ts">
 definePageMeta({
-    middleware: "auth"
+    middleware: ["auth", "permission"]
 });
 import type { TableColumn } from "@nuxt/ui";
 import { STATUS_LABEL_MAP } from "~/constants/system/status";
@@ -46,7 +46,7 @@ const columns: TableColumn<any>[] = [
                     label: "編輯",
                     color: "primary",
                     size: "xs",
-                    onClick: () => editRole(row.original)
+                    to: `/system/roles/edit/${row.original.id}`,
                 }),
                 h(UButton, {
                     icon: "i-lucide-trash",
@@ -60,19 +60,6 @@ const columns: TableColumn<any>[] = [
         }
     }
 ];
-
-const addRole = () => {
-    addRoleModalOpen.value = true;
-};
-
-const editRole = async (data: any) => {
-    const roleData = await useRole().fetchById(data.id);
-    console.log("roleData", roleData);
-    if (roleData) {
-        editData.value = roleData;
-        editRoleModalOpen.value = true;
-    }
-};
 
 const handleDelete = async (data: any) => {
     deleteTarget.value = { id: Number(data.id), label: data.label };
@@ -107,26 +94,19 @@ onMounted(async () => {
                         label="新增角色"
                         color="primary"
                         icon="lucide:plus"
-                        @click="addRole" />
+                        to="/system/roles/add" />
                 </template>
             </UDashboardNavbar>
         </template>
         <template #body>
+            
             <DataTable :data="data" :columns="columns" :loading="loading" />
         </template>
         <template #footer>
             <PageFooter />
         </template>
     </UDashboardPanel>
-    <RoleFrmModal
-        v-model:open="addRoleModalOpen"
-        mode="add"
-        @added="fetchData" />
-    <RoleFrmModal
-        v-model:open="editRoleModalOpen"
-        mode="edit"
-        :data="editData"
-        @updated="fetchData" />
+
     <DeleteConfirmModal
         v-model:open="deleteConfirmModalOpen"
         title="確認刪除"

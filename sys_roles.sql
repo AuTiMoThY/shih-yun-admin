@@ -44,7 +44,6 @@ CREATE TABLE `sys_roles` (
 INSERT INTO `sys_roles` (`id`, `name`, `label`, `description`, `status`, `created_at`, `updated_at`) VALUES
 (1, 'super_admin', '超級管理員', '擁有所有權限的超級管理員角色', 1, '2025-12-16 02:18:36', '2025-12-16 02:18:36'),
 (2, 'admin', '管理員', '', 1, '2025-12-15 18:48:25', '2025-12-15 18:48:25'),
-(4, 'sort', '排序', '', 1, '2025-12-15 18:59:53', '2025-12-15 18:59:53');
 
 --
 -- 已傾印資料表的索引
@@ -65,7 +64,7 @@ ALTER TABLE `sys_roles`
 -- 使用資料表自動遞增(AUTO_INCREMENT) `sys_roles`
 --
 ALTER TABLE `sys_roles`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主鍵', AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主鍵', AUTO_INCREMENT=3;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

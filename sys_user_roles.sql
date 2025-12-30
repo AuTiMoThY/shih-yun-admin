@@ -42,8 +42,6 @@ CREATE TABLE `sys_user_roles` (
 INSERT INTO `sys_user_roles` (`id`, `user_id`, `role_id`, `created_at`, `updated_at`) VALUES
 (1, 1, 1, '2025-12-16 02:56:31', '2025-12-16 02:56:31'),
 (2, 2, 2, '2025-12-16 02:56:31', '2025-12-16 02:56:31'),
-(3, 7, 1, '2025-12-15 19:20:08', '2025-12-15 19:20:08'),
-(5, 6, 1, '2025-12-15 19:22:05', '2025-12-15 19:22:05');
 
 --
 -- 已傾印資料表的索引
@@ -66,7 +64,7 @@ ALTER TABLE `sys_user_roles`
 -- 使用資料表自動遞增(AUTO_INCREMENT) `sys_user_roles`
 --
 ALTER TABLE `sys_user_roles`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主鍵', AUTO_INCREMENT=7;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主鍵', AUTO_INCREMENT=3;
 
 --
 -- 已傾印資料表的限制式

@@ -4,10 +4,11 @@ import { h, resolveComponent } from "vue";
 import { STATUS_LABEL_MAP } from "~/constants/system/status";
 import { STATUS_ICON_MAP } from "~/constants/system/status_icon";
 
-// 接收 structureId 和 caseId 作為 prop
+// 接收 structureId、caseId 和 url 作為 prop
 const props = defineProps<{
     structureId?: number | null;
     caseId?: number | null;
+    url?: string | null;
 }>();
 
 const UButton = resolveComponent("UButton");

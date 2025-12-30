@@ -1,6 +1,6 @@
 <script setup lang="ts">
 definePageMeta({
-    middleware: "auth"
+    middleware: ["auth", "permission"]
 });
 
 const route = useRoute();
@@ -103,11 +103,11 @@ const componentLoading = computed(() => {
 
 // 處理建案篩選器值變化（確保類型正確）
 const handleCaseIdChange = (value: any) => {
-    if (value === null || value === undefined || value === '') {
+    if (value === null || value === undefined || value === "") {
         selectedCaseId.value = null;
     } else {
         // 確保轉換為數字類型（USelect 可能返回字符串）
-        const numValue = typeof value === 'string' ? Number(value) : value;
+        const numValue = typeof value === "string" ? Number(value) : value;
         selectedCaseId.value = isNaN(numValue) ? null : numValue;
     }
 };
@@ -170,43 +170,71 @@ onMounted(async () => {
                                 @click="() => componentRef?.addCutSection?.()"
                                 :ui="{ base: 'justify-center' }" />
                         </PermissionGuard>
-                        <PermissionGuard permission="about.edit">
-                        <UButton
-                            label="儲存"
+                        <PermissionGuard
+                            :permission="
+                                structureInfo.url
+                                    ? `${structureInfo.url}.edit`
+                                    : undefined
+                            ">
+                            <UButton
+                                label="儲存"
                                 color="success"
                                 icon="i-lucide-save"
                                 :loading="componentLoading"
                                 :disabled="componentLoading"
-                                @click="() => componentRef?.saveAllSections?.()" />
+                                @click="
+                                    () => componentRef?.saveAllSections?.()
+                                " />
                         </PermissionGuard>
                     </template>
 
                     <!-- News 模組的按鈕 -->
                     <template v-else-if="structureInfo.moduleName === 'news'">
-                        <UButton
-                            :label="`新增${structureInfo.label || ''}`"
-                            color="primary"
-                            icon="i-lucide-plus"
-                            :to="`/${structureInfo.url}/add`" />
+                        <PermissionGuard
+                            :permission="
+                                structureInfo.url
+                                    ? `${structureInfo.url}.edit`
+                                    : undefined
+                            ">
+                            <UButton
+                                :label="`新增${structureInfo.label || ''}`"
+                                color="primary"
+                                icon="i-lucide-plus"
+                                :to="`/${structureInfo.url}/add`" />
+                        </PermissionGuard>
                     </template>
 
                     <!-- Case 模組的按鈕 -->
                     <template v-else-if="structureInfo.moduleName === 'case'">
-                        <UButton
-                            :label="`新增${structureInfo.label || ''}`"
-                            color="primary"
-                            icon="i-lucide-plus"
-                            :to="`/${structureInfo.url}/add`" />
+                        <PermissionGuard
+                            :permission="
+                                structureInfo.url
+                                    ? `${structureInfo.url}.add`
+                                    : undefined
+                            ">
+                            <UButton
+                                :label="`新增${structureInfo.label || ''}`"
+                                color="primary"
+                                icon="i-lucide-plus"
+                                :to="`/${structureInfo.url}/add`" />
+                        </PermissionGuard>
                     </template>
 
                     <!-- Progress 模組的按鈕 -->
                     <template
                         v-else-if="structureInfo.moduleName === 'progress'">
-                        <UButton
-                            :label="`新增${structureInfo.label || ''}`"
-                            color="primary"
-                            icon="i-lucide-plus"
-                            :to="`/${structureInfo.url}/add`" />
+                        <PermissionGuard
+                            :permission="
+                                structureInfo.url
+                                    ? `${structureInfo.url}.add`
+                                    : undefined
+                            ">
+                            <UButton
+                                :label="`新增${structureInfo.label || ''}`"
+                                color="primary"
+                                icon="i-lucide-plus"
+                                :to="`/${structureInfo.url}/add`" />
+                        </PermissionGuard>
                     </template>
                 </template>
             </UDashboardNavbar>

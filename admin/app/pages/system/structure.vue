@@ -1,6 +1,6 @@
 <script setup lang="ts">
 definePageMeta({
-    middleware: "auth"
+    middleware: ["auth", "permission"]
 });
 
 import { useSortable } from "@vueuse/integrations/useSortable";
@@ -30,7 +30,6 @@ const handleModalSuccess = async () => {
     await nextTick();
     setupRootSortable();
 };
-
 
 const handleDelete = (level: any) => {
     console.log("handleDelete", level);
@@ -86,13 +85,12 @@ const setupRootSortable = () => {
         draggable: "tr[data-depth='0']",
         fallbackOnBody: true,
         swapThreshold: 0.65,
-        onStart: function (evt: any) {
-            console.log("onStart", evt);
-            // 拖曳開始時收合當前層級
-            isExpanded.value = false;
-        },
+        // onStart: function (evt: any) {
+        //     console.log("onStart", evt);
+        //     // 拖曳開始時收合當前層級
+        //     isExpanded.value = false;
+        // },
         onUpdate: async (evt: any) => {
-
             console.log("onUpdate", evt);
             const list = data.value || [];
             const rows = (Array.from(
@@ -137,6 +135,10 @@ const setupRootSortable = () => {
                 movedId: evt.item?.dataset?.levelId,
                 idsAfter: data.value.map((x) => x?.id)
             });
+
+            // 重新設置 sortable，確保拖曳功能繼續有效
+            await nextTick();
+            setupRootSortable();
         }
     });
     sortableStop = stop;
@@ -222,7 +224,7 @@ onMounted(async () => {
                                 </th>
                                 <th
                                     class="w-[120px] py-2 px-4 text-left border-y border-default first:border-l last:border-r">
-                                    是否上線
+                                    狀態
                                 </th>
                                 <th
                                     class="py-2 px-4 text-left border-y border-default first:border-l last:border-r">

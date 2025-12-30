@@ -1,8 +1,4 @@
 <script setup lang="ts">
-definePageMeta({
-    middleware: "auth"
-});
-
 const { submitContact, loading } = useAppContact();
 const toast = useToast();
 const route = useRoute();

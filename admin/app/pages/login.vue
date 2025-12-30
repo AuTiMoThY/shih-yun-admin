@@ -14,6 +14,7 @@ const form = reactive({
 
 const loading = ref(false);
 const errorMessage = ref("");
+const isShowPassword = ref(false);
 
 const handleLogin = async () => {
     loading.value = true;
@@ -66,11 +67,31 @@ const handleLogin = async () => {
                 <UFormField label="密碼" name="password" required>
                     <UInput
                         v-model="form.password"
-                        type="password"
+                        :type="isShowPassword ? 'text' : 'password'"
                         placeholder="請輸入密碼"
                         size="lg"
                         :disabled="loading"
-                        class="w-full" />
+                        class="w-full">
+                        <template #trailing>
+                            <UButton
+                                color="neutral"
+                                variant="link"
+                                size="sm"
+                                :icon="
+                                    isShowPassword
+                                        ? 'i-lucide-eye-off'
+                                        : 'i-lucide-eye'
+                                "
+                                :aria-label="
+                                    isShowPassword
+                                        ? 'Hide password'
+                                        : 'Show password'
+                                "
+                                :aria-pressed="isShowPassword"
+                                aria-controls="password"
+                                @click="isShowPassword = !isShowPassword" />
+                        </template>
+                    </UInput>
                 </UFormField>
 
                 <div v-if="errorMessage" class="text-sm text-red-500">

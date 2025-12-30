@@ -29,10 +29,9 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `sys_admin` (
   `id` bigint(20) UNSIGNED NOT NULL COMMENT '主鍵',
-  `permission_name` varchar(50) DEFAULT NULL COMMENT '權限名稱',
-  `status` tinyint(1) NOT NULL DEFAULT 1 COMMENT '狀態：1=啟用,0=停用',
   `username` varchar(100) NOT NULL COMMENT '帳號（唯一）',
   `password_hash` varchar(255) NOT NULL COMMENT '密碼雜湊值',
+  `status` tinyint(1) NOT NULL DEFAULT 1 COMMENT '狀態：1=啟用,0=停用',
   `name` varchar(100) NOT NULL COMMENT '姓名',
   `phone` varchar(50) DEFAULT NULL COMMENT '電話',
   `address` varchar(255) DEFAULT NULL COMMENT '地址',
@@ -44,10 +43,9 @@ CREATE TABLE `sys_admin` (
 -- 傾印資料表的資料 `sys_admin`
 --
 
-INSERT INTO `sys_admin` (`id`, `permission_name`, `status`, `username`, `password_hash`, `name`, `phone`, `address`, `created_at`, `updated_at`) VALUES
-(1, 'admin', 1, 'test', '$2y$10$rGgUGiFL6L/apmYDVQBIHOq.0xz1e9LBnT/h4tTRScH8xYb3a4xzG', 'test', '', '', '2025-12-09 01:27:23', '2025-12-09 01:27:23'),
-(2, 'admin', 1, 'test1', '$2y$10$2C7yQxlBEGAwhalr4cComOkVtzAJEWNoIqz1rW.hmvn5C8IjH/Cby', 'test1', '', '', '2025-12-09 01:31:54', '2025-12-09 01:31:54'),
-(6, 'admin', 1, 'admin', '$2y$10$CjlAGYn0gfVJJP54D3SsGe.bSosQi.A3F9vmN66uc3vcPca9RNGse', 'admin', '', '', '2025-12-09 19:15:48', '2025-12-09 19:15:48');
+INSERT INTO `sys_admin` (`id`, `username`, `password_hash`, `status`, `name`, `phone`, `address`, `created_at`, `updated_at`) VALUES
+(1, 'ucyadmin', '$2y$10$PX9Mn101wF00jIgKMLsBMuKmXWQAjuUPGPIx/oKQK7jKiyZv2mdHq', 1, 'test', '', '', '2025-12-09 01:27:23', '2025-12-09 01:27:23'),
+(2, 'admin', '$2y$10$CjlAGYn0gfVJJP54D3SsGe.bSosQi.A3F9vmN66uc3vcPca9RNGse', 1, 'admin', '', '', '2025-12-09 19:15:48', '2025-12-09 19:15:48');
 
 --
 -- 已傾印資料表的索引
@@ -68,7 +66,7 @@ ALTER TABLE `sys_admin`
 -- 使用資料表自動遞增(AUTO_INCREMENT) `sys_admin`
 --
 ALTER TABLE `sys_admin`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主鍵', AUTO_INCREMENT=7;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主鍵', AUTO_INCREMENT=3;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

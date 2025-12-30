@@ -1,6 +1,6 @@
 <script setup lang="ts">
 definePageMeta({
-    middleware: "auth"
+    middleware: ["auth", "permission"]
 });
 import { useSortable } from "@vueuse/integrations/useSortable";
 import { STATUS_LABEL_MAP } from "~/constants/system/status";
@@ -8,16 +8,84 @@ import { STATUS_ICON_MAP } from "~/constants/system/status_icon";
 
 const UButton = resolveComponent("UButton");
 const UIcon = resolveComponent("UIcon");
-const { data, loading, fetchData, deletePermission, updateSortOrder } = usePermissionData();
+const {
+    data: allPermissions,
+    loading,
+    fetchData,
+    deletePermission,
+    updateSortOrder
+} = usePermissionData();
+const { data: structureData, fetchData: fetchStructures } = useStructure();
 const { data: moduleData, fetchData: fetchModules } = useModule();
 const addPermissionModalOpen = ref(false);
 const editPermissionModalOpen = ref(false);
 const editData = ref<any>(null);
-const selectedModuleId = ref<number | null>(null);
+const selectedStructureId = ref<number | null>(null);
 const deleteConfirmModalOpen = ref(false);
 const deleteTarget = ref<{ id: number | string; label: string } | null>(null);
 const tableBodyRef = ref<HTMLElement | null>(null);
+const sortableData = ref<any[]>([]);
 let sortableStop: (() => void) | null = null;
+
+// 扁平化單元樹狀結構，用於下拉選單
+const flattenStructures = (items: any[]): any[] => {
+    const result: any[] = [];
+    const traverse = (nodes: any[]) => {
+        for (const node of nodes) {
+            if (node && node.id) {
+                // 只顯示有 URL 的單元（表示是實際的單元，而非分類）
+                if (node.url) {
+                    result.push({
+                        id: node.id,
+                        label: node.label,
+                        url: node.url
+                    });
+                }
+                // 遞迴處理子節點
+                if (node.children && Array.isArray(node.children)) {
+                    traverse(node.children);
+                }
+            }
+        }
+    };
+    traverse(items);
+    return result;
+};
+
+const structureList = computed(() =>
+    flattenStructures(structureData.value || [])
+);
+
+// 根據選中的單元篩選權限
+const data = computed(() => {
+    if (!selectedStructureId.value) {
+        return allPermissions.value || [];
+    }
+
+    const selectedStructure = structureList.value.find(
+        (s: any) => s.id === selectedStructureId.value
+    );
+
+    if (!selectedStructure || !selectedStructure.url) {
+        return allPermissions.value || [];
+    }
+
+    // 根據單元的 URL 篩選權限（權限名稱以 {url}. 開頭）
+    const urlPrefix = `${selectedStructure.url}.`;
+    return (allPermissions.value || []).filter(
+        (p: any) => p.name && p.name.startsWith(urlPrefix)
+    );
+});
+
+const structureLabel = (item: any) => {
+    if (!item.name) {
+        return "-";
+    }
+    // 從權限名稱中提取 URL 前綴（例如：about.view -> about）
+    const urlPrefix = item.name.split(".")[0];
+    const structure = structureList.value.find((s: any) => s.url === urlPrefix);
+    return structure?.label ?? "-";
+};
 
 const addPermission = () => {
     addPermissionModalOpen.value = true;
@@ -39,7 +107,7 @@ const handleDelete = async (data: any) => {
 const confirmDelete = async () => {
     await deletePermission(deleteTarget.value?.id as number, {
         onSuccess: async () => {
-            await fetchData(selectedModuleId.value ?? undefined);
+            await fetchData();
             await nextTick();
             setupSortable();
         }
@@ -48,9 +116,9 @@ const confirmDelete = async () => {
     deleteTarget.value = null;
 };
 
-const handleModuleFilter = async () => {
-    const moduleId = selectedModuleId.value;
-    await fetchData(moduleId ?? undefined);
+const handleStructureFilter = async () => {
+    // 重新載入所有權限資料（篩選邏輯在 computed 中處理）
+    await fetchData();
     await nextTick();
     setupSortable();
 };
@@ -66,7 +134,10 @@ const setupSortable = () => {
         return;
     }
 
-    const { stop } = useSortable(tableBodyRef, data, {
+    // 同步資料到 sortableData
+    sortableData.value = [...data.value];
+
+    const { stop } = useSortable(tableBodyRef, sortableData, {
         handle: ".drag-handle",
         animation: 150,
         draggable: "tr",
@@ -74,9 +145,11 @@ const setupSortable = () => {
         swapThreshold: 0.65,
         onUpdate: async (evt: any) => {
             console.log("onUpdate", evt);
-            const list = data.value || [];
+            const list = sortableData.value || [];
             const rows = (Array.from(
-                tableBodyRef.value?.querySelectorAll("tr[data-permission-id]") ?? []
+                tableBodyRef.value?.querySelectorAll(
+                    "tr[data-permission-id]"
+                ) ?? []
             ) || []) as HTMLElement[];
             const idsAfterDom = rows
                 .map((r) => r.dataset.permissionId)
@@ -104,17 +177,17 @@ const setupSortable = () => {
                     idsAfterDom,
                     listIds: list.map((x) => x?.id)
                 });
-                await fetchData(selectedModuleId.value ?? undefined);
+                await fetchData();
                 await nextTick();
                 setupSortable();
                 return;
             }
 
-            data.value = [...newList];
-            await updateSortOrder(data.value);
+            sortableData.value = [...newList];
+            await updateSortOrder(sortableData.value);
             console.log("onUpdate done", {
                 movedId: evt.item?.dataset?.permissionId,
-                idsAfter: data.value.map((x) => x?.id)
+                idsAfter: sortableData.value.map((x) => x?.id)
             });
         }
     });
@@ -129,8 +202,18 @@ onUnmounted(() => {
     }
 });
 
+// 監聽 data 變化，同步到 sortableData（用於排序）
+watch(
+    data,
+    (newData) => {
+        sortableData.value = [...newData];
+    },
+    { immediate: true }
+);
+
 onMounted(async () => {
     await fetchModules();
+    await fetchStructures();
     await fetchData();
     await nextTick();
     setupSortable();
@@ -156,13 +239,16 @@ onMounted(async () => {
             <UDashboardToolbar>
                 <template #left>
                     <USelect
-                        v-model="selectedModuleId"
+                        v-model="selectedStructureId"
                         :items="[
-                            { label: '全部模組', value: null },
-                            ...moduleData.map((m: any) => ({ label: m.label, value: m.id }))
+                            { label: '全部單元', value: null },
+                            ...structureList.map((s: any) => ({ 
+                                label: s.label, 
+                                value: s.id 
+                            }))
                         ]"
-                        placeholder="篩選模組"
-                        @change="handleModuleFilter"
+                        placeholder="篩選單元"
+                        @change="handleStructureFilter"
                         class="w-48" />
                 </template>
             </UDashboardToolbar>
@@ -177,8 +263,7 @@ onMounted(async () => {
                     <thead>
                         <tr class="bg-elevated/50">
                             <th
-                                class="w-[40px] py-2 px-4 text-left first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r">
-                            </th>
+                                class="w-[40px] py-2 px-4 text-left first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r"></th>
                             <th
                                 class="py-2 px-4 text-left first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r">
                                 權限名稱
@@ -189,7 +274,7 @@ onMounted(async () => {
                             </th>
                             <th
                                 class="py-2 px-4 text-left first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r">
-                                模組
+                                單元
                             </th>
                             <th
                                 class="py-2 px-4 text-left first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r">
@@ -202,7 +287,9 @@ onMounted(async () => {
                         </tr>
                     </thead>
                     <tbody ref="tableBodyRef">
-                        <template v-for="(item, idx) in data" :key="item?.id ?? `permission-${idx}`">
+                        <template
+                            v-for="(item, idx) in sortableData"
+                            :key="item?.id ?? `permission-${idx}`">
                             <tr
                                 v-if="item"
                                 :data-permission-id="item.id"
@@ -219,34 +306,13 @@ onMounted(async () => {
                                     {{ item.name }}
                                 </td>
                                 <td class="py-2 px-4 border-b border-default">
-                                    <template v-if="item.module_id">
-                                        {{
-                                            moduleData.find(
-                                                (m: any) => m.id === item.module_id
-                                            )?.label ?? "-"
-                                        }}
+                                    <template v-if="item.name">
+                                        {{ structureLabel(item) }}
                                     </template>
                                     <template v-else>-</template>
                                 </td>
                                 <td class="py-2 px-4 border-b border-default">
-                                    <div class="flex items-center gap-2">
-                                        <UIcon
-                                            :name="
-                                                STATUS_ICON_MAP[String(item.status)] ??
-                                                'i-lucide-help-circle'
-                                            "
-                                            :class="
-                                                Number(item.status) === 1
-                                                    ? 'text-emerald-500'
-                                                    : 'text-rose-500'
-                                            " />
-                                        <span>
-                                            {{
-                                                STATUS_LABEL_MAP[String(item.status)] ??
-                                                item.status
-                                            }}
-                                        </span>
-                                    </div>
+                                    <DataTableStatus :status="item.status" />
                                 </td>
                                 <td class="py-2 px-4 border-b border-default">
                                     <div class="flex items-center gap-2">
@@ -270,7 +336,7 @@ onMounted(async () => {
                     </tbody>
                 </table>
                 <div
-                    v-if="!loading && data.length === 0"
+                    v-if="!loading && sortableData.length === 0"
                     class="flex items-center justify-center py-12 text-gray-500">
                     暫無資料
                 </div>
@@ -285,8 +351,7 @@ onMounted(async () => {
         mode="add"
         @added="
             async () => {
-                const moduleId = selectedModuleId;
-                await fetchData(moduleId ?? undefined);
+                await fetchData();
                 await nextTick();
                 setupSortable();
             }
@@ -297,8 +362,7 @@ onMounted(async () => {
         :data="editData"
         @updated="
             async () => {
-                const moduleId = selectedModuleId;
-                await fetchData(moduleId ?? undefined);
+                await fetchData();
                 await nextTick();
                 setupSortable();
             }

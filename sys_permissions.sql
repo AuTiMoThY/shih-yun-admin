@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- 主機： 127.0.0.1
--- 產生時間： 2025-12-29 03:52:22
+-- 產生時間： 2025-12-30 07:33:51
 -- 伺服器版本： 10.4.32-MariaDB
 -- PHP 版本： 8.1.25
 
@@ -36,22 +36,10 @@ CREATE TABLE `sys_permissions` (
   `category` varchar(50) DEFAULT NULL COMMENT '分類（如：tw, sg, mm）',
   `action` varchar(50) DEFAULT NULL COMMENT '動作（如：view, create, edit, delete, manage）',
   `status` tinyint(1) NOT NULL DEFAULT 1 COMMENT '狀態：1=啟用,0=停用',
+  `sort_order` int(11) NOT NULL DEFAULT 0 COMMENT '排序順序（數字越小越前面）',
   `created_at` timestamp NULL DEFAULT current_timestamp() COMMENT '建立時間',
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT '更新時間'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci COMMENT='權限表';
-
---
--- 傾印資料表的資料 `sys_permissions`
---
-
-INSERT INTO `sys_permissions` (`id`, `name`, `label`, `description`, `module_id`, `category`, `action`, `status`, `created_at`, `updated_at`) VALUES
-(1, 'about.section.create', '關於我們-新增區塊', '新增區塊(卡)', NULL, '', 'create', 1, '2025-12-15 18:53:57', '2025-12-16 19:39:58'),
-(2, 'about.section.delete', '關於我們-刪除區塊', '刪除區塊(卡)', NULL, NULL, 'delete', 1, '2025-12-15 18:53:57', '2025-12-15 18:53:57'),
-(3, 'about.section.sort', '關於我們-區塊排序', '區塊上移/下移', NULL, NULL, 'sort', 1, '2025-12-15 18:53:57', '2025-12-15 18:53:57'),
-(4, 'about.field.create', '關於我們-新增欄位', '新增欄位', NULL, NULL, 'create', 1, '2025-12-15 18:53:57', '2025-12-15 18:53:57'),
-(5, 'about.field.delete', '關於我們-刪除欄位', '刪除欄位', NULL, NULL, 'delete', 1, '2025-12-15 18:53:57', '2025-12-15 18:53:57'),
-(6, 'about.field.sort', '關於我們-欄位排序', '欄位上移/下移', NULL, NULL, 'sort', 1, '2025-12-15 18:53:57', '2025-12-15 18:53:57'),
-(11, 'about.view', '關於我們-單元查看', '', 1, '', '', 1, '2025-12-28 18:48:21', '2025-12-28 18:48:21');
 
 --
 -- 已傾印資料表的索引
@@ -63,7 +51,8 @@ INSERT INTO `sys_permissions` (`id`, `name`, `label`, `description`, `module_id`
 ALTER TABLE `sys_permissions`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `unique_name` (`name`),
-  ADD KEY `idx_module_id` (`module_id`);
+  ADD KEY `idx_module_id` (`module_id`),
+  ADD KEY `idx_sort_order` (`sort_order`);
 
 --
 -- 在傾印的資料表使用自動遞增(AUTO_INCREMENT)
@@ -73,7 +62,7 @@ ALTER TABLE `sys_permissions`
 -- 使用資料表自動遞增(AUTO_INCREMENT) `sys_permissions`
 --
 ALTER TABLE `sys_permissions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主鍵', AUTO_INCREMENT=12;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主鍵';
 
 --
 -- 已傾印資料表的限制式

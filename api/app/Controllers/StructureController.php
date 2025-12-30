@@ -2,15 +2,18 @@
 namespace App\Controllers;
 
 use App\Models\SysStructureModel;
+use App\Models\PermissionModel;
 use CodeIgniter\HTTP\ResponseInterface;
 
 class StructureController extends BaseController
 {
     protected $SysStructureModel;
+    protected $permissionModel;
 
     public function __construct()
     {
         $this->SysStructureModel = new SysStructureModel();
+        $this->permissionModel = new PermissionModel();
     }
 
     /**
@@ -79,6 +82,11 @@ class StructureController extends BaseController
                     'success' => false,
                     'message' => '新增層級失敗，請稍後再試',
                 ]);
+            }
+
+            // 如果有 URL，自動創建對應的權限（view 和 edit）
+            if (!empty($insertData['url'])) {
+                $this->createPermissionsForStructure($insertData['url'], $insertData['label'], $insertData['module_id']);
             }
 
             return $this->response->setJSON([
@@ -231,6 +239,16 @@ class StructureController extends BaseController
                 ]);
             }
 
+            // 處理權限的創建或更新
+            $newUrl = array_key_exists('url', $updateData) ? $updateData['url'] : ($level['url'] ?? null);
+            $label = array_key_exists('label', $updateData) ? $updateData['label'] : ($level['label'] ?? '');
+            $moduleId = array_key_exists('module_id', $updateData) ? $updateData['module_id'] : ($level['module_id'] ?? null);
+
+            // 如果有 URL，創建或更新對應的權限
+            if (!empty($newUrl) && !empty($label)) {
+                $this->createPermissionsForStructure($newUrl, $label, $moduleId);
+            }
+
             return $this->response->setJSON([
                 'success' => true,
                 'message' => '更新層級成功',
@@ -341,6 +359,67 @@ class StructureController extends BaseController
                 'message' => '更新排序順序失敗，請稍後再試',
                 'error' => ENVIRONMENT !== 'production' ? $e->getMessage() : null,
             ]);
+        }
+    }
+
+    /**
+     * 為結構創建對應的權限（view 和 edit）
+     * 
+     * @param string $url 結構的 URL
+     * @param string $label 結構的標籤名稱
+     * @param int|null $moduleId 模組 ID
+     * @return void
+     */
+    protected function createPermissionsForStructure($url, $label, $moduleId = null)
+    {
+        if (empty($url) || empty($label)) {
+            return;
+        }
+
+        $permissions = [
+            [
+                'name' => $url . '.view',
+                'label' => $label . '-查看',
+                'description' => '查看' . $label . '單元',
+                'module_id' => $moduleId,
+                'category' => '',
+                'action' => 'view',
+                'status' => 1,
+            ],
+            [
+                'name' => $url . '.edit',
+                'label' => $label . '-編輯',
+                'description' => '編輯' . $label . '單元',
+                'module_id' => $moduleId,
+                'category' => '',
+                'action' => 'edit',
+                'status' => 1,
+            ],
+        ];
+
+        foreach ($permissions as $permissionData) {
+            // 檢查權限是否已存在
+            $existing = $this->permissionModel->where('name', $permissionData['name'])->first();
+            
+            if ($existing) {
+                // 如果已存在，更新標籤和描述（保持其他欄位不變）
+                $this->permissionModel->skipValidation(true)->update($existing['id'], [
+                    'label' => $permissionData['label'],
+                    'description' => $permissionData['description'],
+                    'module_id' => $permissionData['module_id'],
+                ]);
+            } else {
+                // 如果不存在，創建新權限
+                try {
+                    $this->permissionModel->skipValidation(true)->insert($permissionData);
+                } catch (\Throwable $e) {
+                    // 記錄錯誤但不中斷流程
+                    log_message('error', 'createPermissionForStructure failed: {message}', [
+                        'message' => $e->getMessage(),
+                        'permission' => $permissionData['name']
+                    ]);
+                }
+            }
         }
     }
 }

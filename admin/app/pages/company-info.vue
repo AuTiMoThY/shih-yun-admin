@@ -1,6 +1,6 @@
 <script setup lang="ts">
 definePageMeta({
-    middleware: "auth"
+    middleware: ["auth", "permission"]
 });
 
 import { getCityArray, getDistrictArray, getZipCode } from "@simoko/tw-zip";

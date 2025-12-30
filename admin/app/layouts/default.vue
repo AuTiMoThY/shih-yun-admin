@@ -167,7 +167,7 @@ const links = computed(() => {
             {
                 label: "模擬前台聯絡表單",
                 icon: "i-lucide-form-input",
-                to: "/contact/contact-frontend",
+                to: "/contact-frontend",
                 onSelect: () => {
                     open.value = false;
                 }

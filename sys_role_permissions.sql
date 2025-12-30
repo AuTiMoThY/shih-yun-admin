@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- 主機： 127.0.0.1
--- 產生時間： 2025-12-16 09:49:11
+-- 產生時間： 2025-12-30 07:34:02
 -- 伺服器版本： 10.4.32-MariaDB
 -- PHP 版本： 8.1.25
 
@@ -56,7 +56,7 @@ ALTER TABLE `sys_role_permissions`
 -- 使用資料表自動遞增(AUTO_INCREMENT) `sys_role_permissions`
 --
 ALTER TABLE `sys_role_permissions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主鍵', AUTO_INCREMENT=19;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主鍵';
 
 --
 -- 已傾印資料表的限制式

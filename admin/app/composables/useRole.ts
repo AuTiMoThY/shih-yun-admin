@@ -164,7 +164,7 @@ export const useRole = () => {
                 body: form
             });
             if (res.success) {
-                resetForm();
+                // resetForm();
                 if (targetModal) targetModal.value = false;
                 options?.onSuccess?.();
                 toast.add({
@@ -251,7 +251,7 @@ export const useRole = () => {
                 body: requestBody
             });
             if (res.success) {
-                resetForm();
+                // resetForm();
                 if (targetModal) targetModal.value = false;
                 options?.onSuccess?.();
 

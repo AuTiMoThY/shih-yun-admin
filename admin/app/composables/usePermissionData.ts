@@ -59,7 +59,7 @@ export const usePermissionData = () => {
     };
 
     const fetchById = async (id: number | string) => {
-        loading.value = true;
+        // loading.value = true;
         try {
             const res = await $fetch<{
                 success: boolean;
@@ -83,7 +83,7 @@ export const usePermissionData = () => {
             console.error("fetchById error", error);
             return null;
         } finally {
-            loading.value = false;
+            // loading.value = false;
         }
     };
 
