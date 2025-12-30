@@ -92,7 +92,7 @@ class AuthController extends BaseController
             ->where('sys_user_roles.user_id', $userId)
             ->where('sys_roles.status', 1)
             ->findAll();
-        
+
         return $userRoles;
     }
     /**
@@ -107,7 +107,7 @@ class AuthController extends BaseController
             'password' => 'required',
         ];
 
-        if (! $this->validateData($payload, $rules)) {
+        if (!$this->validateData($payload, $rules)) {
             return $this->response->setStatusCode(ResponseInterface::HTTP_BAD_REQUEST)->setJSON([
                 'success' => false,
                 'message' => '請提供帳號與密碼',
@@ -118,7 +118,7 @@ class AuthController extends BaseController
 
 
 
-        if (! $admin) {
+        if (!$admin) {
             // HTTP_UNAUTHORIZED = 401 (未授權)
             return $this->response->setStatusCode(ResponseInterface::HTTP_UNAUTHORIZED)->setJSON([
                 'success' => false,
@@ -134,7 +134,7 @@ class AuthController extends BaseController
             ]);
         }
 
-        if (! password_verify($payload['password'], $admin['password_hash'])) {
+        if (!password_verify($payload['password'], $admin['password_hash'])) {
             // HTTP_UNAUTHORIZED = 401 (未授權)
             return $this->response->setStatusCode(ResponseInterface::HTTP_UNAUTHORIZED)->setJSON([
                 'success' => false,
@@ -151,17 +151,17 @@ class AuthController extends BaseController
         $permissions = $this->getUserPermissions($admin['id']);
 
         $user = [
-            'id'              => $admin['id'],
+            'id' => $admin['id'],
             'permission_name' => $admin['permission_name'],
-            'status'          => (int) $admin['status'],
-            'username'        => $admin['username'],
-            'name'            => $admin['name'],
-            'phone'           => $admin['phone'],
-            'address'         => $admin['address'],
-            'created_at'      => $admin['created_at'],
-            'updated_at'      => $admin['updated_at'],
-            'roles'           => $roles,
-            'permissions'     => $permissions,
+            'status' => (int) $admin['status'],
+            'username' => $admin['username'],
+            'name' => $admin['name'],
+            'phone' => $admin['phone'],
+            'address' => $admin['address'],
+            'created_at' => $admin['created_at'],
+            'updated_at' => $admin['updated_at'],
+            'roles' => $roles,
+            'permissions' => $permissions,
         ];
 
         $session->set('admin_user', $user);
@@ -169,8 +169,8 @@ class AuthController extends BaseController
         return $this->response->setJSON([
             'success' => true,
             'message' => '登入成功',
-            'data'    => [
-                'user'  => $user,
+            'data' => [
+                'user' => $user,
                 'token' => session_id(),
             ],
         ]);
@@ -183,7 +183,7 @@ class AuthController extends BaseController
         $session = session();
         $user = $session->get('admin_user');
 
-        if (! $user) {
+        if (!$user) {
             // HTTP_UNAUTHORIZED = 401 (未授權)
             return $this->response->setStatusCode(ResponseInterface::HTTP_UNAUTHORIZED)->setJSON([
                 'success' => false,
@@ -202,7 +202,7 @@ class AuthController extends BaseController
 
         return $this->response->setJSON([
             'success' => true,
-            'data'    => $user,
+            'data' => $user,
         ]);
     }
 
