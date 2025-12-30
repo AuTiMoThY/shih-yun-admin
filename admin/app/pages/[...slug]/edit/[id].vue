@@ -192,6 +192,8 @@ onMounted(async () => {
     // 等待結構資料載入完成後再載入項目資料
     await nextTick();
     await loadItemData();
+
+    console.log("[editPage] previewData", previewData);
 });
 
 // 監聽路徑變化

@@ -239,14 +239,27 @@ class StructureController extends BaseController
                 ]);
             }
 
-            // 處理權限的創建或更新
+            // 處理權限的同步
+            $oldUrl = $level['url'] ?? null;
             $newUrl = array_key_exists('url', $updateData) ? $updateData['url'] : ($level['url'] ?? null);
             $label = array_key_exists('label', $updateData) ? $updateData['label'] : ($level['label'] ?? '');
             $moduleId = array_key_exists('module_id', $updateData) ? $updateData['module_id'] : ($level['module_id'] ?? null);
 
-            // 如果有 URL，創建或更新對應的權限
-            if (!empty($newUrl) && !empty($label)) {
-                $this->createPermissionsForStructure($newUrl, $label, $moduleId);
+            // 如果 URL 有變更
+            if ($oldUrl !== $newUrl) {
+                // 如果舊 URL 存在，刪除舊權限
+                if (!empty($oldUrl)) {
+                    $this->deletePermissionsForStructure($oldUrl);
+                }
+                // 如果新 URL 存在，創建新權限
+                if (!empty($newUrl) && !empty($label)) {
+                    $this->createPermissionsForStructure($newUrl, $label, $moduleId);
+                }
+            } else {
+                // 如果 URL 沒有變更，但 label 或其他資訊有更新，更新現有權限
+                if (!empty($newUrl) && !empty($label)) {
+                    $this->createPermissionsForStructure($newUrl, $label, $moduleId);
+                }
             }
 
             return $this->response->setJSON([
@@ -280,6 +293,15 @@ class StructureController extends BaseController
         }
 
         try {
+            // 先獲取層級資料，以便刪除對應的權限
+            $level = $this->SysStructureModel->find($id);
+            if (!$level) {
+                return $this->response->setStatusCode(ResponseInterface::HTTP_NOT_FOUND)->setJSON([
+                    'success' => false,
+                    'message' => '層級不存在',
+                ]);
+            }
+
             // 檢查是否有子層級
             $children = $this->SysStructureModel->getChildren($id);
             if (!empty($children)) {
@@ -287,6 +309,11 @@ class StructureController extends BaseController
                     'success' => false,
                     'message' => '此層級下還有子層級，無法刪除',
                 ]);
+            }
+
+            // 如果有 URL，刪除對應的權限
+            if (!empty($level['url'])) {
+                $this->deletePermissionsForStructure($level['url']);
             }
 
             $deleted = $this->SysStructureModel->delete($id);
@@ -419,6 +446,39 @@ class StructureController extends BaseController
                         'permission' => $permissionData['name']
                     ]);
                 }
+            }
+        }
+    }
+
+    /**
+     * 刪除結構對應的權限（view 和 edit）
+     * 
+     * @param string $url 結構的 URL
+     * @return void
+     */
+    protected function deletePermissionsForStructure($url)
+    {
+        if (empty($url)) {
+            return;
+        }
+
+        $permissionNames = [
+            $url . '.view',
+            $url . '.edit',
+        ];
+
+        foreach ($permissionNames as $permissionName) {
+            try {
+                $permission = $this->permissionModel->where('name', $permissionName)->first();
+                if ($permission) {
+                    $this->permissionModel->delete($permission['id']);
+                }
+            } catch (\Throwable $e) {
+                // 記錄錯誤但不中斷流程
+                log_message('error', 'deletePermissionForStructure failed: {message}', [
+                    'message' => $e->getMessage(),
+                    'permission' => $permissionName
+                ]);
             }
         }
     }

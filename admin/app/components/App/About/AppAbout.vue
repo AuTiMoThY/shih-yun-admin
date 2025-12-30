@@ -26,6 +26,8 @@ const deleteConfirmModalOpen = ref(false);
 const deleteTarget = ref<{ id: string; label: string } | null>(null);
 
 // 新增區塊
+// 注意：新增區塊後不會立即儲存，需要用戶點擊「儲存」按鈕才會儲存
+// 儲存時會使用 props.structureId 來確保資料對應到正確的單元
 const addCutSection = async () => {
     const newSectionId = `section-${buildId.value}`;
     cutSections.value.push({
@@ -58,6 +60,7 @@ const updateSection = (updatedSection: CutSectionData) => {
 };
 
 // 刪除區塊
+// 確保使用 props.structureId 來儲存，避免資料錯亂
 const deleteSection = async (sectionId: string) => {
     const index = cutSections.value.findIndex((s) => s.id === sectionId);
     if (index !== -1) {
@@ -68,6 +71,7 @@ const deleteSection = async (sectionId: string) => {
         });
         console.log(`第${index + 1}卡已刪除:`, sectionId);
     }
+    // 使用 structureId 確保資料對應到正確的單元
     await saveAbout(props.structureId ?? null);
 };
 
@@ -86,6 +90,7 @@ const confirmDeleteSection = () => {
 };
 
 // 移動區塊排序
+// 確保使用 props.structureId 來儲存，避免資料錯亂
 const moveSection = async (sectionId: string, direction: "up" | "down") => {
     const currentIndex = cutSections.value.findIndex((s) => s.id === sectionId);
     if (currentIndex === -1) return;
@@ -105,12 +110,15 @@ const moveSection = async (sectionId: string, direction: "up" | "down") => {
     });
     cutSections.value = sections;
 
+    // 使用 structureId 確保資料對應到正確的單元
     await saveAbout(props.structureId ?? null);
 };
 
 // 儲存所有區塊資料
+// 確保使用 props.structureId 來儲存，避免資料錯亂
 const saveAllSections = async () => {
     console.log("儲存所有區塊資料:", cutSections.value);
+    // 使用 structureId 確保資料對應到正確的單元
     await saveAbout(props.structureId ?? null);
 };
 

@@ -99,22 +99,30 @@ export const useFormPreview = (options?: UseFormPreviewOptions) => {
         
         // 處理圖片來源
         if (imageSources) {
-            // 封面圖：優先使用預覽，其次使用表單值
+            // 封面圖：優先使用預覽，其次使用表單值，最後使用 data 中的值
             if (imageSources.cover) {
                 const coverUrl =
                     imageSources.cover.preview ||
                     imageSources.cover.formValue ||
+                    data.cover ||
                     "";
-                previewData.value.cover = coverUrl;
+                // 只有在有實際值時才設置（避免空字串覆蓋已有值）
+                if (coverUrl) {
+                    previewData.value.cover = coverUrl;
+                }
             }
             
-            // 輪播圖：優先使用預覽陣列，其次使用表單值
+            // 輪播圖：優先使用預覽陣列，其次使用表單值，最後使用 data 中的值
             if (imageSources.slide) {
                 const slideUrls =
                     imageSources.slide.previews ||
                     imageSources.slide.formValue ||
+                    data.slide ||
                     [];
-                previewData.value.slide = [...slideUrls];
+                // 只有在有實際值時才設置（避免空陣列覆蓋已有值）
+                if (slideUrls.length > 0) {
+                    previewData.value.slide = [...slideUrls];
+                }
             }
         }
     };

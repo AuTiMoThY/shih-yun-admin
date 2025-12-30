@@ -36,6 +36,7 @@ const columns: TableColumn<any>[] = [
             });
         }
     },
+    { accessorKey: "year", header: "年份" },
     { accessorKey: "title", header: "標題" },
     {
         accessorKey: "status",

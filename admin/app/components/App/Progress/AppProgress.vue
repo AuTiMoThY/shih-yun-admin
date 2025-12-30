@@ -13,6 +13,7 @@ const props = defineProps<{
 
 const UButton = resolveComponent("UButton");
 const UIcon = resolveComponent("UIcon");
+const NuxtImg = resolveComponent("NuxtImg");
 const { data, loading, fetchData, deleteProgress } = useAppProgress();
 const { data: caseData, fetchData: fetchCaseData } = useAppCase();
 
@@ -45,6 +46,20 @@ const getCaseName = (caseId: number | null | undefined): string => {
 };
 
 const columns: TableColumn<any>[] = [
+    {
+        accessorKey: "images",
+        header: "工程進度圖片",
+        cell: ({ row }) => {
+            const images = row.original.images;
+            return h("div", { class: "flex items-center gap-2" }, [
+                h(NuxtImg, {
+                    src: images[0],
+                    alt: "工程進度圖片",
+                    class: "w-25 aspect-square object-cover"
+                })
+            ]);
+        }
+    },
     { accessorKey: "title", header: "標題" },
     {
         accessorKey: "case_id",
@@ -88,7 +103,9 @@ const columns: TableColumn<any>[] = [
                     label: "編輯",
                     color: "primary",
                     size: "xs",
-                    to: props.structureId ? `${basePath}/edit/${row.original.id}` : `/progress/edit/${row.original.id}`,
+                    to: props.structureId
+                        ? `${basePath}/edit/${row.original.id}`
+                        : `/progress/edit/${row.original.id}`
                 }),
                 h(UButton, {
                     icon: "i-lucide-trash",
@@ -154,4 +171,3 @@ defineExpose({
         "
         :on-confirm="confirmDelete" />
 </template>
-

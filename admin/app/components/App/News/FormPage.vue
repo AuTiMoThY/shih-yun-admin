@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
+import ImageUploadSingle from "~/components/Form/ImageUploadSingle.vue";
+import ImageUploadMultiple from "~/components/Form/ImageUploadMultiple.vue";
 
-const USlideover = resolveComponent("USlideover");
 const router = useRouter();
 const props = withDefaults(
     defineProps<{
@@ -39,39 +39,30 @@ const { getBasePath } = useBasePath();
 const basePath = getBasePath(router.currentRoute.value.path);
 const pathInfo = resolvePath(basePath);
 
-// 封面圖相關（使用 composable）
-const coverUpload = useImageUploadSingle({
-    onPreviewChange: (preview) => {
-        // 可以在此處理預覽變更
-    }
-});
-// 輪播圖相關（使用 composable）
-const slideUpload = useImageUploadMultiple({
-    enableSortable: true
-});
-
-// 載入初始資料
-const loadInitialData = (data: any) => {
-    if (data) {
-        loadNewsData(data.id);
-        // 載入封面圖（編輯模式下，封面圖已上傳）
-        coverUpload.loadInitialValue(data.cover || null);
-        // 載入輪播圖（編輯模式下，輪播圖已上傳）
-        slideUpload.loadInitialValue(
-            Array.isArray(data.slide) ? data.slide : []
-        );
-    }
-};
-
-// HTML 原始碼預覽開關
-const showHtmlCode = ref(false);
-
 // 側邊欄預覽功能
 const preview = useFormPreview({
     defaultOpen: false,
     width: "500px",
     title: "最新消息預覽"
 });
+
+// 圖片上傳元件引用（用於調用上傳方法）
+const coverUploadRef = ref<InstanceType<typeof ImageUploadSingle> | null>(null);
+const slideUploadRef = ref<InstanceType<typeof ImageUploadMultiple> | null>(
+    null
+);
+
+// 載入初始資料
+const loadInitialData = (data: any) => {
+    if (data) {
+        loadNewsData(Number(data.id));
+    } else {
+        resetForm();
+    }
+};
+
+// HTML 原始碼預覽開關
+const showHtmlCode = ref(false);
 
 // 監聽表單數據變化，即時更新預覽
 watch(
@@ -93,12 +84,12 @@ watch(
             },
             {
                 cover: {
-                    preview: coverUpload.preview.value,
-                    formValue: coverUpload.formValue.value
+                    preview: (coverUploadRef.value as any)?.preview?.value || null,
+                    formValue: (coverUploadRef.value as any)?.formValue?.value || form.cover || ""
                 },
                 slide: {
-                    previews: slideUpload.previews.value,
-                    formValue: slideUpload.formValue.value
+                    previews: (slideUploadRef.value as any)?.previews?.value || [],
+                    formValue: (slideUploadRef.value as any)?.formValue?.value || form.slide || []
                 }
             }
         );
@@ -113,24 +104,12 @@ const handleSubmit = async (event?: Event) => {
     // 在提交前，先上傳待上傳的圖片（如果有臨時 ID）
     // 上傳封面圖
     if (form.cover && form.cover.startsWith("temp_")) {
-        const uploadCoverSuccess = await coverUpload.upload();
+        const uploadCoverSuccess = await coverUploadRef.value?.upload();
         if (!uploadCoverSuccess) {
             return;
         }
-        // 上傳完成後，更新 form.cover 為正式 URL
-        if (
-            coverUpload.formValue.value &&
-            !coverUpload.formValue.value.startsWith("temp_")
-        ) {
-            form.cover = coverUpload.formValue.value;
-        } else if (props.mode === "edit" && props.initialData?.cover) {
-            // 編輯模式下，如果上傳失敗，保持原值
-            form.cover = props.initialData.cover;
-        }
-    } else if (form.cover && !form.cover.startsWith("temp_")) {
-        // 如果已有正式 URL，直接使用
-        form.cover = form.cover;
-    } else if (props.mode === "edit" && props.initialData?.cover) {
+        // 上傳完成後，form.cover 會自動更新（通過 v-model）
+    } else if (!form.cover && props.mode === "edit" && props.initialData?.cover) {
         // 編輯模式下，如果沒有新上傳的圖片，保持原值
         form.cover = props.initialData.cover;
     }
@@ -141,36 +120,36 @@ const handleSubmit = async (event?: Event) => {
         form.slide.length > 0 &&
         form.slide.some((slide: string) => slide && slide.startsWith("temp_"))
     ) {
-        const uploadSlidesSuccess = await slideUpload.upload();
+        const uploadSlidesSuccess = await slideUploadRef.value?.upload();
         if (!uploadSlidesSuccess) {
             return;
         }
-        // 上傳完成後，更新 form.slide 為正式 URL（使用 formValue 以保持排序）
-        if (
-            slideUpload.formValue.value &&
-            slideUpload.formValue.value.length > 0
-        ) {
-            form.slide = slideUpload.formValue.value.filter(
-                (url: string) => url && !url.startsWith("temp_")
-            );
-        } else if (props.mode === "edit" && props.initialData?.slide) {
-            // 編輯模式下，如果上傳失敗，保持原值
-            form.slide = props.initialData.slide;
-        }
-    } else {
-        // 無論是否有新上傳的圖片，都使用 formValue 的值以保持排序後的順序
-        if (
-            slideUpload.formValue.value &&
-            slideUpload.formValue.value.length > 0
-        ) {
+        // 上傳完成後，從元件的 formValue 獲取最新的值（已替換臨時 ID 為正式 URL）
+        // 從元件的 formValue 獲取最新值
+        const formValueRef = (slideUploadRef.value as any)?.formValue;
+        if (formValueRef && formValueRef.value && Array.isArray(formValueRef.value)) {
             // 過濾掉臨時 ID，只保留正式 URL
-            form.slide = slideUpload.formValue.value.filter(
+            form.slide = formValueRef.value.filter(
                 (url: string) => url && !url.startsWith("temp_")
             );
-        } else if (props.mode === "edit" && props.initialData?.slide) {
-            // 編輯模式下，如果沒有值，保持原值
-            form.slide = props.initialData.slide;
+        } else {
+            // 如果無法從元件獲取，則過濾當前的 form.slide
+            form.slide = form.slide.filter(
+                (url: string) => url && !url.startsWith("temp_")
+            );
         }
+    } else if (
+        (!form.slide || form.slide.length === 0) &&
+        props.mode === "edit" &&
+        props.initialData?.slide
+    ) {
+        // 編輯模式下，如果沒有值，保持原值
+        form.slide = props.initialData.slide;
+    } else if (form.slide && form.slide.length > 0) {
+        // 過濾掉臨時 ID，只保留正式 URL
+        form.slide = form.slide.filter(
+            (url: string) => url && !url.startsWith("temp_")
+        );
     }
 
     // 提交表單
@@ -196,154 +175,6 @@ const handleSubmit = async (event?: Event) => {
     }
 };
 
-// 綁定封面圖表單數據
-// 當出現預覽圖時，使用臨時 ID 更新 form.cover
-watch(
-    () => coverUpload.preview.value,
-    (preview) => {
-        if (preview) {
-            // 有預覽圖時，更新 form.cover
-            // 優先使用 formValue（已上傳的 URL），如果沒有則使用臨時 ID
-            if (
-                coverUpload.formValue.value &&
-                !coverUpload.formValue.value.startsWith("temp_")
-            ) {
-                // 已上傳的正式 URL
-                form.cover = coverUpload.formValue.value;
-            } else if (coverUpload.tempId.value) {
-                // 使用臨時 ID 作為標記（用於通過驗證）
-                form.cover = coverUpload.tempId.value;
-            } else if (coverUpload.formValue.value) {
-                // 如果 formValue 是臨時 ID，使用它
-                form.cover = coverUpload.formValue.value;
-            }
-        } else {
-            // 沒有預覽圖時，只有在新增模式下才清空，編輯模式下保持原值
-            if (props.mode === "add") {
-                if (
-                    !coverUpload.formValue.value ||
-                    coverUpload.formValue.value.startsWith("temp_")
-                ) {
-                    form.cover = "";
-                }
-            }
-            // 編輯模式下，如果沒有預覽圖，保持 form.cover 的當前值（可能是初始載入的值）
-        }
-    },
-    { immediate: true }
-);
-watch(
-    () => coverUpload.formValue.value,
-    (newValue) => {
-        // 當 formValue 更新時（例如上傳完成），更新 form.cover
-        if (newValue && !newValue.startsWith("temp_")) {
-            // 只有正式 URL 才更新
-            form.cover = newValue;
-        } else if (
-            !newValue &&
-            !coverUpload.preview.value &&
-            props.mode === "add"
-        ) {
-            // 只有在新增模式且沒有預覽圖時才清空
-            form.cover = "";
-        } else if (
-            newValue &&
-            newValue.startsWith("temp_") &&
-            coverUpload.tempId.value
-        ) {
-            // 如果是臨時 ID，確保 form.cover 也是臨時 ID
-            form.cover = newValue;
-        }
-        // 編輯模式下，如果沒有新值，保持 form.cover 的當前值
-    }
-);
-watch(
-    () => form.cover,
-    (newValue) => {
-        // 從外部更新 form.cover 時，同步到 coverUpload（避免循環更新）
-        // 只有在沒有預覽圖時才同步，避免覆蓋新上傳的圖片
-        if (
-            newValue !== coverUpload.formValue.value &&
-            !coverUpload.preview.value
-        ) {
-            coverUpload.formValue.value = newValue;
-        }
-    }
-);
-
-// 綁定輪播圖表單數據
-// 當出現預覽圖時，使用臨時 ID 更新 form.slide
-watch(
-    () => slideUpload.previews.value.length,
-    (previewLength) => {
-        if (previewLength > 0) {
-            // 有預覽圖時，更新 form.slide 使其長度與預覽圖數量一致
-            const formValueLength = slideUpload.formValue.value.length;
-            if (formValueLength === previewLength) {
-                // 如果 formValue 長度與預覽圖數量一致，使用 formValue（可能是臨時 ID 或正式 URL）
-                form.slide = [...slideUpload.formValue.value];
-            } else {
-                // 如果長度不一致，使用 formValue 並補充臨時 ID
-                const newSlide = [...slideUpload.formValue.value];
-                // 補充臨時 ID 直到長度一致（用於通過驗證）
-                // 注意：這裡的臨時 ID 應該已經在 handleFileSelect 時添加到 formValue 中了
-                // 但如果長度不一致，可能是因為某些原因，我們需要確保長度一致
-                for (let i = formValueLength; i < previewLength; i++) {
-                    // 檢查是否已有臨時 ID，如果沒有則生成一個（但實際上應該已經有了）
-                    // 這種情況不應該發生，因為 handleFileSelect 已經處理了
-                    // 但為了安全起見，我們保持原值
-                    // 注意：這裡的邏輯主要是確保長度一致，實際的臨時 ID 已經在 handleFileSelect 時添加了
-                }
-                form.slide = newSlide.slice(0, previewLength);
-            }
-        } else {
-            // 沒有預覽圖時，只有在新增模式下才清空，編輯模式下保持原值
-            if (props.mode === "add") {
-                if (
-                    slideUpload.formValue.value.length === 0 ||
-                    slideUpload.formValue.value.every((v: string) =>
-                        v.startsWith("temp_")
-                    )
-                ) {
-                    form.slide = [];
-                }
-            }
-            // 編輯模式下，如果沒有預覽圖，保持 form.slide 的當前值（可能是初始載入的值）
-        }
-    },
-    { immediate: true }
-);
-watch(
-    () => slideUpload.formValue.value,
-    (newValue) => {
-        // 當 formValue 更新時（例如上傳完成），更新 form.slide
-        if (newValue.length > 0) {
-            // 使用 formValue（可能包含臨時 ID 或正式 URL）
-            form.slide = [...newValue];
-        } else if (
-            slideUpload.previews.value.length === 0 &&
-            props.mode === "add"
-        ) {
-            // 只有在新增模式且沒有預覽圖時才清空
-            form.slide = [];
-        }
-        // 編輯模式下，如果沒有新值，保持 form.slide 的當前值
-    }
-);
-watch(
-    () => form.slide,
-    (newValue) => {
-        // 從外部更新 form.slide 時，同步到 slideUpload（避免循環更新）
-        // 只有在沒有預覽圖時才同步，避免覆蓋新上傳的圖片
-        if (
-            JSON.stringify(newValue) !==
-                JSON.stringify(slideUpload.formValue.value) &&
-            slideUpload.previews.value.length === 0
-        ) {
-            slideUpload.formValue.value = [...(newValue || [])];
-        }
-    }
-);
 
 // 監聽 initialData 變化
 watch(
@@ -356,30 +187,10 @@ watch(
     { immediate: true, deep: true }
 );
 
-// 監聽輪播圖數據和 DOM 引用變化，確保在數據載入且 DOM 準備好後設置排序功能
-watch(
-    () => ({
-        length: slideUpload.sortableData.value.length,
-        listRef: slideUpload.sortableListRef.value
-    }),
-    ({ length, listRef }) => {
-        if (length > 0 && listRef) {
-            // 當有數據且 DOM 引用已設置時，等待 DOM 渲染完成後再設置排序功能
-            nextTick(() => {
-                slideUpload.setupSortable();
-            });
-        }
-    },
-    { immediate: true }
-);
 
-// 初始化時重置表單（僅在新增模式）
+
 onMounted(() => {
-    if (props.mode === "add" && !props.initialData) {
-        resetForm();
-        coverUpload.reset();
-        slideUpload.reset();
-    }
+    console.log("[formPage] form", form);
 });
 
 // 暴露方法給父組件
@@ -397,7 +208,7 @@ defineExpose({
         getSlideUrls: preview.getSlideUrls
     }
 });
-// console.log(form);
+
 </script>
 
 <template>
@@ -445,119 +256,21 @@ defineExpose({
                         </UCard>
                     </div>
 
-                    <UFormField
-                        label="代表圖檔"
+                    <ImageUploadSingle
+                        ref="coverUploadRef"
+                        v-model="form.cover"
+                        label="封面圖"
                         name="cover"
+                        description="建議尺寸：1920x1080"
                         :error="errors.cover"
-                        required>
-                        <div class="space-y-2">
-                            <input
-                                :ref="coverUpload.inputRef"
-                                type="file"
-                                accept="image/*"
-                                class="hidden"
-                                @change="coverUpload.handleFileSelect" />
-                            <div
-                                v-if="coverUpload.preview.value || form.cover"
-                                class="relative w-full max-w-lg">
-                                <img
-                                    :src="
-                                        coverUpload.preview.value ||
-                                        form.cover ||
-                                        ''
-                                    "
-                                    alt="封面圖預覽"
-                                    class="w-full max-w-lg object-cover rounded-lg border"
-                                    style="max-height: 300px" />
-                                <UButton
-                                    icon="i-lucide-x"
-                                    size="xs"
-                                    color="error"
-                                    variant="solid"
-                                    class="absolute top-2 right-2"
-                                    @click="coverUpload.remove" />
-                            </div>
-                            <UButton
-                                :label="
-                                    coverUpload.preview.value || form.cover
-                                        ? '更換圖片'
-                                        : '上傳圖片'
-                                "
-                                icon="i-lucide-upload"
-                                color="primary"
-                                variant="outline"
-                                block
-                                :loading="coverUpload.isUploading.value"
-                                :disabled="
-                                    coverUpload.isUploading.value || formLoading
-                                "
-                                @click="coverUpload.triggerFileSelect" />
-                        </div>
-                    </UFormField>
-
-                    <UFormField
+                        :disabled="formLoading"
+                        :ui="{ description: 'text-sm text-primary-500' }" />
+                    <ImageUploadMultiple
+                        ref="slideUploadRef"
+                        v-model="form.slide"
                         label="輪播圖"
                         name="slide"
-                        :error="errors.slide"
-                        required>
-                        <div class="space-y-2">
-                            <input
-                                :ref="slideUpload.inputRef"
-                                type="file"
-                                accept="image/*"
-                                class="hidden"
-                                multiple
-                                @change="slideUpload.handleFileSelect" />
-                            <div
-                                v-if="slideUpload.sortableData.value.length > 0"
-                                :ref="slideUpload.sortableListRef"
-                                class="grid grid-cols-5 gap-2">
-                                <div
-                                    v-for="(imageId, index) in slideUpload
-                                        .sortableData.value"
-                                    :key="imageId"
-                                    :data-image-id="imageId"
-                                    class="relative group">
-                                    <img
-                                        :src="
-                                            (slideUpload.previews.value &&
-                                                slideUpload.previews.value[
-                                                    index
-                                                ]) ||
-                                            ''
-                                        "
-                                        :alt="`輪播圖 ${index + 1}`"
-                                        class="w-full object-cover rounded-lg border aspect-square" />
-                                    <!-- 拖動把手 -->
-                                    <div
-                                        class="drag-handle absolute top-2 left-2 cursor-grab active:cursor-grabbing bg-black/50 hover:bg-black/70 rounded p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <UIcon
-                                            name="i-lucide-grip-vertical"
-                                            class="w-4 h-4 text-white" />
-                                    </div>
-                                    <!-- 刪除按鈕 -->
-                                    <UButton
-                                        icon="i-lucide-x"
-                                        size="xs"
-                                        color="error"
-                                        variant="solid"
-                                        class="absolute top-2 right-2"
-                                        @click="slideUpload.remove(index)" />
-                                </div>
-                            </div>
-                            <UButton
-                                label="新增輪播圖（可多選）"
-                                icon="i-lucide-plus"
-                                color="primary"
-                                variant="outline"
-                                block
-                                :loading="slideUpload.isUploading.value"
-                                :disabled="
-                                    slideUpload.isUploading.value || formLoading
-                                "
-                                @click="slideUpload.triggerFileSelect" />
-                        </div>
-                    </UFormField>
+                        :disabled="formLoading" />
 
                     <UFormField
                         label="內文"

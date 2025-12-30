@@ -1,6 +1,7 @@
 <script setup lang="ts">
+    import ImageUploadSingle from "~/components/Form/ImageUploadSingle.vue";
+    import ImageUploadMultiple from "~/components/Form/ImageUploadMultiple.vue";
 const router = useRouter();
-const toast = useToast();
 const props = withDefaults(
     defineProps<{
         mode: "add" | "edit";
@@ -40,53 +41,60 @@ const { getBasePath } = useBasePath();
 const basePath = getBasePath(router.currentRoute.value.path);
 const pathInfo = resolvePath(basePath);
 
-// 圖片上傳（多圖）
-const imagesUpload = useImageUploadMultiple({
-    enableSortable: true
-});
+// 圖片上傳元件引用（用於調用上傳方法）
+const slideUploadRef = ref<InstanceType<typeof ImageUploadMultiple> | null>(null);
+
 
 // 載入初始資料
 const loadInitialData = async (data: any) => {
-    if (!data) {
-        resetForm();
-        return;
-    }
-    if (data.id && (data.images === undefined || data.images === null)) {
+    if (data) {
         await loadProgressData(Number(data.id));
-    } else {
-        // 若外部直接傳入資料
-        resetForm();
-        form.case_id =
-            data.case_id !== null && data.case_id !== undefined
-                ? Number(data.case_id)
-                : null;
-        form.title = data.title ?? "";
-        form.progress_date = data.progress_date ?? "";
-        form.images = Array.isArray(data.images) ? data.images : [];
-        form.sort = data.sort ?? 0;
-        form.status = data.status ?? 1;
     }
-    // 載入圖片預設值
-    imagesUpload.loadInitialValue(
-        Array.isArray(form.images) ? form.images : []
-    );
+    else {
+        resetForm();
+    }
 };
 
 // 提交
 const handleSubmit = async (event?: Event) => {
     if (event) event.preventDefault();
 
-    // 處理圖片上傳
-    if (form.images.some((img: string) => img && img.startsWith("temp_"))) {
-        const uploaded = await imagesUpload.upload();
-        if (!uploaded) return;
-        if (imagesUpload.formValue.value?.length) {
-            form.images = imagesUpload.formValue.value.filter(
+    // 上傳輪播圖
+    if (
+        form.images &&
+        form.images.length > 0 &&
+        form.images.some((image: string) => image && image.startsWith("temp_"))
+    ) {
+        const uploadSlidesSuccess = await slideUploadRef.value?.upload();
+        if (!uploadSlidesSuccess) {
+            return;
+        }
+        // 上傳完成後，從元件的 formValue 獲取最新的值（已替換臨時 ID 為正式 URL）
+        // 從元件的 formValue 獲取最新值
+        const formValueRef = (slideUploadRef.value as any)?.formValue;
+        if (formValueRef && formValueRef.value && Array.isArray(formValueRef.value)) {
+            // 直接使用元件的 formValue（已經過濾掉臨時 ID）
+            form.images = formValueRef.value.filter(
+                (url: string) => url && !url.startsWith("temp_")
+            );
+        } else {
+            // 如果無法從元件獲取，則過濾當前的 form.slide
+            form.images = form.images.filter(
                 (url: string) => url && !url.startsWith("temp_")
             );
         }
-    } else if (imagesUpload.formValue.value?.length) {
-        form.images = imagesUpload.formValue.value;
+    } else if (
+        (!form.images || form.images.length === 0) &&
+        props.mode === "edit" &&
+        props.initialData?.images
+    ) {
+        // 編輯模式下，如果沒有值，保持原值
+        form.images = props.initialData.images;
+    } else if (form.images && form.images.length > 0) {
+        // 過濾掉臨時 ID，只保留正式 URL
+        form.images = form.images.filter(
+            (url: string) => url && !url.startsWith("temp_")
+        );
     }
 
     let success = false;
@@ -117,31 +125,6 @@ watch(
         loadInitialData(data);
     },
     { immediate: true, deep: true }
-);
-
-// 綁定圖片
-watch(
-    () => imagesUpload.formValue.value,
-    (newValue) => {
-        if (Array.isArray(newValue)) {
-            form.images = [...newValue];
-        }
-    },
-    { immediate: true }
-);
-
-// 啟用排序
-watch(
-    () => ({
-        length: imagesUpload.sortableData.value.length,
-        listRef: imagesUpload.sortableListRef.value
-    }),
-    ({ length, listRef }) => {
-        if (length > 0 && listRef) {
-            nextTick(() => imagesUpload.setupSortable());
-        }
-    },
-    { immediate: true }
 );
 
 // 載入建案列表
@@ -225,63 +208,12 @@ defineExpose({
                     <template #header>
                         <h3 class="text-lg font-semibold">工程進度圖片</h3>
                     </template>
-                    <UFormField label="圖片" name="images">
-                        <div class="space-y-2">
-                            <input
-                                :ref="imagesUpload.inputRef"
-                                type="file"
-                                accept="image/*"
-                                class="hidden"
-                                multiple
-                                @change="imagesUpload.handleFileSelect" />
-                            <div
-                                v-if="
-                                    imagesUpload.sortableData.value.length > 0
-                                "
-                                :ref="imagesUpload.sortableListRef"
-                                class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
-                                <div
-                                    v-for="(imageId, index) in imagesUpload
-                                        .sortableData.value"
-                                    :key="imageId"
-                                    :data-image-id="imageId"
-                                    class="relative group">
-                                    <img
-                                        :src="
-                                            (imagesUpload.previews.value &&
-                                                imagesUpload.previews.value[
-                                                    index
-                                                ]) ||
-                                            ''
-                                        "
-                                        :alt="`工程進度圖 ${index + 1}`"
-                                        class="w-full object-cover rounded-lg border aspect-square" />
-                                    <div
-                                        class="drag-handle absolute top-2 left-2 cursor-grab active:cursor-grabbing bg-black/50 hover:bg-black/70 rounded p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <UIcon
-                                            name="i-lucide-grip-vertical"
-                                            class="w-4 h-4 text-white" />
-                                    </div>
-                                    <UButton
-                                        icon="i-lucide-x"
-                                        size="xs"
-                                        color="error"
-                                        variant="solid"
-                                        class="absolute top-2 right-2"
-                                        @click="imagesUpload.remove(index)" />
-                                </div>
-                            </div>
-                            <UButton
-                                label="新增圖片（可多選）"
-                                icon="i-lucide-plus"
-                                color="primary"
-                                variant="outline"
-                                block
-                                :loading="imagesUpload.isUploading.value"
-                                :disabled="imagesUpload.isUploading.value"
-                                @click="imagesUpload.triggerFileSelect" />
-                        </div>
-                    </UFormField>
+                    <ImageUploadMultiple
+                        ref="slideUploadRef"
+                        v-model="form.images"
+                        label="工程進度圖片"
+                        name="images"
+                        :disabled="formLoading" />
                 </UCard>
             </div>
 

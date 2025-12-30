@@ -99,7 +99,8 @@ const getDefaultLabel = (type: FieldType): string => {
         subtitle: "副標題",
         desktop_image: "電腦版圖片",
         mobile_image: "手機版圖片",
-        content: "內文"
+        content: "內文",
+        video: "影片"
     };
     return labels[type];
 };

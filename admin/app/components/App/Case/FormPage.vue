@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import type { CutSectionData } from "~/types/CutSectionField";
+import ImageUploadSingle from "~/components/Form/ImageUploadSingle.vue";
+import ImageUploadMultiple from "~/components/Form/ImageUploadMultiple.vue";
 
 const router = useRouter();
-const toast = useToast();
 const props = withDefaults(
     defineProps<{
         mode: "add" | "edit";
@@ -46,18 +47,22 @@ const preview = useFormPreview({
     title: "建案預覽"
 });
 
-// 圖片上傳
-const coverUpload = useImageUploadSingle();
-const slideUpload = useImageUploadMultiple({
-    enableSortable: true
-});
-const popImgUpload = useImageUploadSingle();
+// 圖片上傳元件引用（用於調用上傳方法）
+const coverUploadRef = ref<InstanceType<typeof ImageUploadSingle> | null>(null);
+const slideUploadRef = ref<InstanceType<typeof ImageUploadMultiple> | null>(null);
+const popImgUploadRef = ref<InstanceType<typeof ImageUploadSingle> | null>(null);
 
 // 內容區塊（沿用 About 模組的切卡）
+// 注意：區塊操作（新增、刪除、移動）會更新表單狀態，但不會立即儲存
+// 需要點擊「新增」或「更新」按鈕提交表單時才會一起儲存
+// 提交時會使用 props.structureId 來確保資料對應到正確的單元
 const sections = computed<CutSectionData[]>(
     () => (form.content ?? []) as CutSectionData[]
 );
 
+// 新增區塊
+// 注意：新增區塊後不會立即儲存，需要用戶點擊「新增」或「更新」按鈕才會儲存
+// 儲存時會使用 props.structureId 來確保資料對應到正確的單元
 const addCutSection = async () => {
     const newSectionId = `section-${Date.now()}`;
     (form.content as CutSectionData[]).push({
@@ -72,123 +77,176 @@ const addCutSection = async () => {
     }
 };
 
+// 更新區塊資料
+// 注意：更新區塊後不會立即儲存，需要用戶點擊「新增」或「更新」按鈕才會儲存
+// 儲存時會使用 props.structureId 來確保資料對應到正確的單元
 const updateSection = (updated: CutSectionData) => {
-    const idx = sections.value.findIndex((s) => s.id === updated.id);
+    const currentContent = (form.content as CutSectionData[]) || [];
+    const idx = currentContent.findIndex((s) => s.id === updated.id);
+    
     if (idx !== -1) {
-        sections.value[idx] = { ...updated };
+        // 更新現有區塊
+        const updatedContent = [...currentContent];
+        updatedContent[idx] = { ...updated };
+        form.content = updatedContent;
     } else {
-        sections.value.push({ ...updated });
+        // 新增區塊
+        form.content = [...currentContent, { ...updated }];
     }
 };
 
-const deleteSection = (sectionId: string) => {
-    const idx = sections.value.findIndex((s) => s.id === sectionId);
-    if (idx !== -1) {
-        sections.value.splice(idx, 1);
-        sections.value.forEach((s, i) => (s.index = i + 1));
-    }
-};
-
-const moveSection = (sectionId: string, direction: "up" | "down") => {
+// 移動區塊排序
+// 確保使用 props.structureId 來儲存，避免資料錯亂
+// 注意：移動區塊後不會立即儲存，需要用戶點擊「新增」或「更新」按鈕才會儲存
+const moveSection = async (sectionId: string, direction: "up" | "down") => {
     const currentIndex = sections.value.findIndex((s) => s.id === sectionId);
     if (currentIndex === -1) return;
+
     const targetIndex =
         direction === "up" ? currentIndex - 1 : currentIndex + 1;
     if (targetIndex < 0 || targetIndex >= sections.value.length) return;
-    const cloned = [...sections.value];
-    const current = cloned[currentIndex];
-    const target = cloned[targetIndex];
-    if (!current || !target) return;
-    cloned[currentIndex] = target;
-    cloned[targetIndex] = current;
-    cloned.forEach((s, i) => (s.index = i + 1));
-    form.content = cloned;
+
+    // 深拷貝陣列和對象，確保響應式更新
+    const clonedSections = sections.value.map((section) => ({
+        ...section,
+        fields: [...section.fields]
+    }));
+    
+    // 交換位置
+    [clonedSections[currentIndex], clonedSections[targetIndex]] = [
+        clonedSections[targetIndex] as CutSectionData,
+        clonedSections[currentIndex] as CutSectionData
+    ];
+
+    // 重新計算索引，創建新對象以觸發響應式更新
+    const updatedSections = clonedSections.map((section, idx) => ({
+        ...section,
+        index: idx + 1
+    }));
+    
+    form.content = updatedSections;
+
+    // 只在編輯模式下立即儲存
+    if (props.mode === "edit" && props.initialData?.id) {
+        await editCase(Number(props.initialData.id));
+    }
+};
+
+const deleteConfirmModalOpen = ref(false);
+const deleteTarget = ref<{ id: string; label: string } | null>(null);
+
+// 刪除區塊
+// 確保使用 props.structureId 來儲存，避免資料錯亂
+// 注意：刪除區塊後不會立即儲存，需要用戶點擊「新增」或「更新」按鈕才會儲存
+const deleteSection = async (sectionId: string) => {
+    const index = sections.value.findIndex((s) => s.id === sectionId);
+    if (index !== -1) {
+        // 創建新陣列，移除指定區塊並重新計算索引
+        const updatedSections = sections.value
+            .filter((s) => s.id !== sectionId)
+            .map((section, idx) => ({
+                ...section,
+                index: idx + 1
+            }));
+        
+        form.content = updatedSections;
+        console.log(`第${index + 1}卡已刪除:`, sectionId);
+    }
+    
+    // 只在編輯模式下立即儲存
+    if (props.mode === "edit" && props.initialData?.id) {
+        await editCase(Number(props.initialData.id));
+    }
+};
+
+
+const requestDeleteSection = (sectionId: string, label: string) => {
+    deleteTarget.value = { id: sectionId, label };
+    deleteConfirmModalOpen.value = true;
+};
+
+const confirmDeleteSection = () => {
+    if (deleteTarget.value) {
+        deleteSection(deleteTarget.value.id);
+    }
+    deleteConfirmModalOpen.value = false;
+    deleteTarget.value = null;
 };
 
 // 載入初始資料
 const loadInitialData = async (data: any) => {
-    if (!data) {
-        resetForm();
-        return;
-    }
-    if (data.id && (data.content === undefined || data.content === null)) {
+    if (data) {
         await loadCaseData(Number(data.id));
-    } else {
-        // 若外部直接傳入資料
+    }
+    else {
         resetForm();
-        form.year = data.year ?? null;
-        form.title = data.title ?? "";
-        form.s_text = data.s_text ?? "";
-        form.cover = data.cover ?? "";
-        form.slide = Array.isArray(data.slide) ? data.slide : [];
-        form.content = Array.isArray(data.content) ? data.content : [];
-        form.ca_type = data.ca_type ?? "";
-        form.ca_area = data.ca_area ?? "";
-        form.ca_square = data.ca_square ?? "";
-        form.ca_phone = data.ca_phone ?? "";
-        form.ca_adds = data.ca_adds ?? "";
-        form.ca_map = data.ca_map ?? "";
-        form.ca_pop_type = data.ca_pop_type ?? 0;
-        form.ca_pop = data.ca_pop ?? "";
-        form.is_sale = data.is_sale ?? 0;
-        form.is_msg = data.is_msg ?? 0;
-        form.sort = data.sort ?? 0;
-        form.status = data.status ?? 1;
     }
-    // 載入圖片預設值
-    coverUpload.loadInitialValue(form.cover || null);
-    slideUpload.loadInitialValue(Array.isArray(form.slide) ? form.slide : []);
-    // 載入彈窗圖片預設值（僅當類型為圖片時）
-    if (form.ca_pop_type === 1 && form.ca_pop) {
-        popImgUpload.loadInitialValue(form.ca_pop);
-    }
+    // 元件會自動監聽 modelValue 變化並載入初始值，無需手動調用
 };
 // 提交
 const handleSubmit = async (event?: Event) => {
     if (event) event.preventDefault();
-    // 先處理封面
+
+    // 在提交前，先上傳待上傳的圖片（如果有臨時 ID）
+    // 上傳封面圖
     if (form.cover && form.cover.startsWith("temp_")) {
-        const uploaded = await coverUpload.upload();
-        if (!uploaded) return;
-        if (
-            coverUpload.formValue.value &&
-            !coverUpload.formValue.value.startsWith("temp_")
-        ) {
-            form.cover = coverUpload.formValue.value;
+        const uploadCoverSuccess = await coverUploadRef.value?.upload();
+        if (!uploadCoverSuccess) {
+            return;
         }
+        // 上傳完成後，form.cover 會自動更新（通過 v-model）
+    } else if (!form.cover && props.mode === "edit" && props.initialData?.cover) {
+        // 編輯模式下，如果沒有新上傳的圖片，保持原值
+        form.cover = props.initialData.cover;
     }
-    // 處理輪播
-    if (form.slide.some((s: string) => s && s.startsWith("temp_"))) {
-        const uploaded = await slideUpload.upload();
-        if (!uploaded) return;
-        if (slideUpload.formValue.value?.length) {
-            form.slide = slideUpload.formValue.value.filter(
+
+    // 上傳輪播圖
+    if (
+        form.slide &&
+        form.slide.length > 0 &&
+        form.slide.some((slide: string) => slide && slide.startsWith("temp_"))
+    ) {
+        const uploadSlidesSuccess = await slideUploadRef.value?.upload();
+        if (!uploadSlidesSuccess) {
+            return;
+        }
+        // 上傳完成後，從元件的 formValue 獲取最新的值（已替換臨時 ID 為正式 URL）
+        // 從元件的 formValue 獲取最新值
+        const formValueRef = (slideUploadRef.value as any)?.formValue;
+        if (formValueRef && formValueRef.value && Array.isArray(formValueRef.value)) {
+            // 直接使用元件的 formValue（已經過濾掉臨時 ID）
+            form.slide = formValueRef.value.filter(
+                (url: string) => url && !url.startsWith("temp_")
+            );
+        } else {
+            // 如果無法從元件獲取，則過濾當前的 form.slide
+            form.slide = form.slide.filter(
                 (url: string) => url && !url.startsWith("temp_")
             );
         }
-    } else if (slideUpload.formValue.value?.length) {
-        form.slide = slideUpload.formValue.value;
+    } else if (
+        (!form.slide || form.slide.length === 0) &&
+        props.mode === "edit" &&
+        props.initialData?.slide
+    ) {
+        // 編輯模式下，如果沒有值，保持原值
+        form.slide = props.initialData.slide;
+    } else if (form.slide && form.slide.length > 0) {
+        // 過濾掉臨時 ID，只保留正式 URL
+        form.slide = form.slide.filter(
+            (url: string) => url && !url.startsWith("temp_")
+        );
     }
+
     // 處理彈窗圖片（僅當類型為圖片時）
     if (
         form.ca_pop_type === 1 &&
         form.ca_pop &&
         form.ca_pop.startsWith("temp_")
     ) {
-        const uploaded = await popImgUpload.upload();
+        const uploaded = await popImgUploadRef.value?.upload();
         if (!uploaded) return;
-        if (
-            popImgUpload.formValue.value &&
-            !popImgUpload.formValue.value.startsWith("temp_")
-        ) {
-            form.ca_pop = popImgUpload.formValue.value;
-        }
-    } else if (
-        form.ca_pop_type === 1 &&
-        popImgUpload.formValue.value &&
-        !popImgUpload.formValue.value.startsWith("temp_")
-    ) {
-        form.ca_pop = popImgUpload.formValue.value;
+        // 上傳完成後，form.ca_pop 會自動更新（通過 v-model）
     }
 
     let success = false;
@@ -198,8 +256,10 @@ const handleSubmit = async (event?: Event) => {
             submitError.value = "缺少建案 ID";
             return;
         }
+        // 編輯模式：使用建案 ID 更新，不改變 structure_id
         success = await editCase(caseId);
     } else {
+        // 新增模式：使用 structureId 確保資料對應到正確的單元
         success = await addCase(props.structureId ?? null);
         if (success) {
             setTimeout(() => {
@@ -221,75 +281,6 @@ watch(
     { immediate: true, deep: true }
 );
 
-// 綁定封面圖
-watch(
-    () => coverUpload.preview.value,
-    (preview) => {
-        if (preview) {
-            form.cover =
-                coverUpload.formValue.value &&
-                !coverUpload.formValue.value.startsWith("temp_")
-                    ? coverUpload.formValue.value
-                    : coverUpload.tempId.value ||
-                      coverUpload.formValue.value ||
-                      form.cover;
-        } else if (props.mode === "add") {
-            form.cover = "";
-        }
-    },
-    { immediate: true }
-);
-watch(
-    () => coverUpload.formValue.value,
-    (newValue) => {
-        if (newValue && !newValue.startsWith("temp_")) {
-            form.cover = newValue;
-        }
-    }
-);
-
-// 綁定輪播圖
-watch(
-    () => slideUpload.formValue.value,
-    (newValue) => {
-        if (Array.isArray(newValue)) {
-            form.slide = [...newValue];
-        }
-    },
-    { immediate: true }
-);
-
-// 綁定彈窗圖片
-watch(
-    () => popImgUpload.preview.value,
-    (preview) => {
-        if (preview && form.ca_pop_type === 1) {
-            form.ca_pop =
-                popImgUpload.formValue.value &&
-                !popImgUpload.formValue.value.startsWith("temp_")
-                    ? popImgUpload.formValue.value
-                    : popImgUpload.tempId.value ||
-                      popImgUpload.formValue.value ||
-                      form.ca_pop;
-        } else if (props.mode === "add" || form.ca_pop_type !== 1) {
-            form.ca_pop = "";
-        }
-    },
-    { immediate: true }
-);
-watch(
-    () => popImgUpload.formValue.value,
-    (newValue) => {
-        if (
-            newValue &&
-            !newValue.startsWith("temp_") &&
-            form.ca_pop_type === 1
-        ) {
-            form.ca_pop = newValue;
-        }
-    }
-);
-
 // 監聽彈窗類型變化，切換時清空內容
 watch(
     () => form.ca_pop_type,
@@ -298,10 +289,10 @@ watch(
             if (newType === 0) {
                 // 不顯示時清空
                 form.ca_pop = "";
-                popImgUpload.remove();
+                popImgUploadRef.value?.remove();
             } else if (newType === 2) {
                 // 切換到影片時清空圖片
-                popImgUpload.remove();
+                popImgUploadRef.value?.remove();
             } else if (newType === 1 && oldType === 2) {
                 // 從影片切換到圖片時清空連結
                 form.ca_pop = "";
@@ -310,19 +301,7 @@ watch(
     }
 );
 
-// 啟用排序
-watch(
-    () => ({
-        length: slideUpload.sortableData.value.length,
-        listRef: slideUpload.sortableListRef.value
-    }),
-    ({ length, listRef }) => {
-        if (length > 0 && listRef) {
-            nextTick(() => slideUpload.setupSortable());
-        }
-    },
-    { immediate: true }
-);
+// 排序功能由 ImageUploadMultiple 元件內部處理，無需手動設置
 
 // 監聽表單數據變化，即時更新預覽
 watch(
@@ -343,7 +322,7 @@ watch(
         slide: form.slide
     }),
     () => {
-        console.log(form.content);
+        console.log("[preview] form", form);
         preview.updatePreview(
             {
                 title: form.title,
@@ -363,12 +342,12 @@ watch(
             },
             {
                 cover: {
-                    preview: coverUpload.preview.value,
-                    formValue: coverUpload.formValue.value
+                    preview: (coverUploadRef.value as any)?.preview?.value || null,
+                    formValue: (coverUploadRef.value as any)?.formValue?.value || form.cover || ""
                 },
                 slide: {
-                    previews: slideUpload.previews.value,
-                    formValue: slideUpload.formValue.value
+                    previews: (slideUploadRef.value as any)?.previews?.value || [],
+                    formValue: (slideUploadRef.value as any)?.formValue?.value || form.slide || []
                 }
             }
         );
@@ -378,7 +357,7 @@ watch(
 
 
 onMounted(() => {
-    console.log(form);
+    console.log("[formPage] form", form);
 });
 
 defineExpose({
@@ -436,67 +415,15 @@ defineExpose({
                                     placeholder="請輸入小字"
                                     :ui="{ root: 'w-full' }" />
                             </UFormField>
-                            <UFormField
+                            <ImageUploadSingle
+                                ref="coverUploadRef"
+                                v-model="form.cover"
                                 label="封面圖"
                                 name="cover"
                                 description="建議尺寸：1920x1080"
                                 :error="errors.cover"
-                                :ui="{ description: 'text-sm text-primary-500' }">
-                                <div class="space-y-2">
-                                    <input
-                                        :ref="coverUpload.inputRef"
-                                        type="file"
-                                        accept="image/*"
-                                        class="hidden"
-                                        @change="
-                                            coverUpload.handleFileSelect
-                                        " />
-                                    <div
-                                        v-if="
-                                            coverUpload.preview.value ||
-                                            form.cover
-                                        "
-                                        class="relative w-full max-w-lg">
-                                        <img
-                                            :src="
-                                                coverUpload.preview.value ||
-                                                form.cover
-                                            "
-                                            alt="封面預覽"
-                                            class="w-full max-w-lg object-cover rounded-lg border" />
-                                        <UButton
-                                            icon="i-lucide-x"
-                                            size="xs"
-                                            color="error"
-                                            variant="solid"
-                                            class="absolute top-2 right-2"
-                                            @click="
-                                                () => {
-                                                    coverUpload.remove();
-                                                    form.cover = '';
-                                                }
-                                            " />
-                                    </div>
-                                    <UButton
-                                        :label="
-                                            coverUpload.preview.value ||
-                                            form.cover
-                                                ? '更換圖片'
-                                                : '上傳圖片'
-                                        "
-                                        icon="i-lucide-upload"
-                                        color="primary"
-                                        variant="outline"
-                                        block
-                                        :loading="coverUpload.isUploading.value"
-                                        :disabled="
-                                            coverUpload.isUploading.value
-                                        "
-                                        @click="
-                                            coverUpload.triggerFileSelect
-                                        " />
-                                </div>
-                            </UFormField>
+                                :disabled="formLoading"
+                                :ui="{ description: 'text-sm text-primary-500' }" />
                         </div>
                         <UCard :ui="{ body: 'space-y-4' }">
                             <FormStatusField
@@ -575,59 +502,13 @@ defineExpose({
                                     { label: '影片', value: 2 }
                                 ]" />
                         </UFormField>
-                        <UFormField
+                        <ImageUploadSingle
                             v-if="form.ca_pop_type === 1"
+                            ref="popImgUploadRef"
+                            v-model="form.ca_pop"
                             label="彈窗圖片"
-                            name="ca_pop">
-                            <div class="space-y-2">
-                                <input
-                                    :ref="popImgUpload.inputRef"
-                                    type="file"
-                                    accept="image/*"
-                                    class="hidden"
-                                    @change="popImgUpload.handleFileSelect" />
-                                <div
-                                    v-if="
-                                        popImgUpload.preview.value ||
-                                        form.ca_pop
-                                    "
-                                    class="relative w-full max-w-lg">
-                                    <img
-                                        :src="
-                                            popImgUpload.preview.value ||
-                                            form.ca_pop
-                                        "
-                                        alt="彈窗圖片預覽"
-                                        class="w-full max-w-lg object-cover rounded-lg border" />
-                                    <UButton
-                                        icon="i-lucide-x"
-                                        size="xs"
-                                        color="error"
-                                        variant="solid"
-                                        class="absolute top-2 right-2"
-                                        @click="
-                                            () => {
-                                                popImgUpload.remove();
-                                                form.ca_pop = '';
-                                            }
-                                        " />
-                                </div>
-                                <UButton
-                                    :label="
-                                        popImgUpload.preview.value ||
-                                        form.ca_pop
-                                            ? '更換圖片'
-                                            : '上傳圖片'
-                                    "
-                                    icon="i-lucide-upload"
-                                    color="primary"
-                                    variant="outline"
-                                    block
-                                    :loading="popImgUpload.isUploading.value"
-                                    :disabled="popImgUpload.isUploading.value"
-                                    @click="popImgUpload.triggerFileSelect" />
-                            </div>
-                        </UFormField>
+                            name="ca_pop"
+                            :disabled="formLoading" />
                         <UFormField
                             v-if="form.ca_pop_type === 2"
                             label="彈窗影片連結"
@@ -638,63 +519,12 @@ defineExpose({
                                 :ui="{ root: 'w-full' }" />
                         </UFormField>
                     </div>
-                    <UFormField
+                    <ImageUploadMultiple
+                        ref="slideUploadRef"
+                        v-model="form.slide"
                         label="輪播圖"
-                        name="slide">
-                        <div class="space-y-2">
-                            <input
-                                :ref="slideUpload.inputRef"
-                                type="file"
-                                accept="image/*"
-                                class="hidden"
-                                multiple
-                                @change="slideUpload.handleFileSelect" />
-                            <div
-                                v-if="slideUpload.sortableData.value.length > 0"
-                                :ref="slideUpload.sortableListRef"
-                                class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2">
-                                <div
-                                    v-for="(imageId, index) in slideUpload
-                                        .sortableData.value"
-                                    :key="imageId"
-                                    :data-image-id="imageId"
-                                    class="relative group">
-                                    <img
-                                        :src="
-                                            (slideUpload.previews.value &&
-                                                slideUpload.previews.value[
-                                                    index
-                                                ]) ||
-                                            ''
-                                        "
-                                        :alt="`輪播圖 ${index + 1}`"
-                                        class="w-full object-cover rounded-lg border aspect-square" />
-                                    <div
-                                        class="drag-handle absolute top-2 left-2 cursor-grab active:cursor-grabbing bg-black/50 hover:bg-black/70 rounded p-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <UIcon
-                                            name="i-lucide-grip-vertical"
-                                            class="w-4 h-4 text-white" />
-                                    </div>
-                                    <UButton
-                                        icon="i-lucide-x"
-                                        size="xs"
-                                        color="error"
-                                        variant="solid"
-                                        class="absolute top-2 right-2"
-                                        @click="slideUpload.remove(index)" />
-                                </div>
-                            </div>
-                            <UButton
-                                label="新增輪播圖（可多選）"
-                                icon="i-lucide-plus"
-                                color="primary"
-                                variant="outline"
-                                block
-                                :loading="slideUpload.isUploading.value"
-                                :disabled="slideUpload.isUploading.value"
-                                @click="slideUpload.triggerFileSelect" />
-                        </div>
-                    </UFormField>
+                        name="slide"
+                        :disabled="formLoading" />
                 </UCard>
 
                 <UCard :ui="{ body: 'space-y-4' }">
@@ -727,7 +557,7 @@ defineExpose({
                                 :can-move-up="section.index > 1"
                                 :can-move-down="section.index < sections.length"
                                 @update="updateSection"
-                                @delete-request="(id) => deleteSection(id)"
+                                @delete-request="requestDeleteSection(section.id, `第${section.index}卡內容編輯`)"
                                 @move-up="moveSection(section.id, 'up')"
                                 @move-down="moveSection(section.id, 'down')" />
                         </template>
@@ -758,5 +588,14 @@ defineExpose({
                 </div>
             </section>
         </UForm>
+        <DeleteConfirmModal
+        v-model:open="deleteConfirmModalOpen"
+        title="確認刪除區塊"
+        :description="
+            deleteTarget
+                ? `確定要刪除「${deleteTarget.label}」嗎？此操作無法復原，區塊內的所有欄位資料將會被永久刪除。`
+                : ''
+        "
+        :on-confirm="confirmDeleteSection" />
     </template>
 </template>

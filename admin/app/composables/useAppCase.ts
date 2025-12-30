@@ -143,6 +143,8 @@ export const useAppCase = () => {
         }
     };
 
+    // 新增建案
+    // 確保使用 structureId 來儲存，避免資料錯亂
     const addCase = async (structureId?: number | null) => {
         loading.value = true;
         submitError.value = "";
@@ -161,6 +163,7 @@ export const useAppCase = () => {
                 ...form,
                 content: form.content as CutSectionData[]
             };
+            // 使用 structureId 確保資料對應到正確的單元
             if (structureId !== undefined && structureId !== null) {
                 body.structure_id = structureId;
             }
@@ -214,6 +217,9 @@ export const useAppCase = () => {
         }
     };
 
+    // 更新建案
+    // 注意：編輯時不應該改變 structure_id，以避免資料錯亂
+    // 後端會根據建案 ID 來更新資料，不會改變原有的 structure_id
     const editCase = async (id: number | string) => {
         loading.value = true;
         if (!validateForm()) {
